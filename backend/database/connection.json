@@ -1,0 +1,13 @@
+{
+    "server": "localhost",
+    "user": "sa",
+    "password": "123",
+    "database": "WhatPad",
+    "options": {
+        "encrypt": true,
+        "trustServerCertificate": true,
+        "enableArithAbort": true
+    },
+    "port": 1433,
+    "connectionTimeout": 15000
+}

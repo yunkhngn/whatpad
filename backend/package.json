@@ -1,0 +1,22 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "cloudinary": "^2.7.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mssql": "^12.0.0",
+    "multer": "^2.0.2"
+  },
+  "scripts": {
+    "dev": "nodemon src/app.js"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}
