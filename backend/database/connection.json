@@ -1,13 +1,10 @@
 {
-    "server": "localhost",
+    "host": "localhost",
     "user": "sa",
     "password": "123",
     "database": "wattpad",
-    "options": {
-        "encrypt": true,
-        "trustServerCertificate": true,
-        "enableArithAbort": true
-    },
-    "port": 1433,
-    "connectionTimeout": 15000
+    "port": 3306,
+    "connectionLimit": 10,
+    "waitForConnections": true,
+    "connectTimeout": 15000
 }
