@@ -1,5 +1,5 @@
 const express = require('express');
-const { sql, poolPromise } = require('../../db');
+const pool = require('../../db');
 const auth = require('../../mw/auth');
 
 const router = express.Router();
@@ -7,16 +7,10 @@ const router = express.Router();
 // POST /chapters/:id/vote - Vote (like) a chapter
 router.post('/chapters/:id/vote', auth, async (req, res, next) => {
   try {
-    const pool = await poolPromise;
-    
-    await pool.request()
-      .input('chapter_id', sql.Int, req.params.id)
-      .input('user_id', sql.Int, req.user.id)
-      .query(`
-        IF NOT EXISTS (SELECT 1 FROM votes WHERE chapter_id = @chapter_id AND user_id = @user_id)
-        INSERT INTO votes (chapter_id, user_id, created_at)
-        VALUES (@chapter_id, @user_id, GETDATE())
-      `);
+    await pool.query(
+      'INSERT IGNORE INTO votes (chapter_id, user_id, created_at) VALUES (?, ?, NOW())',
+      [req.params.id, req.user.id]
+    );
 
     res.json({ ok: true, message: 'Vote recorded' });
   } catch (err) {
@@ -27,12 +21,10 @@ router.post('/chapters/:id/vote', auth, async (req, res, next) => {
 // DELETE /chapters/:id/vote - Remove vote
 router.delete('/chapters/:id/vote', auth, async (req, res, next) => {
   try {
-    const pool = await poolPromise;
-    
-    await pool.request()
-      .input('chapter_id', sql.Int, req.params.id)
-      .input('user_id', sql.Int, req.user.id)
-      .query('DELETE FROM votes WHERE chapter_id = @chapter_id AND user_id = @user_id');
+    await pool.query(
+      'DELETE FROM votes WHERE chapter_id = ? AND user_id = ?',
+      [req.params.id, req.user.id]
+    );
 
     res.json({ ok: true, message: 'Vote removed' });
   } catch (err) {
