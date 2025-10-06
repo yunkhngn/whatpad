@@ -1,6 +1,6 @@
 const express = require('express');
-const { sql, poolPromise } = require('../db');
-const auth = require('../mw/auth');
+const { sql, poolPromise } = require('../../db');
+const auth = require('../../mw/auth');
 const { checkChapterOwnership, checkStoryOwnershipByStoryId } = require('./service');
 
 const router = express.Router();

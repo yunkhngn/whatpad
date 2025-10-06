@@ -1,4 +1,4 @@
-const { sql, poolPromise } = require('../db');
+const { sql, poolPromise } = require('../../db');
 
 async function checkChapterOwnership(chapterId, userId) {
   const pool = await poolPromise;

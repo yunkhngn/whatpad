@@ -1,7 +1,7 @@
 const express = require('express');
-const { sql, poolPromise } = require('../db');
-const auth = require('../mw/auth');
-const { slugify } = require('../utils/slugify');
+const { sql, poolPromise } = require('../../db');
+const auth = require('../../mw/auth');
+const { slugify } = require('../../utils/slugify');
 
 const router = express.Router();
 
