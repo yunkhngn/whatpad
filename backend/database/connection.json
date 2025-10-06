@@ -2,7 +2,7 @@
     "server": "localhost",
     "user": "sa",
     "password": "123",
-    "database": "WhatPad",
+    "database": "wattpad",
     "options": {
         "encrypt": true,
         "trustServerCertificate": true,
