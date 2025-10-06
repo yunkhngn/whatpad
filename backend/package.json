@@ -1,23 +1,25 @@
 {
-  "name": "backend",
+  "name": "whatapp-backend",
   "version": "1.0.0",
-  "main": "src/index.js",
+  "main": "src/app.js",
   "license": "MIT",
-  "dependencies": {
-    "bcryptjs": "^3.0.2",
-    "cloudinary": "^2.7.0",
-    "cors": "^2.8.5",
-    "dotenv": "^17.2.3",
-    "express": "^5.1.0",
-    "jsonwebtoken": "^9.0.2",
-    "mssql": "^12.0.0",
-    "multer": "^2.0.2",
-    "mysql2": "^3.15.1"
-  },
+  "description": "Wattpad-like backend with Express and MSSQL",
   "scripts": {
-    "dev": "nodemon src/index.js"
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cloudinary": "^1.41.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.6.0",
+    "multer": "^1.4.5-lts.1",
+    "swagger-ui-express": "^5.0.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.10"
+    "nodemon": "^3.0.1"
   }
 }
