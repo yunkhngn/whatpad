@@ -1,82 +1,97 @@
 # Wattpad-like Backend API
 
-A complete Node.js + Express + MSSQL backend for a Wattpad-like story platform.
+A complete Node.js + Express + MySQL backend for a Wattpad-like story platform.
 
 ## 🚀 Features
 
-- **Authentication**: Simple JWT-based auth (register, login, me)
-- **Users**: Profile management, followers/following
+- **Authentication**: JWT-based auth (register, login, me) with 2h token expiry
+- **Users**: Profile management, followers/following system
 - **Stories**: CRUD operations, search, tags, publish/draft status
-- **Chapters**: Full chapter management with ordering
+- **Chapters**: Full chapter management with ordering and publishing control
 - **Comments**: Threaded comments on chapters
 - **Votes**: Like/unlike chapters
 - **Tags**: Story categorization with tags
 - **Favorites**: Reading lists (favorite_lists + items)
-- **Reading History**: Track user progress
-- **Reviews**: Story reviews with likes
+- **Reading History**: Track user reading progress
+- **Reviews**: Story reviews with ratings and likes
 - **Follows**: Follow authors and stories
 - **Upload**: Image upload to Cloudinary
-- **API Documentation**: Swagger UI at `/docs`
+- **API Documentation**: Interactive Swagger UI at `/docs`
 
 ## 📋 Requirements
 
 - Node.js 14+
-- MSSQL Server
+- MySQL 8.0+
 - Cloudinary account (for image uploads)
 
 ## 🛠️ Installation
 
-1. Install dependencies:
+### 1. Install dependencies:
 ```bash
 npm install
+# or
+yarn install
 ```
 
-2. Copy `.env.example` to `.env` and configure:
+### 2. Setup environment variables:
 ```bash
 cp .env.example .env
 ```
 
-3. Update `.env` with your credentials:
+### 3. Configure `.env` with your credentials:
 ```env
 PORT=4000
-JWT_SECRET=your-secret-key
+JWT_SECRET=your-long-random-secret-key-here
 
-SQL_SERVER=localhost
-SQL_USER=sa
-SQL_PASSWORD=YourPassword
-SQL_DB=wattpad
-SQL_ENCRYPT=false
+# MySQL Configuration
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=your-password
+DB_NAME=wattpad
+DB_PORT=3306
 
+# Cloudinary (for image uploads)
 CLOUDINARY_CLOUD_NAME=your-cloud-name
 CLOUDINARY_API_KEY=your-api-key
 CLOUDINARY_API_SECRET=your-api-secret
 ```
 
-4. Run the database scripts (in order):
+### 4. Setup MySQL Database:
 ```bash
-# Run createdb.sql to create all tables
-# Run insertdb.sql to insert sample data (optional)
+# Login to MySQL
+mysql -u root -p
+
+# Run database creation script
+source database/createdb.sql;
+
+# (Optional) Insert sample data
+source database/insertdb.sql;
+
+# Exit MySQL
+exit;
 ```
 
 ## 🏃 Running the Server
 
-Development mode:
+Development mode (auto-reload with nodemon):
 ```bash
 npm run dev
+# or
+yarn dev
 ```
 
 Production mode:
 ```bash
 npm start
+# or
+yarn start
 ```
 
 Server will start at `http://localhost:4000`
 
-## 📚 API Documentation
-
-Once the server is running, visit:
-- **Swagger UI**: http://localhost:4000/docs
+### ✅ Verify server is running:
 - **Health Check**: http://localhost:4000/health
+- **API Documentation**: http://localhost:4000/docs
 
 ## 🔑 API Endpoints
 
@@ -183,73 +198,109 @@ All endpoints return JSON with a consistent format:
 
 ## 🗄️ Database
 
-The backend uses MSSQL with the following main tables:
-- users
-- stories
-- chapters
-- tags, story_tags
-- story_comments
-- story_reviews, review_likes
-- votes
-- follows
-- followed_stories
-- favorite_lists, favorite_list_items
-- reading_history
+The backend uses **MySQL 8.0+** with the following main tables:
+- `users` - User accounts and profiles
+- `stories` - Story content and metadata
+- `chapters` - Story chapters with ordering
+- `tags`, `story_tags` - Story categorization
+- `story_comments` - Threaded comments on chapters
+- `story_reviews`, `review_likes` - Story reviews and interactions
+- `votes` - Chapter likes/votes
+- `follows` - User following relationships
+- `followed_stories` - Story following
+- `favorite_lists`, `favorite_list_items` - Reading lists
+- `reading_history` - User reading progress tracking
 
-All queries use parameterized inputs (`.input()`) for SQL injection protection.
+### Security Features:
+- ✅ **Parameterized queries** (`?` placeholders) for SQL injection protection
+- ✅ **Password hashing** with bcrypt (10 rounds)
+- ✅ **JWT authentication** with configurable secret
+- ✅ **Input validation** on all endpoints
 
-## 📝 Notes
+## 📝 Additional Notes
 
-- Pagination: Default `page=1`, `size=12`
-- Search: Use `?q=keyword` query parameter
-- All timestamps are `DATETIME2` in MSSQL
-- Image URLs (avatar_url, cover_url) are stored in DB, actual images on Cloudinary
-- Password hashing uses bcrypt with 10 rounds
-- JWT secret should be changed in production
+- **Pagination**: Default `page=1`, `size=12` for list endpoints
+- **Search**: Use `?q=keyword` query parameter for text search
+- **Timestamps**: All dates use MySQL `DATETIME` with `NOW()` function
+- **Images**: URLs (avatar_url, cover_url) stored in DB, files hosted on Cloudinary
+- **Token Expiry**: JWT tokens expire after 2 hours (no refresh token)
+- **Security**: Change `JWT_SECRET` to a strong random value in production
 
-## 🧪 Quick Test
+## 🧪 Quick Test Flow
 
-1. Start server: `npm run dev`
-2. Check health: `GET http://localhost:4000/health`
-3. Register: `POST http://localhost:4000/auth/register`
-4. Login: `POST http://localhost:4000/auth/login`
-5. Create story: `POST http://localhost:4000/stories` (with Bearer token)
+```bash
+# 1. Start server
+yarn dev
+
+# 2. Check health
+curl http://localhost:4000/health
+
+# 3. Register user
+curl -X POST http://localhost:4000/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username":"testuser","email":"test@example.com","password":"Test123"}'
+
+# 4. Login
+curl -X POST http://localhost:4000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"Test123"}'
+
+# 5. Create story (use token from login)
+curl -X POST http://localhost:4000/stories \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  -d '{"title":"My First Story","description":"A great story"}'
+```
 
 ## 📦 Project Structure
 
 ```
 backend/
 ├── src/
-│   ├── app.js              # Main application
-│   ├── db.js               # MSSQL connection
+│   ├── app.js              # Express application setup
+│   ├── db.js               # MySQL connection pool (mysql2)
 │   ├── mw/                 # Middleware
-│   │   ├── auth.js         # JWT auth middleware
-│   │   └── error.js        # Error handler
-│   ├── utils/              # Utilities
+│   │   ├── auth.js         # JWT authentication
+│   │   └── error.js        # Global error handler
+│   ├── utils/              # Utility functions
 │   │   ├── paging.js       # Pagination helper
-│   │   └── slugify.js      # Slugify helper
-│   ├── modules/            # API modules
-│   │   ├── auth/
-│   │   ├── users/
-│   │   ├── stories/
-│   │   ├── chapters/
-│   │   ├── comments/
-│   │   ├── votes/
-│   │   ├── follows/
-│   │   ├── tags/
-│   │   ├── favorites/
-│   │   ├── reading/
-│   │   ├── reviews/
-│   │   └── upload/
+│   │   └── slugify.js      # String slugification
+│   ├── modules/            # Feature modules
+│   │   ├── auth/           # Authentication (register, login, me)
+│   │   ├── users/          # User profiles & relationships
+│   │   ├── stories/        # Story CRUD & management
+│   │   ├── chapters/       # Chapter management
+│   │   ├── comments/       # Comment system
+│   │   ├── votes/          # Chapter voting
+│   │   ├── follows/        # Author following
+│   │   ├── tags/           # Tag management
+│   │   ├── favorites/      # Reading lists
+│   │   ├── reading/        # Reading history
+│   │   ├── reviews/        # Story reviews
+│   │   └── upload/         # Cloudinary image upload
 │   └── docs/
-│       └── openapi.js      # Swagger spec
+│       └── openapi.js      # Swagger/OpenAPI specification
 ├── database/
-│   ├── createdb.sql        # DB schema
-│   └── insertdb.sql        # Sample data
-├── .env.example
-├── package.json
-└── README.md
+│   ├── createdb.sql        # MySQL schema (tables, indexes)
+│   ├── insertdb.sql        # Sample test data
+│   └── connection.json     # DB config (for reference)
+├── .env                    # Environment variables (gitignored)
+├── .env.example            # Environment template
+├── package.json            # Dependencies & scripts
+├── CONVERSION_COMPLETE.md  # MySQL migration summary
+└── README.md               # This file
 ```
+
+## 🔧 Tech Stack
+
+- **Runtime**: Node.js 14+
+- **Framework**: Express.js 4.18
+- **Database**: MySQL 8.0+ with mysql2 driver
+- **Authentication**: JWT (jsonwebtoken)
+- **Password**: bcryptjs
+- **Image Upload**: Cloudinary + Multer
+- **API Docs**: Swagger UI Express
+- **Dev Tools**: Nodemon for auto-reload
 
 ## 📄 License
 
