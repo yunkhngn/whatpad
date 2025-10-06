@@ -55,8 +55,8 @@ app.use(errorHandler);
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-  console.log(`📚 API Documentation: http://localhost:${PORT}/docs`);
+  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`API Documentation: http://localhost:${PORT}/docs`);
 });
 
 module.exports = app;

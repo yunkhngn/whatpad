@@ -3,7 +3,7 @@ module.exports = {
   info: {
     title: 'Wattpad-like API',
     version: '1.0.0',
-    description: 'Backend API for a Wattpad-like story platform with MSSQL'
+    description: 'Backend API for a Wattpad-like story platform with MySQL database',
   },
   servers: [
     {
