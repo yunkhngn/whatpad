@@ -28,36 +28,40 @@ router.get('/:id', async (req, res, next) => {
 router.put('/me', auth, async (req, res, next) => {
   try {
     const { username, bio, avatar_url } = req.body;
-    const pool = await poolPromise;
     
     const updates = [];
-    const request = pool.request().input('id', sql.Int, req.user.id);
+    const values = [];
     
     if (username) {
-      updates.push('username = @username');
-      request.input('username', sql.NVarChar, username);
+      updates.push('username = ?');
+      values.push(username);
     }
     if (bio !== undefined) {
-      updates.push('bio = @bio');
-      request.input('bio', sql.NVarChar, bio);
+      updates.push('bio = ?');
+      values.push(bio);
     }
     if (avatar_url !== undefined) {
-      updates.push('avatar_url = @avatar_url');
-      request.input('avatar_url', sql.NVarChar, avatar_url);
+      updates.push('avatar_url = ?');
+      values.push(avatar_url);
     }
     
     if (updates.length === 0) {
       return res.status(400).json({ ok: false, message: 'No fields to update', errorCode: 'NO_UPDATES' });
     }
 
-    const result = await request.query(`
-      UPDATE users 
-      SET ${updates.join(', ')}
-      OUTPUT INSERTED.id, INSERTED.username, INSERTED.email, INSERTED.bio, INSERTED.avatar_url
-      WHERE id = @id
-    `);
+    values.push(req.user.id);
 
-    res.json({ ok: true, data: result.recordset[0] });
+    await pool.query(
+      `UPDATE users SET ${updates.join(', ')} WHERE id = ?`,
+      values
+    );
+
+    const [users] = await pool.query(
+      'SELECT id, username, email, bio, avatar_url FROM users WHERE id = ?',
+      [req.user.id]
+    );
+
+    res.json({ ok: true, data: users[0] });
   } catch (err) {
     next(err);
   }
@@ -65,20 +69,16 @@ router.put('/me', auth, async (req, res, next) => {
 
 // GET /users/:id/followers
 router.get('/:id/followers', async (req, res, next) => {
-  try {
-    const pool = await poolPromise;
-    
-    const result = await pool.request()
-      .input('author_id', sql.Int, req.params.id)
-      .query(`
-        SELECT u.id, u.username, u.avatar_url, f.created_at as followed_at
-        FROM follows f
-        JOIN users u ON f.follower_id = u.id
-        WHERE f.author_id = @author_id
-        ORDER BY f.created_at DESC
-      `);
+  try {    
+    const [followers] = await pool.query(`
+      SELECT u.id, u.username, u.avatar_url, f.created_at as followed_at
+      FROM follows f
+      JOIN users u ON f.follower_id = u.id
+      WHERE f.author_id = ?
+      ORDER BY f.created_at DESC
+    `, [req.params.id]);
 
-    res.json({ ok: true, data: result.recordset });
+    res.json({ ok: true, data: followers });
   } catch (err) {
     next(err);
   }
@@ -86,20 +86,16 @@ router.get('/:id/followers', async (req, res, next) => {
 
 // GET /users/:id/following
 router.get('/:id/following', async (req, res, next) => {
-  try {
-    const pool = await poolPromise;
-    
-    const result = await pool.request()
-      .input('follower_id', sql.Int, req.params.id)
-      .query(`
-        SELECT u.id, u.username, u.avatar_url, f.created_at as followed_at
-        FROM follows f
-        JOIN users u ON f.author_id = u.id
-        WHERE f.follower_id = @follower_id
-        ORDER BY f.created_at DESC
-      `);
+  try {    
+    const [following] = await pool.query(`
+      SELECT u.id, u.username, u.avatar_url, f.created_at as followed_at
+      FROM follows f
+      JOIN users u ON f.author_id = u.id
+      WHERE f.follower_id = ?
+      ORDER BY f.created_at DESC
+    `, [req.params.id]);
 
-    res.json({ ok: true, data: result.recordset });
+    res.json({ ok: true, data: following });
   } catch (err) {
     next(err);
   }

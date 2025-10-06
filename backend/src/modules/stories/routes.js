@@ -1,5 +1,5 @@
 const express = require('express');
-const { sql, poolPromise } = require('../../db');
+const pool = require('../../db');
 const auth = require('../../mw/auth');
 const { getPagination } = require('../../utils/paging');
 const { checkStoryOwnership, getStoryWithTags } = require('./service');
@@ -11,7 +11,6 @@ router.get('/', async (req, res, next) => {
   try {
     const { page, size, offset } = getPagination(req);
     const { q, tag } = req.query;
-    const pool = await poolPromise;
     
     let query = `
       SELECT DISTINCT s.*, u.username as author_name
@@ -20,11 +19,11 @@ router.get('/', async (req, res, next) => {
       WHERE s.status = 'published'
     `;
     
-    const request = pool.request();
+    const params = [];
     
     if (q) {
-      query += ` AND (s.title LIKE @search OR s.description LIKE @search)`;
-      request.input('search', sql.NVarChar, `%${q}%`);
+      query += ` AND (s.title LIKE ? OR s.description LIKE ?)`;
+      params.push(`%${q}%`, `%${q}%`);
     }
     
     if (tag) {
@@ -32,20 +31,18 @@ router.get('/', async (req, res, next) => {
         AND EXISTS (
           SELECT 1 FROM story_tags st
           JOIN tags t ON st.tag_id = t.id
-          WHERE st.story_id = s.id AND t.name = @tag
+          WHERE st.story_id = s.id AND t.name = ?
         )
       `;
-      request.input('tag', sql.NVarChar, tag);
+      params.push(tag);
     }
     
-    query += ` ORDER BY s.created_at DESC OFFSET @offset ROWS FETCH NEXT @size ROWS ONLY`;
+    query += ` ORDER BY s.created_at DESC LIMIT ? OFFSET ?`;
+    params.push(size, offset);
     
-    request.input('offset', sql.Int, offset);
-    request.input('size', sql.Int, size);
-    
-    const result = await request.query(query);
+    const [rows] = await pool.query(query, params);
 
-    res.json({ ok: true, data: result.recordset, page, size });
+    res.json({ ok: true, data: rows, page, size });
   } catch (err) {
     next(err);
   }
@@ -74,48 +71,34 @@ router.post('/', auth, async (req, res, next) => {
     if (!title) {
       return res.status(400).json({ ok: false, message: 'Title is required', errorCode: 'MISSING_TITLE' });
     }
-
-    const pool = await poolPromise;
     
     // Insert story
-    const result = await pool.request()
-      .input('user_id', sql.Int, req.user.id)
-      .input('title', sql.NVarChar, title)
-      .input('description', sql.NVarChar, description || null)
-      .input('cover_url', sql.NVarChar, cover_url || null)
-      .query(`
-        INSERT INTO stories (user_id, title, description, cover_url, status, created_at)
-        OUTPUT INSERTED.*
-        VALUES (@user_id, @title, @description, @cover_url, 'draft', GETDATE())
-      `);
+    const [result] = await pool.query(
+      `INSERT INTO stories (user_id, title, description, cover_url, status, created_at)
+       VALUES (?, ?, ?, ?, 'draft', NOW())`,
+      [req.user.id, title, description || null, cover_url || null]
+    );
     
-    const story = result.recordset[0];
+    const [stories] = await pool.query('SELECT * FROM stories WHERE id = ?', [result.insertId]);
+    const story = stories[0];
     
     // Handle tags if provided
     if (tags && Array.isArray(tags) && tags.length > 0) {
       for (const tagName of tags) {
         // Upsert tag
-        const tagResult = await pool.request()
-          .input('name', sql.NVarChar, tagName)
-          .query(`
-            MERGE tags AS target
-            USING (SELECT @name AS name) AS source
-            ON target.name = source.name
-            WHEN NOT MATCHED THEN
-              INSERT (name) VALUES (@name)
-            OUTPUT INSERTED.id;
-          `);
+        await pool.query(
+          'INSERT INTO tags (name) VALUES (?) ON DUPLICATE KEY UPDATE name = name',
+          [tagName]
+        );
         
-        const tagId = tagResult.recordset[0].id;
+        const [tagRows] = await pool.query('SELECT id FROM tags WHERE name = ?', [tagName]);
+        const tagId = tagRows[0].id;
         
         // Insert story_tag
-        await pool.request()
-          .input('story_id', sql.Int, story.id)
-          .input('tag_id', sql.Int, tagId)
-          .query(`
-            IF NOT EXISTS (SELECT 1 FROM story_tags WHERE story_id = @story_id AND tag_id = @tag_id)
-            INSERT INTO story_tags (story_id, tag_id) VALUES (@story_id, @tag_id)
-          `);
+        await pool.query(
+          'INSERT IGNORE INTO story_tags (story_id, tag_id) VALUES (?, ?)',
+          [story.id, tagId]
+        );
       }
     }
 
@@ -135,38 +118,38 @@ router.put('/:id', auth, async (req, res, next) => {
     }
 
     const { title, description, cover_url } = req.body;
-    const pool = await poolPromise;
     
     const updates = [];
-    const request = pool.request().input('id', sql.Int, req.params.id);
+    const values = [];
     
     if (title) {
-      updates.push('title = @title');
-      request.input('title', sql.NVarChar, title);
+      updates.push('title = ?');
+      values.push(title);
     }
     if (description !== undefined) {
-      updates.push('description = @description');
-      request.input('description', sql.NVarChar, description);
+      updates.push('description = ?');
+      values.push(description);
     }
     if (cover_url !== undefined) {
-      updates.push('cover_url = @cover_url');
-      request.input('cover_url', sql.NVarChar, cover_url);
+      updates.push('cover_url = ?');
+      values.push(cover_url);
     }
     
     if (updates.length === 0) {
       return res.status(400).json({ ok: false, message: 'No fields to update', errorCode: 'NO_UPDATES' });
     }
 
-    updates.push('updated_at = GETDATE()');
+    updates.push('updated_at = NOW()');
+    values.push(req.params.id);
     
-    const result = await request.query(`
-      UPDATE stories 
-      SET ${updates.join(', ')}
-      OUTPUT INSERTED.*
-      WHERE id = @id
-    `);
+    await pool.query(
+      `UPDATE stories SET ${updates.join(', ')} WHERE id = ?`,
+      values
+    );
+    
+    const [stories] = await pool.query('SELECT * FROM stories WHERE id = ?', [req.params.id]);
 
-    res.json({ ok: true, data: result.recordset[0] });
+    res.json({ ok: true, data: stories[0] });
   } catch (err) {
     next(err);
   }
@@ -180,19 +163,15 @@ router.post('/:id/publish', auth, async (req, res, next) => {
     if (!isOwner) {
       return res.status(403).json({ ok: false, message: 'Not authorized', errorCode: 'NOT_AUTHORIZED' });
     }
-
-    const pool = await poolPromise;
     
-    const result = await pool.request()
-      .input('id', sql.Int, req.params.id)
-      .query(`
-        UPDATE stories 
-        SET status = 'published', updated_at = GETDATE()
-        OUTPUT INSERTED.*
-        WHERE id = @id
-      `);
+    await pool.query(
+      `UPDATE stories SET status = 'published', updated_at = NOW() WHERE id = ?`,
+      [req.params.id]
+    );
+    
+    const [stories] = await pool.query('SELECT * FROM stories WHERE id = ?', [req.params.id]);
 
-    res.json({ ok: true, data: result.recordset[0] });
+    res.json({ ok: true, data: stories[0] });
   } catch (err) {
     next(err);
   }
@@ -206,12 +185,8 @@ router.delete('/:id', auth, async (req, res, next) => {
     if (!isOwner) {
       return res.status(403).json({ ok: false, message: 'Not authorized', errorCode: 'NOT_AUTHORIZED' });
     }
-
-    const pool = await poolPromise;
     
-    await pool.request()
-      .input('id', sql.Int, req.params.id)
-      .query('DELETE FROM stories WHERE id = @id');
+    await pool.query('DELETE FROM stories WHERE id = ?', [req.params.id]);
 
     res.json({ ok: true, message: 'Story deleted' });
   } catch (err) {
