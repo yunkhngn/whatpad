@@ -1,0 +1,78 @@
+.genre-section {
+    margin-bottom: 1rem;
+}
+
+.genre-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.8rem;
+    padding: 0 1rem;
+}
+
+.genre-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-foreground);
+    margin: 0;
+}
+
+.genre-nav-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.nav-button {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--color-border);
+    background: var(--color-background);
+    color: var(--color-foreground);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.nav-button:hover {
+    background: var(--color-muted);
+    border-color: var(--color-foreground);
+}
+
+.nav-button:active {
+    transform: scale(0.95);
+}
+
+.genre-scroll-container {
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding: 0 1rem;
+}
+
+.genre-scroll-container::-webkit-scrollbar {
+    display: none;
+}
+
+.genre-stories {
+    display: flex;
+    gap: 1.5rem;
+    padding-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+    .genre-title {
+        font-size: 1.25rem;
+    }
+
+    .nav-button {
+        width: 36px;
+        height: 36px;
+    }
+
+    .genre-stories {
+        gap: 1rem;
+    }
+}

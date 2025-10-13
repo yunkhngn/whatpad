@@ -1,0 +1,20 @@
+.homePage {
+    min-height: 100vh;
+    background: var(--color-background);
+    padding: 2rem 0;
+}
+
+.pageContainer {
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+@media (max-width: 768px) {
+    .homePage {
+        padding: 1rem 0;
+    }
+
+    .pageContainer {
+        padding: 0 0.5rem;
+    }
+}

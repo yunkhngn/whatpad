@@ -1,70 +1,159 @@
-# Getting Started with Create React App
+# Wattpad Clone
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A React-based clone of Wattpad, an online story reading and writing platform. This project demonstrates a modern web application with routing, component architecture, and responsive design.
 
-## Available Scripts
+## 🚀 Features
 
-In the project directory, you can run:
+- **Browse Stories**: View a collection of stories with cover images, titles, authors, and stats
+- **Read Stories**: Click on any story to read its full content
+- **Responsive Design**: Works seamlessly on desktop, tablet, and mobile devices
+- **Modern UI**: Clean interface using TailwindCSS and Bootstrap
+- **Component Architecture**: Reusable components following React best practices
 
-### `yarn start`
+## 📁 Project Structure
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+\`\`\`
+wattpad-clone/
+├── src/
+│   ├── assets/
+│   │   └── styles/
+│   │       ├── reset.css
+│   │       ├── global.css
+│   │       └── variables.css
+│   ├── components/
+│   │       ├── Button.jsx
+│   │       ├── Card.jsx
+│   │       └── StoryCard.jsx
+│   │─── layout/
+│   │       ├── Layout.jsx
+│   │       ├── Header.jsx
+│   │       └── Footer.jsx
+│   ├── pages/
+│   │   ├── HomePage/
+│   │   │   ├── HomePage.jsx
+│   │   │   └── HomePage.module.css
+│   │   └── ReadingPage/
+│   │       ├── ReadingPage.jsx
+│   │       └── ReadingPage.module.css
+│   ├── services/
+│   │   └── api.js
+│   ├── routes/
+│   │   └── AppRouter.jsx
+│   ├── App.jsx
+│   └── index.js
+├── index.html
+├── package.json
+└── README.md
+\`\`\`
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### 📂 Folder Structure Explained
 
-### `yarn test`
+#### `src/assets/`
+Contains all static assets like images, fonts, and global styles.
+- **`images/`** - Store story covers, icons, and other image assets
+- **`styles/`** - Global CSS files:
+  - `reset.css` - Removes default browser styling for consistency
+  - `variables.css` - Defines CSS custom properties (colors, fonts, spacing)
+  - `global.css` - Global styles applied across the entire application
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+#### `src/components/`
+Reusable React components organized by purpose.
+  - `Button.jsx` - Customizable button component with variants
+  - `Card.jsx` - Generic card container for content
+  - `StoryCard.jsx` - Specialized card for displaying story previews
 
-### `yarn build`
+  
+#### `src/layouts/`
+Components that define the app's structure:
+  - `MainLayout` - Main layout wrapper that includes header and footer
+  - `Header` - Top navigation bar with logo and menu
+  - `Footer` - Bottom footer with links and copyright
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+#### `src/pages/`
+Page-level components representing different routes. Each page has its own folder with component and CSS module.
+- **`HomePage/`** - Landing page displaying story listings
+  - `HomePage.jsx` - Main component with story grid
+  - `HomePage.module.css` - Page-specific styles using CSS Modules
+- **`ReadingPage/`** - Individual story reading view
+  - `ReadingPage.jsx` - Displays full story content with metadata
+  - `ReadingPage.module.css` - Styles for reading interface
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+#### `src/services/`
+API and data fetching logic separated from components.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+#### `src/routes/`
+Routing configuration and route definitions.
+- **`AppRouter.jsx`** - Defines all application routes using React Router, mapping URLs to page components
 
-### `yarn eject`
+#### Root Files
+- **`App.jsx`** - Root component that wraps the entire application with providers and router
+- **`index.js`** - Application entry point that renders App into the DOM
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+## 🛠️ Technologies Used
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+- **React 18** - UI library
+- **React Router v6** - Client-side routing
+- **TailwindCSS** - Utility-first CSS framework
+- **Bootstrap 5** - Component library
+- **CSS Modules** - Scoped styling for pages
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## 📦 Installation
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+1. **Clone or download the project**
 
-## Learn More
+2. **Install dependencies**
+   \`\`\`bash
+   npm install
+   \`\`\`
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+3. **Start the development server**
+   \`\`\`bash
+   npm start
+   \`\`\`
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+4. **Open your browser**
+   Navigate to `http://localhost:3000` (or the port shown in your terminal)
 
-### Code Splitting
+## 🎨 Customization
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### Colors
+Edit the color palette in `src/assets/styles/variables.css`:
+\`\`\`css
+:root {
+  --color-primary: #ff6b00;
+  --color-secondary: #1a1a1a;
+  --color-background: #ffffff;
+  --color-text: #333333;
+}
+\`\`\`
 
-### Analyzing the Bundle Size
+## 📱 Routes
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+- `/` - Home page with story listings
+- `/read/:id` - Reading page for individual stories
 
-### Making a Progressive Web App
+## 🏗️ Building for Production
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+\`\`\`bash
+npm run build
+\`\`\`
 
-### Advanced Configuration
+The built files will be in the `dist/` directory, ready to be deployed to any static hosting service.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+## 🔮 Future Enhancements
 
-### Deployment
+- User authentication and profiles
+- Story creation and editing interface
+- Comments and voting system
+- Search and filter functionality
+- Genre-based browsing
+- Reading lists and bookmarks
+- Backend API integration
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+## 📄 License
 
-### `yarn build` fails to minify
+This is a learning project and is free to use for educational purposes.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## 🤝 Contributing
+
+Feel free to fork this project and submit pull requests with improvements!
