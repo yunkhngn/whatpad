@@ -1,7 +1,7 @@
 .homePage {
     min-height: 100vh;
     background: var(--color-background);
-    padding: 2rem 0;
+    padding: 0;
 }
 
 .pageContainer {
@@ -9,12 +9,283 @@
     padding: 0 1rem;
 }
 
+/* Genres Row */
+.genresRow {
+    background: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+}
+
+.genresHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.sectionTitle {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--color-secondary);
+    margin-bottom: 0;
+}
+
+.viewAllLink {
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: 500;
+    padding: 0;
+}
+
+.viewAllLink:hover {
+    color: var(--color-primary);
+    text-decoration: underline;
+}
+
+.genreCardsContainer {
+    overflow-x: auto;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+}
+
+.genreCardsContainer::-webkit-scrollbar {
+    height: 6px;
+}
+
+.genreCardsContainer::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.genreCardsContainer::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}
+
+.genreCardsContainer::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* 5 columns on large screens */
+.genreCardsContainer :global(.col-lg-custom) {
+    flex: 0 0 auto;
+    width: 20%;
+}
+
+.genreCard {
+    cursor: pointer;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: all var(--transition-fast);
+    height: 100%;
+    position: relative;
+}
+
+.genreCard:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.genreThumbnail {
+    width: 100%;
+    height: 180px;
+    position: relative;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background-color: #f0f0f0;
+}
+
+.genreOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        to bottom,
+        rgba(0, 0, 0, 0.1) 0%,
+        rgba(0, 0, 0, 0.6) 100%
+    );
+}
+
+.genreInfo {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 0.75rem;
+    color: white;
+    z-index: 2;
+}
+
+.genreName {
+    font-size: 1rem;
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+.genreCount {
+    font-size: 0.875rem;
+    margin-bottom: 0;
+    opacity: 0.95;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.genreButton {
+    width: 100%;
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1rem;
+    font-weight: 500;
+    transition: all var(--transition-fast);
+    border: 2px solid var(--color-primary);
+    color: var(--color-primary);
+    background: white;
+}
+
+.genreButton:hover {
+    background: var(--color-primary);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Carousel Section */
+.carouselSection {
+    margin-bottom: 3rem;
+    margin-top: 3rem;
+}
+
+.mainCarousel {
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+}
+
+.carouselPlaceholder {
+    height: 400px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.carouselContent {
+    text-align: center;
+    color: white;
+    z-index: 2;
+    padding: 2rem;
+}
+
+.carouselContent h2 {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.carouselContent p {
+    font-size: 1.25rem;
+    margin-bottom: 2rem;
+    opacity: 0.95;
+}
+
+.carouselBadge {
+    font-size: 0.875rem;
+    padding: 0.5rem 1rem;
+    margin-bottom: 1rem;
+}
+
+/* Genre Sections */
+.genreSections {
+    padding: 2rem 0;
+}
+
+/* Latest Stories Section */
+.latestStoriesSection {
+    background: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+}
+
 @media (max-width: 768px) {
     .homePage {
-        padding: 1rem 0;
+        padding: 0;
     }
 
     .pageContainer {
         padding: 0 0.5rem;
+    }
+
+    .genresRow {
+        padding: 1.5rem 0;
+    }
+
+    .sectionTitle {
+        font-size: 1.25rem;
+        margin-bottom: 1rem;
+    }
+
+    .genreThumbnail {
+        height: 150px;
+    }
+
+    .genreName {
+        font-size: 0.875rem;
+    }
+
+    .genreCount {
+        font-size: 0.75rem;
+    }
+
+    .carouselPlaceholder {
+        height: 300px;
+    }
+
+    .carouselContent h2 {
+        font-size: 1.75rem;
+    }
+
+    .carouselContent p {
+        font-size: 1rem;
+    }
+
+    .genreButton {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .genreThumbnail {
+        height: 120px;
+    }
+
+    .carouselPlaceholder {
+        height: 250px;
+    }
+
+    .carouselContent h2 {
+        font-size: 1.5rem;
+    }
+
+    .carouselContent p {
+        font-size: 0.875rem;
+        margin-bottom: 1rem;
+    }
+
+    .genresRow {
+        padding: 1rem 0;
+    }
+
+    .sectionTitle {
+        font-size: 1.125rem;
+    }
+}
+
+@media (min-width: 992px) {
+    .genreCardsContainer :global(.col-lg-custom) {
+        width: 20%;
     }
 }

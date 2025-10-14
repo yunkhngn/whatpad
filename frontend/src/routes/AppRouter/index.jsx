@@ -2,6 +2,8 @@ import { BrowserRouter, Route, Routes } from "react-router"
 import MainLayout from '../../layouts/MainLayout'
 import HomePage from '../../pages/HomePage'
 import ReadingPage from '../../pages/ReadingPage'
+import AuthPage from '../../pages/AuthPage'
+import StoryDetailPage from '../../pages/StoryDetailPage'
 
 const AppRouter = () => {
     return (
@@ -9,7 +11,9 @@ const AppRouter = () => {
             <MainLayout>
                 <Routes>
                     <Route path="/" element={<HomePage />}></Route>
-                    <Route path="/read/:id" element={<ReadingPage />}></Route>
+                    <Route path="/auth" element={<AuthPage />}></Route>
+                    <Route path="/story/:id" element={<StoryDetailPage />}></Route>
+                    <Route path="/read/:chapterId" element={<ReadingPage />}></Route>
                 </Routes>
             </MainLayout>
         </BrowserRouter>
