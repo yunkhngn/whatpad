@@ -6,19 +6,73 @@ const auth = require('../../mw/auth');
 
 const router = express.Router();
 
+// Input validation helpers
+const validateUsername = (username) => {
+  if (!username || typeof username !== 'string') return false;
+  if (username.length < 3 || username.length > 30) return false;
+  return /^[a-zA-Z0-9_]+$/.test(username);
+};
+
+const validateEmail = (email) => {
+  if (!email || typeof email !== 'string') return false;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+const validatePassword = (password) => {
+  if (!password || typeof password !== 'string') return false;
+  return password.length >= 6 && password.length <= 100;
+};
+
+// Sanitize input
+const sanitizeInput = (input) => {
+  if (!input) return '';
+  return input.trim();
+};
+
 // POST /auth/register
 router.post('/register', async (req, res, next) => {
   try {
     const { username, email, password } = req.body;
     
+    // Validate required fields
     if (!username || !email || !password) {
       return res.status(400).json({ ok: false, message: 'Missing required fields', errorCode: 'MISSING_FIELDS' });
+    }
+
+    // Sanitize inputs
+    const cleanUsername = sanitizeInput(username);
+    const cleanEmail = sanitizeInput(email);
+
+    // Validate inputs
+    if (!validateUsername(cleanUsername)) {
+      return res.status(400).json({ 
+        ok: false, 
+        message: 'Username must be 3-30 characters and contain only letters, numbers, and underscores', 
+        errorCode: 'INVALID_USERNAME' 
+      });
+    }
+
+    if (!validateEmail(cleanEmail)) {
+      return res.status(400).json({ 
+        ok: false, 
+        message: 'Invalid email format', 
+        errorCode: 'INVALID_EMAIL' 
+      });
+    }
+
+    if (!validatePassword(password)) {
+      return res.status(400).json({ 
+        ok: false, 
+        message: 'Password must be 6-100 characters', 
+        errorCode: 'INVALID_PASSWORD' 
+      });
     }
 
     // Check if user exists
     const [existing] = await pool.query(
       'SELECT id FROM users WHERE email = ? OR username = ?',
-      [email, username]
+      [cleanEmail, cleanUsername]
     );
     
     if (existing.length > 0) {
@@ -31,7 +85,7 @@ router.post('/register', async (req, res, next) => {
     // Insert user
     const [result] = await pool.query(
       'INSERT INTO users (username, email, password_hash, created_at) VALUES (?, ?, ?, NOW())',
-      [username, email, password_hash]
+      [cleanUsername, cleanEmail, password_hash]
     );
 
     const [users] = await pool.query('SELECT id, username, email, bio, avatar_url, created_at FROM users WHERE id = ?', [result.insertId]);
@@ -50,14 +104,29 @@ router.post('/register', async (req, res, next) => {
 // POST /auth/login
 router.post('/login', async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const { username, password } = req.body;
     
-    if (!email || !password) {
-      return res.status(400).json({ ok: false, message: 'Missing email or password', errorCode: 'MISSING_CREDENTIALS' });
+    if (!username || !password) {
+      return res.status(400).json({ ok: false, message: 'Missing username or password', errorCode: 'MISSING_CREDENTIALS' });
     }
 
-    // Get user by email
-    const [users] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
+    // Sanitize input
+    const cleanUsername = sanitizeInput(username);
+
+    // Validate inputs
+    if (!validateUsername(cleanUsername)) {
+      return res.status(401).json({ ok: false, message: 'Invalid credentials', errorCode: 'INVALID_CREDENTIALS' });
+    }
+
+    if (!validatePassword(password)) {
+      return res.status(401).json({ ok: false, message: 'Invalid credentials', errorCode: 'INVALID_CREDENTIALS' });
+    }
+
+    // Get user by username or email
+    const [users] = await pool.query(
+      'SELECT * FROM users WHERE username = ? OR email = ?', 
+      [cleanUsername, cleanUsername]
+    );
     const user = users[0];
     
     if (!user) {

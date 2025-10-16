@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useCallback, useRef } from "react"
 import { Navbar, Nav, NavDropdown, Form, Button, Container } from "react-bootstrap"
 import { Link, useNavigate } from "react-router"
 import { authAPI, tagsAPI } from "../../../../services/api"
@@ -9,6 +9,7 @@ function Header() {
     const [tags, setTags] = useState([])
     const [searchQuery, setSearchQuery] = useState("")
     const navigate = useNavigate()
+    const debounceTimerRef = useRef(null)
 
     useEffect(() => {
         checkAuthStatus()
@@ -43,6 +44,37 @@ function Header() {
             navigate(`/?q=${encodeURIComponent(searchQuery)}`)
         }
     }
+
+    // Debounced search handler
+    const handleSearchInput = useCallback((value) => {
+        // Clear existing timer
+        if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current)
+        }
+
+        // Set new timer
+        debounceTimerRef.current = setTimeout(() => {
+            if (value.trim()) {
+                // Optional: Auto-search after delay
+                // navigate(`/?q=${encodeURIComponent(value)}`)
+            }
+        }, 500) // 500ms delay
+    }, [])
+
+    const handleSearchChange = (e) => {
+        const value = e.target.value
+        setSearchQuery(value)
+        handleSearchInput(value)
+    }
+
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current)
+            }
+        }
+    }, [])
 
     const handleLogout = () => {
         localStorage.removeItem('authToken')
@@ -85,21 +117,21 @@ function Header() {
                                 </NavDropdown.Item>
                             ))}
                         </NavDropdown>
+                        
+                        {/* Search Bar - Moved next to Browse */}
+                        <Form className="d-flex search-form ms-3" onSubmit={handleSearch}>
+                            <div className="search-wrapper">
+                                <i className="bi bi-search search-icon"></i>
+                                <Form.Control
+                                    type="search"
+                                    placeholder="Search"
+                                    className="search-input"
+                                    value={searchQuery}
+                                    onChange={handleSearchChange}
+                                />
+                            </div>
+                        </Form>
                     </Nav>
-
-                    {/* Search Bar */}
-                    <Form className="d-flex search-form mx-auto" onSubmit={handleSearch}>
-                        <div className="search-wrapper">
-                            <i className="bi bi-search search-icon"></i>
-                            <Form.Control
-                                type="search"
-                                placeholder="Search"
-                                className="search-input"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                            />
-                        </div>
-                    </Form>
 
                     {/* Right Side Nav */}
                     <Nav className="ms-auto align-items-center">

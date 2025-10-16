@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react"
+import React, { useState, useEffect, useCallback, useRef } from "react"
 import { Container, Row, Col, Button, Alert, Spinner, Carousel, Badge } from "react-bootstrap"
 import { storiesAPI, tagsAPI } from "../../services/api"
 import styles from "./HomePage.module.css"
@@ -9,6 +9,7 @@ const HomePage = () => {
     const [tags, setTags] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
+    const genreScrollRef = useRef(null)
 
     const fetchData = useCallback(async () => {
         try {
@@ -17,6 +18,11 @@ const HomePage = () => {
                 tagsAPI.getAll(),
                 storiesAPI.getAll({ page: 1, size: 50, sort: 'created_at', order: 'desc' })
             ])
+            
+            console.log('=== HOMEPAGE DATA DEBUG ===')
+            console.log('Tags:', tagsResponse.tags)
+            console.log('Stories:', storiesResponse.stories)
+            console.log('First story tags:', storiesResponse.stories?.[0]?.tags)
             
             setTags(tagsResponse.tags || [])
             setStories(storiesResponse.stories || [])
@@ -55,18 +61,54 @@ const HomePage = () => {
     }
 
     const getGenreCardsForDisplay = () => {
-        // Just return first 5 tags as genre cards
-        console.log('Tags:', tags);
+        // Count stories for each tag and sort by story count (descending)
+        const genreCards = tags.map(tag => {
+            const storyCount = stories.filter(story => 
+                story.tags && story.tags.some(storyTag => storyTag.id === tag.id)
+            ).length
+
+            return {
+                id: tag.id,
+                name: tag.name,
+                thumbnail: '/assests/icons/default-cover.png',
+                storyCount: storyCount
+            }
+        })
         
-        const genreCards = tags.slice(0, 5).map(tag => ({
-            id: tag.id,
-            name: tag.name,
-            thumbnail: '/assests/icons/default-cover.png', // Use placeholder for now
-            storyCount: 0 // We'll update this later if needed
-        }));
-        
-        console.log('Genre cards:', genreCards);
-        return genreCards;
+        // Sort: genres with stories first (by count desc), then genres without stories
+        return genreCards.sort((a, b) => {
+            if (a.storyCount === 0 && b.storyCount === 0) return 0
+            if (a.storyCount === 0) return 1
+            if (b.storyCount === 0) return -1
+            return b.storyCount - a.storyCount
+        })
+    }
+
+    const scrollGenres = (direction) => {
+        if (genreScrollRef.current) {
+            const container = genreScrollRef.current
+            const itemWidth = container.querySelector('.col-lg-custom')?.offsetWidth || 200
+            const gap = 16 // 1rem gap
+            
+            // Calculate items per view based on screen width
+            let itemsPerView = 5 // Desktop: 5 items
+            if (window.innerWidth <= 576) {
+                itemsPerView = 2 // Mobile: 2 items
+            } else if (window.innerWidth <= 768) {
+                itemsPerView = 3 // Tablet: 3 items
+            }
+            
+            const scrollAmount = (itemWidth + gap) * itemsPerView
+            
+            const newScrollLeft = direction === "left" 
+                ? container.scrollLeft - scrollAmount 
+                : container.scrollLeft + scrollAmount
+            
+            container.scrollTo({
+                left: newScrollLeft,
+                behavior: "smooth",
+            })
+        }
     }
 
     const storiesByGenre = groupStoriesByTag()
@@ -133,12 +175,32 @@ const HomePage = () => {
                     <div className={styles.genresRow}>
                         <Container>
                             <div className={styles.genresHeader}>
-                                <h2 className={styles.sectionTitle}>Browse genres</h2>
-                                <Button variant="link" className={styles.viewAllLink}>
-                                    View all &gt;
-                                </Button>
+                                <div className={styles.titleWrapper}>
+                                    <a href="/genres" className={styles.sectionTitleLink}>
+                                        <h2 className={styles.sectionTitle}>Browse genres</h2>
+                                    </a>
+                                    <a href="/genres" className={styles.viewAllLink}>
+                                        View all
+                                    </a>
+                                </div>
+                                <div className={styles.genreNavButtons}>
+                                    <button 
+                                        className={styles.navButton} 
+                                        onClick={() => scrollGenres("left")} 
+                                        aria-label="Previous"
+                                    >
+                                        <i className="bi bi-chevron-left"></i>
+                                    </button>
+                                    <button 
+                                        className={styles.navButton} 
+                                        onClick={() => scrollGenres("right")} 
+                                        aria-label="Next"
+                                    >
+                                        <i className="bi bi-chevron-right"></i>
+                                    </button>
+                                </div>
                             </div>
-                            <div className={styles.genreCardsContainer}>
+                            <div className={styles.genreCardsContainer} ref={genreScrollRef}>
                                 <Row className="g-3">
                                     {genreCards.map(genre => (
                                         <Col key={genre.id} xs={6} sm={4} md={3} lg className="col-lg-custom">

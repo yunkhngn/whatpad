@@ -2,6 +2,45 @@ import React, { useState } from 'react';
 import { Container, Row, Col, Card, Form, Button, Alert, Nav } from 'react-bootstrap';
 import { authAPI } from '../../services/api';
 
+// Input validation utilities
+const validateUsername = (username) => {
+    if (!username || username.length < 3) {
+        return 'Username must be at least 3 characters';
+    }
+    if (username.length > 30) {
+        return 'Username must be less than 30 characters';
+    }
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+        return 'Username can only contain letters, numbers, and underscores';
+    }
+    return null;
+};
+
+const validateEmail = (email) => {
+    if (!email) return 'Email is required';
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        return 'Please enter a valid email address';
+    }
+    return null;
+};
+
+const validatePassword = (password) => {
+    if (!password || password.length < 6) {
+        return 'Password must be at least 6 characters';
+    }
+    if (password.length > 100) {
+        return 'Password must be less than 100 characters';
+    }
+    return null;
+};
+
+// Sanitize input to prevent XSS
+const sanitizeInput = (input) => {
+    if (!input) return '';
+    return input.trim().replace(/[<>]/g, '');
+};
+
 const AuthPage = () => {
     const [isLogin, setIsLogin] = useState(true);
     const [formData, setFormData] = useState({
@@ -13,12 +52,50 @@ const AuthPage = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [validationErrors, setValidationErrors] = useState({});
 
     const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        const sanitizedValue = sanitizeInput(value);
+        
         setFormData({
             ...formData,
-            [e.target.name]: e.target.value
+            [name]: sanitizedValue
         });
+
+        // Clear validation error for this field
+        setValidationErrors({
+            ...validationErrors,
+            [name]: null
+        });
+    };
+
+    const validateForm = () => {
+        const errors = {};
+
+        // Validate username
+        const usernameError = validateUsername(formData.username);
+        if (usernameError) errors.username = usernameError;
+
+        // Validate email (only for registration)
+        if (!isLogin) {
+            const emailError = validateEmail(formData.email);
+            if (emailError) errors.email = emailError;
+        }
+
+        // Validate password
+        const passwordError = validatePassword(formData.password);
+        if (passwordError) errors.password = passwordError;
+
+        // Validate confirm password (only for registration)
+        if (!isLogin) {
+            if (formData.password !== formData.confirmPassword) {
+                errors.confirmPassword = 'Passwords do not match';
+            }
+        }
+
+        setValidationErrors(errors);
+        return Object.keys(errors).length === 0;
     };
 
     const handleSubmit = async (e) => {
@@ -27,26 +104,30 @@ const AuthPage = () => {
         setError('');
         setSuccess('');
 
+        // Validate form before submission
+        if (!validateForm()) {
+            setLoading(false);
+            setError('Please fix the validation errors');
+            return;
+        }
+
         try {
             if (isLogin) {
                 const response = await authAPI.login({
-                    username: formData.username,
-                    password: formData.password
+                    username: sanitizeInput(formData.username),
+                    password: formData.password // Don't sanitize password
                 });
                 localStorage.setItem('authToken', response.token);
                 setSuccess('Login successful!');
                 // Redirect to home page
-                window.location.href = '/';
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 1000);
             } else {
-                if (formData.password !== formData.confirmPassword) {
-                    setError('Passwords do not match');
-                    return;
-                }
-                
                 await authAPI.register({
-                    username: formData.username,
-                    email: formData.email,
-                    password: formData.password
+                    username: sanitizeInput(formData.username),
+                    email: sanitizeInput(formData.email),
+                    password: formData.password // Don't sanitize password
                 });
                 setSuccess('Registration successful! Please login.');
                 setIsLogin(true);
@@ -103,7 +184,11 @@ const AuthPage = () => {
                                         onChange={handleInputChange}
                                         required
                                         placeholder="Enter username"
+                                        isInvalid={!!validationErrors.username}
                                     />
+                                    <Form.Control.Feedback type="invalid">
+                                        {validationErrors.username}
+                                    </Form.Control.Feedback>
                                 </Form.Group>
 
                                 {!isLogin && (
@@ -116,7 +201,11 @@ const AuthPage = () => {
                                             onChange={handleInputChange}
                                             required
                                             placeholder="Enter email"
+                                            isInvalid={!!validationErrors.email}
                                         />
+                                        <Form.Control.Feedback type="invalid">
+                                            {validationErrors.email}
+                                        </Form.Control.Feedback>
                                     </Form.Group>
                                 )}
 
@@ -129,7 +218,11 @@ const AuthPage = () => {
                                         onChange={handleInputChange}
                                         required
                                         placeholder="Enter password"
+                                        isInvalid={!!validationErrors.password}
                                     />
+                                    <Form.Control.Feedback type="invalid">
+                                        {validationErrors.password}
+                                    </Form.Control.Feedback>
                                 </Form.Group>
 
                                 {!isLogin && (
@@ -142,7 +235,11 @@ const AuthPage = () => {
                                             onChange={handleInputChange}
                                             required
                                             placeholder="Confirm password"
+                                            isInvalid={!!validationErrors.confirmPassword}
                                         />
+                                        <Form.Control.Feedback type="invalid">
+                                            {validationErrors.confirmPassword}
+                                        </Form.Control.Feedback>
                                     </Form.Group>
                                 )}
 
