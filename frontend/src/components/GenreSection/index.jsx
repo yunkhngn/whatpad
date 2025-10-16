@@ -3,7 +3,7 @@ import { useRef } from "react"
 import StoryCard from "../StoryCard"
 import "./GenreSection.css"
 
-function GenreSection({ title, stories, showProgress = false }) {
+function GenreSection({ title, stories, showProgress = false, showTitle = true }) {
     const scrollContainerRef = useRef(null)
 
     const scroll = (direction) => {
@@ -20,9 +20,21 @@ function GenreSection({ title, stories, showProgress = false }) {
 
     return (
         <div className="genre-section">
-            <div className="genre-header">
-                <h2 className="genre-title">{title}</h2>
-                <div className="genre-nav-buttons">
+            {showTitle && (
+                <div className="genre-header">
+                    <h2 className="genre-title">{title}</h2>
+                    <div className="genre-nav-buttons">
+                        <button className="nav-button" onClick={() => scroll("left")} aria-label="Previous">
+                            <i className="bi bi-chevron-left"></i>
+                        </button>
+                        <button className="nav-button" onClick={() => scroll("right")} aria-label="Next">
+                            <i className="bi bi-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            )}
+            {!showTitle && (
+                <div className="genre-nav-buttons-only">
                     <button className="nav-button" onClick={() => scroll("left")} aria-label="Previous">
                         <i className="bi bi-chevron-left"></i>
                     </button>
@@ -30,7 +42,7 @@ function GenreSection({ title, stories, showProgress = false }) {
                         <i className="bi bi-chevron-right"></i>
                     </button>
                 </div>
-            </div>
+            )}
             <div className="genre-scroll-container" ref={scrollContainerRef}>
                 <div className="genre-stories">
                     {stories.map((story) => (

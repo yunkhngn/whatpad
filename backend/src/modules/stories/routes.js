@@ -42,6 +42,17 @@ router.get('/', async (req, res, next) => {
     
     const [rows] = await pool.query(query, params);
 
+    // Fetch tags for each story
+    for (const story of rows) {
+      const [tags] = await pool.query(`
+        SELECT t.id, t.name 
+        FROM tags t
+        JOIN story_tags st ON t.id = st.tag_id
+        WHERE st.story_id = ?
+      `, [story.id]);
+      story.tags = tags;
+    }
+
     res.json({ ok: true, data: rows, page, size });
   } catch (err) {
     next(err);
