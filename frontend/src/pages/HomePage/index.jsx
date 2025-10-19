@@ -10,31 +10,39 @@ const HomePage = () => {
     const [continueReading, setContinueReading] = useState([])
 
     useEffect(() => {
-        const allStories = getStories()
+        async function getAllStories() {
+            try {
+                const allStories = await getStories()
 
-        // Mock continue reading data (first 3 stories with random progress)
-        setContinueReading(allStories.slice(0, 3))
+                // Mock continue reading data (first 3 stories with random progress)
+                setContinueReading(allStories.slice(0, 3))
 
-        // Group stories by genre
-        const genres = {
-            Romance: allStories.filter((s) => s.genre === "Romance" || s.id === "2"),
-            Fantasy: allStories.filter((s) => s.genre === "Fantasy" || s.id === "1"),
-            Mystery: allStories.filter((s) => s.genre === "Mystery" || s.id === "5"),
-            Horror: allStories.filter((s) => s.genre === "Horror"),
-            Adventure: allStories.filter((s) => s.genre === "Adventure" || s.id === "3"),
-            "Sci-Fi": allStories.filter((s) => s.genre === "Sci-Fi" || s.id === "6"),
-            Comedy: allStories.filter((s) => s.genre === "Comedy"),
-            Drama: allStories.filter((s) => s.genre === "Drama" || s.id === "4"),
+                // Group stories by genre
+                const genres = {
+                    Romance: allStories.filter((s) => s.genre === "Romance" || s.id === "2"),
+                    Fantasy: allStories.filter((s) => s.genre === "Fantasy" || s.id === "1"),
+                    Mystery: allStories.filter((s) => s.genre === "Mystery" || s.id === "5"),
+                    Horror: allStories.filter((s) => s.genre === "Horror"),
+                    Adventure: allStories.filter((s) => s.genre === "Adventure" || s.id === "3"),
+                    "Sci-Fi": allStories.filter((s) => s.genre === "Sci-Fi" || s.id === "6"),
+                    Comedy: allStories.filter((s) => s.genre === "Comedy"),
+                    Drama: allStories.filter((s) => s.genre === "Drama" || s.id === "4"),
+                }
+
+                // If having empty genres, fill them with all stories for demo
+                Object.keys(genres).forEach((genre) => {
+                    if (genres[genre].length === 0) {
+                        genres[genre] = allStories
+                    }
+                })
+
+                setStoriesByGenre(genres)
+            } catch (error) {
+                console.log(error)
+            }
         }
 
-        // If having empty genres, fill them with all stories for demo
-        Object.keys(genres).forEach((genre) => {
-            if (genres[genre].length === 0) {
-                genres[genre] = allStories
-            }
-        })
-
-        setStoriesByGenre(genres)
+        getAllStories()
     }, [])
 
     return (

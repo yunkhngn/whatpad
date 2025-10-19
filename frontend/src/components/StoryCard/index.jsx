@@ -7,7 +7,7 @@ const StoryCard = ({ story, showProgress = false, progress = 0 }) => {
     const navigate = useNavigate()
 
     const handleClick = () => {
-        navigate(`/read/${story.id}`)
+        navigate(`/story/${story.id}`)
     }
 
     return (
@@ -22,7 +22,7 @@ const StoryCard = ({ story, showProgress = false, progress = 0 }) => {
             </div>
             <div className="story-info">
                 <h4 className="story-title">{story.title}</h4>
-                <p className="story-genre">{story.genre || "Fiction"}</p>
+                <p className="story-genre">{story?.tag}</p>
             </div>
         </div>
     )

@@ -7,23 +7,25 @@
     margin-bottom: 2rem;
 }
 
-.storyContent {
+.section {
     max-width: 800px;
     margin: 0 auto;
     background: white;
-    padding: 3rem;
+    padding: 2rem;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 10px;
 }
 
 .storyHeader {
     border-bottom: 2px solid #f0f0f0;
-    padding-bottom: 2rem;
+    padding-bottom: 1rem;
     margin-bottom: 2rem;
 }
 
 .storyTitle {
-    font-size: 2.5rem;
+    font-size: 1.5rem;
+    font-weight: 500;
     color: var(--color-secondary);
     margin-bottom: 0.5rem;
     line-height: 1.2;
@@ -75,12 +77,28 @@
 .storyFooter {
     border-top: 2px solid #f0f0f0;
     padding-top: 2rem;
-}
-
-.actionButtons {
     display: flex;
+    justify-content: center;
     gap: 1rem;
     flex-wrap: wrap;
+}
+
+.button {
+    border-radius: 10px;
+    background-color: #cccccc6c;
+    padding: 4px 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.button:hover {
+    background-color: #b4b4b46c;
+}
+
+.button i {
+    margin-bottom: -2px;
 }
 
 @media (max-width: 768px) {
@@ -95,4 +113,48 @@
     .actionButtons {
         flex-direction: column;
     }
+}
+
+.userComment {
+    display: flex;
+    gap: 14px;
+}
+
+.commentInput {
+    border: 1px solid #ccc;
+    width: 100%;
+    padding: 4px 12px;
+    outline: none;
+    transition: all 0.2s;
+    border-radius: 10px;
+    font-size: 0.9rem;
+}
+
+.commentInput:focus {
+    border-color: #616161;
+}
+
+.commentItem {
+    margin: 20px 0;
+}
+
+.userInfo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+.userDetail p {
+    margin: 0;
+    padding: 0;
+}
+
+.userName {
+    font-size: 0.9rem;
+}
+
+.commentDate {
+    font-size: 0.8rem;
+    color: #616161;
 }
