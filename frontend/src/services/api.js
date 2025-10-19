@@ -255,7 +255,7 @@ export const readingAPI = {
 export const uploadAPI = {
     uploadImage: async (file) => {
         const formData = new FormData();
-        formData.append('image', file);
+        formData.append('file', file); // Sửa từ 'image' thành 'file' để match với backend
         
         const token = getAuthToken();
         const response = await fetch(`${API_BASE_URL}/upload/image`, {

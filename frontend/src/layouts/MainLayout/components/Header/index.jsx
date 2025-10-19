@@ -3,7 +3,6 @@ import { Navbar, Nav, NavDropdown, Form, Button, Container } from "react-bootstr
 import { Link, useNavigate } from "react-router"
 import { authAPI, tagsAPI } from "../../../../services/api"
 import "./Header.css"
-
 function Header() {
     const [user, setUser] = useState(null)
     const [tags, setTags] = useState([])
@@ -138,7 +137,7 @@ function Header() {
                         {user ? (
                             <>
                                 {/* Write Button */}
-                                <Nav.Link as={Link} to="/create-story" className="me-2">
+                                <Nav.Link as={Link} to="/upload" className="me-2">
                                     <Button variant="link" className="write-btn">
                                         <i className="bi bi-pencil me-1"></i>
                                         Write

@@ -3,7 +3,6 @@ import { Container, Row, Col, Button, Alert, Spinner, Carousel, Badge } from "re
 import { storiesAPI, tagsAPI } from "../../services/api"
 import styles from "./HomePage.module.css"
 import GenreSection from "../../components/GenreSection"
-
 const HomePage = () => {
     const [stories, setStories] = useState([])
     const [tags, setTags] = useState([])
