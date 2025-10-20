@@ -10,10 +10,10 @@ const AppRouter = () => {
         <BrowserRouter>
             <MainLayout>
                 <Routes>
-                    <Route path="/" element={<HomePage />}></Route>
-                    <Route path="/profile" element={<UserProfilePage />}></Route>
-                    <Route path="/story/:id" element={<StoryPreviewPage />}></Route>
-                    <Route path="/story/:id/chapter/:id" element={<ReadingPage />}></Route>
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/profile" element={<UserProfilePage />} />
+                    <Route path="/story/:id" element={<StoryPreviewPage />} />
+                    <Route path="/story/:id/chapter/:id" element={<ReadingPage />} />
                 </Routes>
             </MainLayout>
         </BrowserRouter>

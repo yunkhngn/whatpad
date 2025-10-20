@@ -56,6 +56,10 @@ function Header() {
         setIsUserProfileOpen(false)
     }
 
+    const handleCreateStoryClick = () => {
+        navigate('myworks/new')
+    }
+
     return (
         <header className="topbar">
             <div className="container">
@@ -101,7 +105,7 @@ function Header() {
 
                     {/* Topbar right */}
                     <div className="topbar-right">
-                        <button className="btn btn-create">Create Story</button>
+                        <button className="btn btn-create" onClick={handleCreateStoryClick}>Create Story</button>
 
                         {/* Profile menu */}
                         <div className="user-profile" ref={profileRef}>
