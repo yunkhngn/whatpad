@@ -4,6 +4,7 @@ import HomePage from '../../pages/HomePage'
 import ReadingPage from '../../pages/ReadingPage'
 import AuthPage from '../../pages/AuthPage'
 import StoryDetailPage from '../../pages/StoryDetailPage'
+import SearchPage from '../../pages/SearchPage'
 
 const AppRouter = () => {
     return (
@@ -11,6 +12,7 @@ const AppRouter = () => {
             <MainLayout>
                 <Routes>
                     <Route path="/" element={<HomePage />}></Route>
+                    <Route path="/search" element={<SearchPage />}></Route>
                     <Route path="/auth" element={<AuthPage />}></Route>
                     <Route path="/story/:id" element={<StoryDetailPage />}></Route>
                     <Route path="/read/:chapterId" element={<ReadingPage />}></Route>

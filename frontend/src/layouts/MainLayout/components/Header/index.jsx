@@ -8,8 +8,12 @@ function Header() {
     const [user, setUser] = useState(null)
     const [tags, setTags] = useState([])
     const [searchQuery, setSearchQuery] = useState("")
+    const [suggestions, setSuggestions] = useState([])
+    const [showSuggestions, setShowSuggestions] = useState(false)
+    const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false)
     const navigate = useNavigate()
     const debounceTimerRef = useRef(null)
+    const searchWrapperRef = useRef(null)
 
     useEffect(() => {
         checkAuthStatus()
@@ -38,10 +42,35 @@ function Header() {
         }
     }
 
+    const fetchSuggestions = useCallback(async (query) => {
+        if (!query || query.trim().length < 2) {
+            setSuggestions([])
+            setShowSuggestions(false)
+            setIsLoadingSuggestions(false)
+            return
+        }
+
+        setIsLoadingSuggestions(true)
+        try {
+            const response = await fetch(
+                `http://localhost:4000/stories?q=${encodeURIComponent(query)}&size=5`
+            )
+            const data = await response.json()
+            setSuggestions(data.data || [])
+            setShowSuggestions(true)
+        } catch (err) {
+            console.error('Error fetching suggestions:', err)
+            setSuggestions([])
+        } finally {
+            setIsLoadingSuggestions(false)
+        }
+    }, [])
+
     const handleSearch = (e) => {
         e.preventDefault()
         if (searchQuery.trim()) {
-            navigate(`/?q=${encodeURIComponent(searchQuery)}`)
+            navigate(`/search?q=${encodeURIComponent(searchQuery)}`)
+            setShowSuggestions(false)
         }
     }
 
@@ -55,17 +84,37 @@ function Header() {
         // Set new timer
         debounceTimerRef.current = setTimeout(() => {
             if (value.trim()) {
-                // Optional: Auto-search after delay
-                // navigate(`/?q=${encodeURIComponent(value)}`)
+                fetchSuggestions(value)
             }
-        }, 500) // 500ms delay
-    }, [])
+        }, 300) // 300ms delay
+    }, [fetchSuggestions])
 
     const handleSearchChange = (e) => {
         const value = e.target.value
         setSearchQuery(value)
         handleSearchInput(value)
     }
+
+    const handleSuggestionClick = (story) => {
+        navigate(`/story/${story.id}`)
+        setSearchQuery("")
+        setSuggestions([])
+        setShowSuggestions(false)
+    }
+
+    // Close suggestions when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (searchWrapperRef.current && !searchWrapperRef.current.contains(event.target)) {
+                setShowSuggestions(false)
+            }
+        }
+
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside)
+        }
+    }, [])
 
     // Cleanup on unmount
     useEffect(() => {
@@ -111,7 +160,7 @@ function Header() {
                                 <NavDropdown.Item 
                                     key={tag.id} 
                                     as={Link} 
-                                    to={`/?tag=${tag.id}`}
+                                    to={`/search?tag=${tag.id}`}
                                 >
                                     {tag.name}
                                 </NavDropdown.Item>
@@ -120,7 +169,7 @@ function Header() {
                         
                         {/* Search Bar - Moved next to Browse */}
                         <Form className="d-flex search-form ms-3" onSubmit={handleSearch}>
-                            <div className="search-wrapper">
+                            <div className="search-wrapper" ref={searchWrapperRef}>
                                 <i className="bi bi-search search-icon"></i>
                                 <Form.Control
                                     type="search"
@@ -128,7 +177,47 @@ function Header() {
                                     className="search-input"
                                     value={searchQuery}
                                     onChange={handleSearchChange}
+                                    autoComplete="off"
                                 />
+                                {showSuggestions && (
+                                    <div className="search-suggestions">
+                                        {isLoadingSuggestions ? (
+                                            <div className="suggestion-loading">
+                                                <div className="spinner-border spinner-border-sm text-primary" role="status">
+                                                    <span className="visually-hidden">Loading...</span>
+                                                </div>
+                                                <span className="ms-2">Searching...</span>
+                                            </div>
+                                        ) : suggestions.length > 0 ? (
+                                            suggestions.map((story) => (
+                                                <div
+                                                    key={story.id}
+                                                    className="suggestion-item"
+                                                    onClick={() => handleSuggestionClick(story)}
+                                                >
+                                                    <div className="suggestion-content">
+                                                        {story.cover_url && (
+                                                            <img 
+                                                                src={story.cover_url} 
+                                                                alt={story.title}
+                                                                className="suggestion-cover"
+                                                            />
+                                                        )}
+                                                        <div className="suggestion-text">
+                                                            <div className="suggestion-title">{story.title}</div>
+                                                            <div className="suggestion-author">by {story.author_name}</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="suggestion-empty">
+                                                <i className="bi bi-search"></i>
+                                                <span>No stories found</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         </Form>
                     </Nav>

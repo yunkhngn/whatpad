@@ -176,3 +176,107 @@
 .header-wattpad .btn-link:focus {
   box-shadow: none;
 }
+
+/* Search Suggestions */
+.search-suggestions {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #e6e6e6;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  max-height: 400px;
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+.suggestion-item {
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.suggestion-item:hover {
+  background-color: #f8f8f8;
+}
+
+.suggestion-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.suggestion-cover {
+  width: 40px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.suggestion-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.suggestion-title {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.suggestion-author {
+  font-size: 12px;
+  color: #666;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Scrollbar styling for suggestions */
+.search-suggestions::-webkit-scrollbar {
+  width: 6px;
+}
+
+.search-suggestions::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border-radius: 0 8px 8px 0;
+}
+
+.search-suggestions::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 3px;
+}
+
+.search-suggestions::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}
+
+/* Loading and Empty States */
+.suggestion-loading,
+.suggestion-empty {
+  padding: 20px 16px;
+  text-align: center;
+  color: #666;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.suggestion-empty i {
+  font-size: 20px;
+  color: #999;
+}
