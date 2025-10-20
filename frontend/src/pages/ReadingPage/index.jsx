@@ -16,6 +16,8 @@ const ReadingPage = () => {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
     const [readProgress, setReadProgress] = useState(0)
+    const [commentText, setCommentText] = useState("")
+    const [comments, setComments] = useState([])
 
     // Check if user is logged in
     const isLoggedIn = () => {
@@ -261,9 +263,73 @@ const ReadingPage = () => {
                         <i className="bi bi-chat-dots me-2"></i>
                         Comments
                     </h3>
-                    <div className={styles.commentPlaceholder}>
-                        <p>No comments yet. Be the first to share your thoughts!</p>
+                    
+                    {/* Comment Input */}
+                    <div className={styles.commentInputSection}>
+                        <textarea
+                            className={styles.commentInput}
+                            placeholder={isLoggedIn() ? "Share your thoughts..." : "Login to comment"}
+                            value={commentText}
+                            onChange={(e) => setCommentText(e.target.value)}
+                            onFocus={(e) => {
+                                if (!isLoggedIn()) {
+                                    e.target.blur()
+                                    if (window.confirm('You need to login to comment. Go to login page?')) {
+                                        navigate('/auth')
+                                    }
+                                }
+                            }}
+                            rows="3"
+                        />
+                        <div className={styles.commentActions}>
+                            <button 
+                                className={styles.postCommentBtn}
+                                onClick={() => {
+                                    if (!isLoggedIn()) {
+                                        if (window.confirm('You need to login to comment. Go to login page?')) {
+                                            navigate('/auth')
+                                        }
+                                        return
+                                    }
+                                    if (commentText.trim()) {
+                                        // TODO: Implement post comment functionality
+                                        console.log('Posting comment:', commentText)
+                                        setCommentText("")
+                                    }
+                                }}
+                                disabled={!commentText.trim()}
+                            >
+                                <i className="bi bi-send me-1"></i>
+                                Post Comment
+                            </button>
+                        </div>
                     </div>
+
+                    {/* Comments List */}
+                    {comments.length > 0 ? (
+                        <div className={styles.commentsList}>
+                            {comments.map((comment) => (
+                                <div key={comment.id} className={styles.commentItem}>
+                                    <div className={styles.commentHeader}>
+                                        <img 
+                                            src={comment.user_avatar || '/default-avatar.png'} 
+                                            alt={comment.user_name}
+                                            className={styles.commentAvatar}
+                                        />
+                                        <div className={styles.commentMeta}>
+                                            <span className={styles.commentAuthor}>{comment.user_name}</span>
+                                            <span className={styles.commentTime}>{comment.created_at}</span>
+                                        </div>
+                                    </div>
+                                    <p className={styles.commentText}>{comment.content}</p>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className={styles.commentPlaceholder}>
+                            <p>No comments yet. Be the first to share your thoughts!</p>
+                        </div>
+                    )}
                 </section>
 
                 {/* Recommendations */}

@@ -268,6 +268,120 @@
     font-size: 1rem;
 }
 
+/* Comment Input Section */
+.commentInputSection {
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.commentInput {
+    width: 100%;
+    padding: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 80px;
+    transition: border-color 0.3s ease;
+}
+
+.commentInput:focus {
+    outline: none;
+    border-color: #ff6b35;
+    box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+}
+
+.commentInput::placeholder {
+    color: #999;
+}
+
+.commentActions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 1rem;
+}
+
+.postCommentBtn {
+    background-color: #ff6b35;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.postCommentBtn:hover:not(:disabled) {
+    background-color: #ff5722;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(255, 107, 53, 0.3);
+}
+
+.postCommentBtn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* Comments List */
+.commentsList {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.commentItem {
+    padding: 1.5rem;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    border-left: 3px solid #ff6b35;
+}
+
+.commentHeader {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.commentAvatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.commentMeta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.commentAuthor {
+    font-weight: 600;
+    color: #333;
+    font-size: 1rem;
+}
+
+.commentTime {
+    font-size: 0.875rem;
+    color: #999;
+}
+
+.commentText {
+    color: #555;
+    line-height: 1.6;
+    margin: 0;
+    font-size: 1rem;
+}
+
 .recommendationsSection {
     background-color: white;
     border-radius: 8px;
