@@ -1,20 +1,138 @@
 "use client"
 import { useParams, useNavigate } from "react-router"
-import { getStoryById } from "../../services/api"
-import Button from "../../components/Button"
+import { useState, useEffect } from "react"
+import { chaptersAPI, storiesAPI } from "../../services/api"
+import { Link } from "react-router"
+import { Dropdown } from "react-bootstrap"
 import styles from "./ReadingPage.module.css"
 
 const ReadingPage = () => {
-    const { id } = useParams()
+    const { chapterId } = useParams()
     const navigate = useNavigate()
-    const story = getStoryById(id)
+    const [chapter, setChapter] = useState(null)
+    const [story, setStory] = useState(null)
+    const [chapters, setChapters] = useState([])
+    const [recommendations, setRecommendations] = useState([])
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState(null)
+    const [readProgress, setReadProgress] = useState(0)
 
-    if (!story) {
+    // Check if user is logged in
+    const isLoggedIn = () => {
+        return !!localStorage.getItem('authToken')
+    }
+
+    // Handle actions that require authentication
+    const handleAuthAction = (action) => {
+        if (!isLoggedIn()) {
+            if (window.confirm('You need to login to perform this action. Go to login page?')) {
+                navigate('/auth')
+            }
+            return false
+        }
+        return true
+    }
+
+    useEffect(() => {
+        const fetchChapterAndStory = async () => {
+            try {
+                setLoading(true)
+                // Fetch chapter
+                const chapterResponse = await chaptersAPI.getById(chapterId)
+                setChapter(chapterResponse.chapter)
+
+                // Fetch story details
+                if (chapterResponse.chapter?.story_id) {
+                    const storyResponse = await storiesAPI.getById(chapterResponse.chapter.story_id)
+                    setStory(storyResponse.story)
+
+                    // Fetch all chapters of this story
+                    const chaptersResponse = await chaptersAPI.getByStoryId(chapterResponse.chapter.story_id)
+                    setChapters(chaptersResponse.chapters || [])
+
+                    // Fetch recommendations (stories with same tags)
+                    if (storyResponse.story?.tags?.length > 0) {
+                        const tag = storyResponse.story.tags[0].name
+                        const recsResponse = await storiesAPI.getAll({ tag, size: 6 })
+                        setRecommendations(recsResponse.stories?.filter(s => s.id !== storyResponse.story.id) || [])
+                    }
+                }
+
+                setError(null)
+            } catch (err) {
+                console.error('Error fetching chapter:', err)
+                setError('Chapter not found')
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        if (chapterId) {
+            fetchChapterAndStory()
+        }
+    }, [chapterId])
+
+    // Restore scroll position when chapter loads
+    useEffect(() => {
+        if (!loading && chapter) {
+            const savedProgress = localStorage.getItem(`chapter_${chapterId}_scroll`)
+            if (savedProgress) {
+                const scrollPosition = parseFloat(savedProgress)
+                // Wait for content to render
+                setTimeout(() => {
+                    const documentHeight = document.documentElement.scrollHeight
+                    const windowHeight = window.innerHeight
+                    const scrollTo = (scrollPosition / 100) * (documentHeight - windowHeight)
+                    window.scrollTo(0, scrollTo)
+                }, 100)
+            }
+        }
+    }, [loading, chapter, chapterId])
+
+    // Calculate reading progress based on scroll and save to localStorage
+    useEffect(() => {
+        const handleScroll = () => {
+            const windowHeight = window.innerHeight
+            const documentHeight = document.documentElement.scrollHeight
+            const scrollTop = window.scrollY
+            const scrollPercentage = (scrollTop / (documentHeight - windowHeight)) * 100
+            const progress = Math.min(100, Math.max(0, scrollPercentage))
+            setReadProgress(progress)
+            
+            // Save scroll progress to localStorage
+            if (chapterId) {
+                localStorage.setItem(`chapter_${chapterId}_scroll`, progress.toString())
+            }
+        }
+
+        window.addEventListener('scroll', handleScroll)
+        return () => window.removeEventListener('scroll', handleScroll)
+    }, [chapterId])
+
+    const handleChapterChange = (newChapterId) => {
+        navigate(`/read/${newChapterId}`)
+    }
+
+    const currentChapterIndex = chapters.findIndex(ch => ch.id === parseInt(chapterId))
+    const prevChapter = currentChapterIndex > 0 ? chapters[currentChapterIndex - 1] : null
+    const nextChapter = currentChapterIndex < chapters.length - 1 ? chapters[currentChapterIndex + 1] : null
+
+    if (loading) {
         return (
             <div className={styles.readingPage}>
                 <div className="container">
-                    <h2>Story not found</h2>
-                    <Button onClick={() => navigate("/")}>Back to Home</Button>
+                    <div className={styles.loading}>Loading chapter...</div>
+                </div>
+            </div>
+        )
+    }
+
+    if (error || !chapter) {
+        return (
+            <div className={styles.readingPage}>
+                <div className="container">
+                    <h2>{error || 'Chapter not found'}</h2>
+                    <button className={styles.backButton} onClick={() => navigate(-1)}>Back</button>
                 </div>
             </div>
         )
@@ -22,47 +140,164 @@ const ReadingPage = () => {
 
     return (
         <div className={styles.readingPage}>
-            <div className="container">
-                <div className={styles.backButton}>
-                    <Button variant="outline" onClick={() => navigate("/")}>
-                        ← Back to Home
-                    </Button>
+            {/* Sticky Reading Header */}
+            <div className={styles.stickyHeader}>
+                <div className="container">
+                    <div className={styles.headerTop}>
+                        <button 
+                            className={styles.closeButton} 
+                            onClick={() => navigate(`/story/${story?.id}`)}
+                            title="Back to story"
+                        >
+                            <i className="bi bi-x-lg"></i>
+                        </button>
+                        <h1 className={styles.storyTitle}>{story?.title}</h1>
+                        {(story?.author_name || story?.username) && (
+                            <span className={styles.authorInfo}>by {story.author_name || story.username}</span>
+                        )}
+                        <Dropdown className={styles.chapterDropdown}>
+                            <Dropdown.Toggle variant="link" id="chapter-dropdown">
+                                <i className="bi bi-chevron-down"></i>
+                            </Dropdown.Toggle>
+
+                            <Dropdown.Menu>
+                                {chapters.map((ch) => (
+                                    <Dropdown.Item
+                                        key={ch.id}
+                                        active={ch.id === parseInt(chapterId)}
+                                        onClick={() => handleChapterChange(ch.id)}
+                                    >
+                                        {ch.chapter_number}. {ch.title}
+                                    </Dropdown.Item>
+                                ))}
+                            </Dropdown.Menu>
+                        </Dropdown>
+                    </div>
                 </div>
+                <div className={styles.progressBar}>
+                    <div 
+                        className={styles.progressFill} 
+                        style={{ width: `${readProgress}%` }}
+                    />
+                </div>
+            </div>
 
-                <article className={styles.storyContent}>
-                    <header className={styles.storyHeader}>
-                        <h1 className={styles.storyTitle}>{story.title}</h1>
-                        <p className={styles.storyAuthor}>by {story.author}</p>
-                        <div className={styles.storyMeta}>
-                            <span className={styles.metaItem}>
-                                <i className="icon">👁</i> {story.reads} reads
-                            </span>
-                            <span className={styles.metaItem}>
-                                <i className="icon">⭐</i> {story.votes} votes
-                            </span>
-                            <span className={styles.metaItem}>
-                                <i className="icon">💬</i> {story.comments} comments
-                            </span>
-                        </div>
-                    </header>
-
-                    <div className={styles.storyBody}>
-                        <p className={styles.storyDescription}>{story.description}</p>
-                        <div className={styles.storyText}>
-                            {story.content.split("\n\n").map((paragraph, index) => (
-                                <p key={index}>{paragraph}</p>
-                            ))}
-                        </div>
+            {/* Main Content */}
+            <div className="container">
+                {/* Chapter Content */}
+                <section className={styles.contentSection}>
+                    <h2 className={styles.chapterTitle}>{chapter.title}</h2>
+                    <div className={styles.chapterMeta}>
+                        <span><i className="bi bi-eye"></i> {chapter.views || 0} reads</span>
+                        <span><i className="bi bi-star"></i> {chapter.votes || 0} votes</span>
+                        <span><i className="bi bi-chat"></i> {chapter.comments_count || 0} comments</span>
                     </div>
 
-                    <footer className={styles.storyFooter}>
-                        <div className={styles.actionButtons}>
-                            <Button variant="primary">⭐ Vote</Button>
-                            <Button variant="outline">💬 Comment</Button>
-                            <Button variant="outline">📚 Add to Library</Button>
+                    <div className={styles.chapterContent}>
+                        {chapter.content && chapter.content.split("\n\n").map((paragraph, index) => (
+                            <p key={index}>{paragraph}</p>
+                        ))}
+                    </div>
+
+                    {/* Navigation Buttons */}
+                    <div className={styles.navigation}>
+                        {prevChapter ? (
+                            <button 
+                                className={`${styles.navButton} ${styles.prevButton}`}
+                                onClick={() => handleChapterChange(prevChapter.id)}
+                            >
+                                <i className="bi bi-arrow-left me-2"></i> Previous Chapter
+                            </button>
+                        ) : (
+                            <div></div>
+                        )}
+                        {nextChapter && (
+                            <button 
+                                className={`${styles.navButton} ${styles.nextButton}`}
+                                onClick={() => handleChapterChange(nextChapter.id)}
+                            >
+                                Next Chapter <i className="bi bi-arrow-right ms-2"></i>
+                            </button>
+                        )}
+                    </div>
+                </section>
+
+                {/* Action Section */}
+                <section className={styles.actionSection}>
+                    <div className={styles.actionButtons}>
+                        <button 
+                            className={styles.actionButton}
+                            onClick={() => {
+                                if (handleAuthAction('add to library')) {
+                                    // TODO: Implement add to library functionality
+                                    console.log('Add to library')
+                                }
+                            }}
+                        >
+                            <i className="bi bi-plus-lg"></i> Add to library
+                        </button>
+                        <button 
+                            className={styles.actionButton}
+                            onClick={() => {
+                                if (handleAuthAction('vote')) {
+                                    // TODO: Implement vote functionality
+                                    console.log('Vote')
+                                }
+                            }}
+                        >
+                            <i className="bi bi-star"></i> Vote
+                        </button>
+                    </div>
+                    <div className={styles.shareSection}>
+                        <button className={styles.shareButton}>
+                            <i className="bi bi-share"></i> Share
+                        </button>
+                    </div>
+                </section>
+
+                {/* Comments Section */}
+                <section className={styles.commentsSection}>
+                    <h3 className={styles.sectionTitle}>
+                        <i className="bi bi-chat-dots me-2"></i>
+                        Comments
+                    </h3>
+                    <div className={styles.commentPlaceholder}>
+                        <p>No comments yet. Be the first to share your thoughts!</p>
+                    </div>
+                </section>
+
+                {/* Recommendations */}
+                {recommendations.length > 0 && (
+                    <section className={styles.recommendationsSection}>
+                        <h3 className={styles.sectionTitle}>Recommendations</h3>
+                        <div className={styles.recommendationGrid}>
+                            {recommendations.map((rec) => (
+                                <Link 
+                                    key={rec.id} 
+                                    to={`/story/${rec.id}`}
+                                    className={styles.recCard}
+                                >
+                                    {rec.cover_url && (
+                                        <img 
+                                            src={rec.cover_url} 
+                                            alt={rec.title}
+                                            className={styles.recCover}
+                                        />
+                                    )}
+                                    <div className={styles.recInfo}>
+                                        <h4 className={styles.recTitle}>{rec.title}</h4>
+                                        <p className={styles.recAuthor}>by {rec.author_name}</p>
+                                        <div className={styles.recStats}>
+                                            <span><i className="bi bi-eye"></i> 0</span>
+                                            <span><i className="bi bi-star"></i> 0</span>
+                                            <span><i className="bi bi-chat"></i> 0</span>
+                                        </div>
+                                    </div>
+                                </Link>
+                            ))}
                         </div>
-                    </footer>
-                </article>
+                    </section>
+                )}
             </div>
         </div>
     )
