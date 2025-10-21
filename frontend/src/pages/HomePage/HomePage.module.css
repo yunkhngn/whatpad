@@ -13,7 +13,7 @@
 .genresRow {
     background: white;
     padding: 2rem 0;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
 }
 
 .genresHeader {
@@ -267,8 +267,8 @@
 
 /* Carousel Section */
 .carouselSection {
-    margin-bottom: 3rem;
-    margin-top: 3rem;
+    margin-bottom: 1.5rem;
+    margin-top: 1.5rem;
 }
 
 .mainCarousel {
@@ -321,7 +321,7 @@
 .latestStoriesSection {
     background: white;
     padding: 2rem 0;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
 }
 
 @media (max-width: 768px) {

@@ -22,8 +22,8 @@ router.get('/', async (req, res, next) => {
     const params = [];
     
     if (q) {
-      query += ` AND (s.title LIKE ? OR s.description LIKE ?)`;
-      params.push(`%${q}%`, `%${q}%`);
+      query += ` AND (s.title LIKE ? OR s.description LIKE ? OR u.username LIKE ?)`;
+      params.push(`%${q}%`, `%${q}%`, `%${q}%`);
     }
     
     if (tag) {

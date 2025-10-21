@@ -27,12 +27,12 @@ const StoryCard = ({ story, showProgress = false, progress = 0 }) => {
                         <div className="progress-bar" style={{ width: `${progress}%` }}></div>
                     </div>
                 )}
-                <div className="story-info">
-                    <h3 className="story-title">{story.title}</h3>
-                    <p className="story-genre">
-                        {story.tags && story.tags.length > 0 ? story.tags[0].name : 'Story'}
-                    </p>
-                </div>
+            </div>
+            <div className="story-info">
+                <h3 className="story-title">{story.title}</h3>
+                <p className="story-genre">
+                    {story.tags && story.tags.length > 0 ? story.tags[0].name : 'Story'}
+                </p>
             </div>
         </Card>
     )
