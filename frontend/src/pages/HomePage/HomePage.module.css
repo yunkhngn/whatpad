@@ -13,7 +13,7 @@
 .genresRow {
     background: white;
     padding: 2rem 0;
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
 }
 
 .genresHeader {
@@ -172,17 +172,19 @@
     gap: 0.75rem;
 }
 
-/* 5 columns on large screens */
+/* Fixed width for genre cards - same as story cards */
 .genreCardsContainer :global(.col-lg-custom) {
     flex: 0 0 auto;
-    width: calc(20% - 0.6rem); /* 5 items per row with smaller gap */
-    min-width: calc(20% - 0.6rem);
+    width: 140px;
+    min-width: 140px;
     scroll-snap-align: start; /* Snap to start of each item */
 }
 
 /* Ensure columns don't wrap on smaller screens */
 .genreCardsContainer :global([class*="col-"]) {
     flex-shrink: 0;
+    width: 140px;
+    min-width: 140px;
 }
 
 .genreCard {
@@ -312,14 +314,14 @@
 
 /* Genre Sections */
 .genreSections {
-    padding: 2rem 0;
+    padding: 1rem 0;
 }
 
 /* Latest Stories Section */
 .latestStoriesSection {
     background: white;
     padding: 2rem 0;
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
 }
 
 @media (max-width: 768px) {

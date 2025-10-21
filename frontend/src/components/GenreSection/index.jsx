@@ -5,6 +5,7 @@ import "./GenreSection.css"
 
 function GenreSection({ title, stories, showProgress = false, showTitle = true }) {
     const scrollContainerRef = useRef(null)
+    const showNavButtons = stories && stories.length > 5
 
     const scroll = (direction) => {
         if (scrollContainerRef.current) {
@@ -20,10 +21,23 @@ function GenreSection({ title, stories, showProgress = false, showTitle = true }
 
     return (
         <div className="genre-section">
-            {showTitle && (
+            {showTitle ? (
                 <div className="genre-header">
                     <h2 className="genre-title">{title}</h2>
-                    <div className="genre-nav-buttons">
+                    {showNavButtons && (
+                        <div className="genre-nav-buttons">
+                            <button className="nav-button" onClick={() => scroll("left")} aria-label="Previous">
+                                <i className="bi bi-chevron-left"></i>
+                            </button>
+                            <button className="nav-button" onClick={() => scroll("right")} aria-label="Next">
+                                <i className="bi bi-chevron-right"></i>
+                            </button>
+                        </div>
+                    )}
+                </div>
+            ) : (
+                showNavButtons && (
+                    <div className="genre-nav-buttons-only">
                         <button className="nav-button" onClick={() => scroll("left")} aria-label="Previous">
                             <i className="bi bi-chevron-left"></i>
                         </button>
@@ -31,17 +45,7 @@ function GenreSection({ title, stories, showProgress = false, showTitle = true }
                             <i className="bi bi-chevron-right"></i>
                         </button>
                     </div>
-                </div>
-            )}
-            {!showTitle && (
-                <div className="genre-nav-buttons-only">
-                    <button className="nav-button" onClick={() => scroll("left")} aria-label="Previous">
-                        <i className="bi bi-chevron-left"></i>
-                    </button>
-                    <button className="nav-button" onClick={() => scroll("right")} aria-label="Next">
-                        <i className="bi bi-chevron-right"></i>
-                    </button>
-                </div>
+                )
             )}
             <div className="genre-scroll-container" ref={scrollContainerRef}>
                 <div className="genre-stories">
