@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react"
 import { Container, Row, Col, Button, Alert, Spinner, Carousel, Badge } from "react-bootstrap"
-import { storiesAPI, tagsAPI } from "../../services/api"
+import { getStories, getTags } from "../../services/api"
 import styles from "./HomePage.module.css"
 import GenreSection from "../../components/GenreSection"
 
@@ -15,8 +15,8 @@ const HomePage = () => {
         try {
             setLoading(true)
             const [tagsResponse, storiesResponse] = await Promise.all([
-                tagsAPI.getAll(),
-                storiesAPI.getAll({ page: 1, size: 50, sort: 'created_at', order: 'desc' })
+                getTags(),
+                getStories({ page: 1, size: 50, sort: 'created_at', order: 'desc' })
             ])
             
             console.log('=== HOMEPAGE DATA DEBUG ===')

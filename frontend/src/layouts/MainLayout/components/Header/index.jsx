@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react"
 import { Navbar, Nav, NavDropdown, Form, Button, Container } from "react-bootstrap"
 import { Link, useNavigate } from "react-router"
-import { authAPI, tagsAPI } from "../../../../services/api"
+import { getCurrentUser, getTags } from "../../../../services/api"
 import "./Header.css"
 
 function Header() {
@@ -24,7 +24,7 @@ function Header() {
         const token = localStorage.getItem('authToken')
         if (token) {
             try {
-                const response = await authAPI.me()
+                const response = await getCurrentUser()
                 setUser(response.user)
             } catch (err) {
                 localStorage.removeItem('authToken')
@@ -35,7 +35,7 @@ function Header() {
 
     const fetchTags = async () => {
         try {
-            const response = await tagsAPI.getAll()
+            const response = await getTags()
             setTags(response.tags || [])
         } catch (err) {
             console.error('Error fetching tags:', err)

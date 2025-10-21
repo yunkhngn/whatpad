@@ -28,288 +28,240 @@ const apiRequest = async (endpoint, options = {}) => {
 };
 
 // Auth API
-export const authAPI = {
-    register: async (userData) => {
-        return apiRequest('/auth/register', {
-            method: 'POST',
-            body: JSON.stringify(userData),
-        });
-    },
-    
-    login: async (credentials) => {
-        return apiRequest('/auth/login', {
-            method: 'POST',
-            body: JSON.stringify(credentials),
-        });
-    },
-    
-    me: async () => {
-        return apiRequest('/auth/me');
-    },
+export const registerUser = async (userData) => {
+    return apiRequest('/auth/register', {
+        method: 'POST',
+        body: JSON.stringify(userData),
+    });
+};
+
+export const loginUser = async (credentials) => {
+    return apiRequest('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify(credentials),
+    });
+};
+
+export const getCurrentUser = async () => {
+    return apiRequest('/auth/me');
 };
 
 // Stories API
-export const storiesAPI = {
-    getAll: async (params = {}) => {
-        const queryString = new URLSearchParams(params).toString();
-        const response = await apiRequest(`/stories${queryString ? `?${queryString}` : ''}`);
-        return { 
-            stories: response.data || [], 
-            page: response.page, 
-            size: response.size 
-        };
-    },
-    
-    getById: async (id) => {
-        const response = await apiRequest(`/stories/${id}`);
-        return { story: response.data };
-    },
-    
-    create: async (storyData) => {
-        return apiRequest('/stories', {
-            method: 'POST',
-            body: JSON.stringify(storyData),
-        });
-    },
-    
-    update: async (id, storyData) => {
-        return apiRequest(`/stories/${id}`, {
-            method: 'PUT',
-            body: JSON.stringify(storyData),
-        });
-    },
-    
-    delete: async (id) => {
-        return apiRequest(`/stories/${id}`, {
-            method: 'DELETE',
-        });
-    },
-    
-    publish: async (id) => {
-        return apiRequest(`/stories/${id}/publish`, {
-            method: 'PUT',
-        });
-    },
+export const getStories = async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const response = await apiRequest(`/stories${queryString ? `?${queryString}` : ''}`);
+    return { 
+        stories: response.data || [], 
+        page: response.page, 
+        size: response.size 
+    };
+};
+
+export const getStoryById = async (id) => {
+    const response = await apiRequest(`/stories/${id}`);
+    return { story: response.data };
+};
+
+export const createStory = async (storyData) => {
+    return apiRequest('/stories', {
+        method: 'POST',
+        body: JSON.stringify(storyData),
+    });
+};
+
+export const updateStory = async (id, storyData) => {
+    return apiRequest(`/stories/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(storyData),
+    });
+};
+
+export const deleteStory = async (id) => {
+    return apiRequest(`/stories/${id}`, {
+        method: 'DELETE',
+    });
+};
+
+export const publishStory = async (id) => {
+    return apiRequest(`/stories/${id}/publish`, {
+        method: 'PUT',
+    });
 };
 
 // Chapters API
-export const chaptersAPI = {
-    getByStoryId: async (storyId) => {
-        const response = await apiRequest(`/chapters/story/${storyId}`);
-        return { chapters: response.data || [] };
-    },
-    
-    getById: async (id) => {
-        const response = await apiRequest(`/chapters/${id}`);
-        return { chapter: response.chapter };
-    },
-    
-    create: async (chapterData) => {
-        return apiRequest('/chapters', {
-            method: 'POST',
-            body: JSON.stringify(chapterData),
-        });
-    },
-    
-    update: async (id, chapterData) => {
-        return apiRequest(`/chapters/${id}`, {
-            method: 'PUT',
-            body: JSON.stringify(chapterData),
-        });
-    },
-    
-    delete: async (id) => {
-        return apiRequest(`/chapters/${id}`, {
-            method: 'DELETE',
-        });
-    },
+export const getChaptersByStoryId = async (storyId) => {
+    const response = await apiRequest(`/chapters/story/${storyId}`);
+    return { chapters: response.data || [] };
+};
+
+export const getChapterById = async (id) => {
+    const response = await apiRequest(`/chapters/${id}`);
+    return { chapter: response.chapter };
+};
+
+export const createChapter = async (chapterData) => {
+    return apiRequest('/chapters', {
+        method: 'POST',
+        body: JSON.stringify(chapterData),
+    });
+};
+
+export const updateChapter = async (id, chapterData) => {
+    return apiRequest(`/chapters/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(chapterData),
+    });
+};
+
+export const deleteChapter = async (id) => {
+    return apiRequest(`/chapters/${id}`, {
+        method: 'DELETE',
+    });
 };
 
 // Tags API
-export const tagsAPI = {
-    getAll: async () => {
-        const response = await apiRequest('/tags');
-        return { tags: response.data || [] };
-    },
+export const getTags = async () => {
+    const response = await apiRequest('/tags');
+    return { tags: response.data || [] };
 };
 
 // Users API
-export const usersAPI = {
-    getProfile: async (id) => {
-        return apiRequest(`/users/${id}`);
-    },
-    
-    updateMe: async (userData) => {
-        return apiRequest('/users/me', {
-            method: 'PUT',
-            body: JSON.stringify(userData),
-        });
-    },
+export const getUserProfile = async (id) => {
+    return apiRequest(`/users/${id}`);
+};
+
+export const updateCurrentUser = async (userData) => {
+    return apiRequest('/users/me', {
+        method: 'PUT',
+        body: JSON.stringify(userData),
+    });
 };
 
 // Comments API
-export const commentsAPI = {
-    getByStory: async (storyId) => {
-        return apiRequest(`/comments/story/${storyId}`);
-    },
-    
-    getByChapter: async (chapterId) => {
-        return apiRequest(`/comments/chapter/${chapterId}`);
-    },
-    
-    create: async (commentData) => {
-        const { chapter_id, content } = commentData;
-        return apiRequest(`/comments/chapter/${chapter_id}`, {
-            method: 'POST',
-            body: JSON.stringify({ content }),
-        });
-    },
-    
-    delete: async (id) => {
-        return apiRequest(`/comments/${id}`, {
-            method: 'DELETE',
-        });
-    },
+export const getCommentsByStory = async (storyId) => {
+    return apiRequest(`/comments/story/${storyId}`);
+};
+
+export const getCommentsByChapter = async (chapterId) => {
+    return apiRequest(`/comments/chapter/${chapterId}`);
+};
+
+export const createComment = async (commentData) => {
+    const { chapter_id, content } = commentData;
+    return apiRequest(`/comments/chapter/${chapter_id}`, {
+        method: 'POST',
+        body: JSON.stringify({ content }),
+    });
+};
+
+export const deleteComment = async (id) => {
+    return apiRequest(`/comments/${id}`, {
+        method: 'DELETE',
+    });
 };
 
 // Votes API
-export const votesAPI = {
-    vote: async (chapterId) => {
-        return apiRequest('/votes', {
-            method: 'POST',
-            body: JSON.stringify({ chapter_id: chapterId }),
-        });
-    },
-    
-    unvote: async (chapterId) => {
-        return apiRequest(`/votes/chapter/${chapterId}`, {
-            method: 'DELETE',
-        });
-    },
+export const voteChapter = async (chapterId) => {
+    return apiRequest('/votes', {
+        method: 'POST',
+        body: JSON.stringify({ chapter_id: chapterId }),
+    });
+};
+
+export const unvoteChapter = async (chapterId) => {
+    return apiRequest(`/votes/chapter/${chapterId}`, {
+        method: 'DELETE',
+    });
 };
 
 // Favorites API
-export const favoritesAPI = {
-    getLists: async () => {
-        return apiRequest('/favorites');
-    },
-    
-    createList: async (listData) => {
-        return apiRequest('/favorites', {
-            method: 'POST',
-            body: JSON.stringify(listData),
-        });
-    },
-    
-    addToList: async (listId, storyId) => {
-        return apiRequest(`/favorites/${listId}/items`, {
-            method: 'POST',
-            body: JSON.stringify({ story_id: storyId }),
-        });
-    },
-    
-    removeFromList: async (listId, storyId) => {
-        return apiRequest(`/favorites/${listId}/items/${storyId}`, {
-            method: 'DELETE',
-        });
-    },
+export const getFavoriteLists = async () => {
+    return apiRequest('/favorites');
+};
+
+export const createFavoriteList = async (listData) => {
+    return apiRequest('/favorites', {
+        method: 'POST',
+        body: JSON.stringify(listData),
+    });
+};
+
+export const addStoryToFavoriteList = async (listId, storyId) => {
+    return apiRequest(`/favorites/${listId}/items`, {
+        method: 'POST',
+        body: JSON.stringify({ story_id: storyId }),
+    });
+};
+
+export const removeStoryFromFavoriteList = async (listId, storyId) => {
+    return apiRequest(`/favorites/${listId}/items/${storyId}`, {
+        method: 'DELETE',
+    });
 };
 
 // Follows API
-export const followsAPI = {
-    follow: async (userId) => {
-        return apiRequest('/follows', {
-            method: 'POST',
-            body: JSON.stringify({ following_id: userId }),
-        });
-    },
-    
-    unfollow: async (userId) => {
-        return apiRequest(`/follows/${userId}`, {
-            method: 'DELETE',
-        });
-    },
-    
-    getFollowers: async (userId) => {
-        return apiRequest(`/follows/${userId}/followers`);
-    },
-    
-    getFollowing: async (userId) => {
-        return apiRequest(`/follows/${userId}/following`);
-    },
+export const followUser = async (userId) => {
+    return apiRequest('/follows', {
+        method: 'POST',
+        body: JSON.stringify({ following_id: userId }),
+    });
+};
+
+export const unfollowUser = async (userId) => {
+    return apiRequest(`/follows/${userId}`, {
+        method: 'DELETE',
+    });
+};
+
+export const getFollowers = async (userId) => {
+    return apiRequest(`/follows/${userId}/followers`);
+};
+
+export const getFollowing = async (userId) => {
+    return apiRequest(`/follows/${userId}/following`);
 };
 
 // Reading API
-export const readingAPI = {
-    updateProgress: async (chapterId, progress) => {
-        return apiRequest('/reading', {
-            method: 'POST',
-            body: JSON.stringify({ 
-                chapter_id: chapterId, 
-                progress_percentage: progress 
-            }),
-        });
-    },
-    
-    getProgress: async (storyId) => {
-        return apiRequest(`/reading/story/${storyId}`);
-    },
+export const updateReadingProgress = async (chapterId, progress) => {
+    return apiRequest('/reading', {
+        method: 'POST',
+        body: JSON.stringify({ 
+            chapter_id: chapterId, 
+            progress_percentage: progress 
+        }),
+    });
+};
+
+export const getReadingProgress = async (storyId) => {
+    return apiRequest(`/reading/story/${storyId}`);
 };
 
 // Upload API
-export const uploadAPI = {
-    uploadImage: async (file) => {
-        const formData = new FormData();
-        formData.append('image', file);
-        
-        const token = getAuthToken();
-        const response = await fetch(`${API_BASE_URL}/upload/image`, {
-            method: 'POST',
-            headers: {
-                ...(token && { Authorization: `Bearer ${token}` }),
-            },
-            body: formData,
-        });
-        
-        if (!response.ok) {
-            throw new Error(`Upload Error: ${response.status}`);
-        }
-        
-        return response.json();
-    },
+export const uploadImage = async (file) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    
+    const token = getAuthToken();
+    const response = await fetch(`${API_BASE_URL}/upload/image`, {
+        method: 'POST',
+        headers: {
+            ...(token && { Authorization: `Bearer ${token}` }),
+        },
+        body: formData,
+    });
+    
+    if (!response.ok) {
+        throw new Error(`Upload Error: ${response.status}`);
+    }
+    
+    return response.json();
 };
 
-// Export all APIs as named exports for easy importing
-const apiExports = {
-    authAPI,
-    storiesAPI,
-    chaptersAPI,
-    tagsAPI,
-    usersAPI,
-    commentsAPI,
-    votesAPI,
-    favoritesAPI,
-    followsAPI,
-    readingAPI,
-    uploadAPI,
+// Helper functions for backward compatibility and convenience
+export const searchStories = (query) => {
+    return getStories({ q: query });
 };
 
-// Export default for backward compatibility
-export default apiExports;
-
-// Backward compatibility functions
-export function getStories() {
-    return storiesAPI.getAll();
-}
-
-export function getStoryById(id) {
-    return storiesAPI.getById(id);
-}
-
-export function searchStories(query) {
-    return storiesAPI.getAll({ q: query });
-}
-
-export function getStoriesByGenre(genre) {
-    return storiesAPI.getAll({ tag: genre });
-}
+export const getStoriesByGenre = (genre) => {
+    return getStories({ tag: genre });
+};

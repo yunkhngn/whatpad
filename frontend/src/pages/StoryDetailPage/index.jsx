@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button, Badge, Alert, Spinner, ListGroup } from 'react-bootstrap';
 import { useParams, Link } from 'react-router';
-import { storiesAPI, chaptersAPI, followsAPI, favoritesAPI, commentsAPI } from '../../services/api';
+import { getStoryById, getChaptersByStoryId, followUser, unfollowUser, getCommentsByStory } from '../../services/api';
 
 const StoryDetailPage = () => {
     const { id } = useParams();
@@ -20,9 +20,9 @@ const StoryDetailPage = () => {
         try {
             setLoading(true);
             const [storyResponse, chaptersResponse, commentsResponse] = await Promise.all([
-                storiesAPI.getById(id),
-                chaptersAPI.getByStoryId(id),
-                commentsAPI.getByStory(id)
+                getStoryById(id),
+                getChaptersByStoryId(id),
+                getCommentsByStory(id)
             ]);
             
             setStory(storyResponse.story);
@@ -39,10 +39,10 @@ const StoryDetailPage = () => {
     const handleFollowToggle = async () => {
         try {
             if (following) {
-                await followsAPI.unfollow(story.user_id);
+                await unfollowUser(story.user_id);
                 setFollowing(false);
             } else {
-                await followsAPI.follow(story.user_id);
+                await followUser(story.user_id);
                 setFollowing(true);
             }
         } catch (err) {

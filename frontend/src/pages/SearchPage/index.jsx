@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react"
 import { Container, Row, Col, Form, Spinner, Badge } from "react-bootstrap"
 import { useSearchParams, Link } from "react-router"
-import { storiesAPI, tagsAPI } from "../../services/api"
+import { getStories, getTags } from "../../services/api"
 import styles from "./SearchPage.module.css"
 
 const SearchPage = () => {
@@ -27,7 +27,7 @@ const SearchPage = () => {
 
     const fetchTags = async () => {
         try {
-            const response = await tagsAPI.getAll()
+            const response = await getTags()
             setTags(response.tags || [])
         } catch (err) {
             console.error('Error fetching tags:', err)
@@ -45,7 +45,7 @@ const SearchPage = () => {
             if (query) params.q = query
             if (tagFilter) params.tag = tagFilter
             
-            const response = await storiesAPI.getAll(params)
+            const response = await getStories(params)
             setStories(response.stories || [])
             setResultCount(response.stories?.length || 0)
         } catch (err) {

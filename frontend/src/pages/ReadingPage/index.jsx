@@ -1,7 +1,7 @@
 "use client"
 import { useParams, useNavigate } from "react-router"
 import { useState, useEffect } from "react"
-import { chaptersAPI, storiesAPI, commentsAPI } from "../../services/api"
+import { getChapterById, getStoryById, getChaptersByStoryId, getStories, getCommentsByChapter, createComment } from "../../services/api"
 import { Link } from "react-router"
 import { Dropdown } from "react-bootstrap"
 import styles from "./ReadingPage.module.css"
@@ -40,29 +40,29 @@ const ReadingPage = () => {
             try {
                 setLoading(true)
                 // Fetch chapter
-                const chapterResponse = await chaptersAPI.getById(chapterId)
+                const chapterResponse = await getChapterById(chapterId)
                 setChapter(chapterResponse.chapter)
 
                 // Fetch story details
                 if (chapterResponse.chapter?.story_id) {
-                    const storyResponse = await storiesAPI.getById(chapterResponse.chapter.story_id)
+                    const storyResponse = await getStoryById(chapterResponse.chapter.story_id)
                     setStory(storyResponse.story)
 
                     // Fetch all chapters of this story
-                    const chaptersResponse = await chaptersAPI.getByStoryId(chapterResponse.chapter.story_id)
+                    const chaptersResponse = await getChaptersByStoryId(chapterResponse.chapter.story_id)
                     setChapters(chaptersResponse.chapters || [])
 
                     // Fetch recommendations (stories with same tags)
                     if (storyResponse.story?.tags?.length > 0) {
                         const tag = storyResponse.story.tags[0].name
-                        const recsResponse = await storiesAPI.getAll({ tag, size: 6 })
+                        const recsResponse = await getStories({ tag, size: 6 })
                         setRecommendations(recsResponse.stories?.filter(s => s.id !== storyResponse.story.id) || [])
                     }
                 }
 
                 // Fetch comments for this chapter
                 try {
-                    const commentsResponse = await commentsAPI.getByChapter(chapterId)
+                    const commentsResponse = await getCommentsByChapter(chapterId)
                     setComments(commentsResponse.data || [])
                 } catch (err) {
                     console.error('Error fetching comments:', err)
@@ -303,7 +303,7 @@ const ReadingPage = () => {
                                     if (commentText.trim()) {
                                         try {
                                             // Post comment to backend
-                                            await commentsAPI.create({
+                                            await createComment({
                                                 chapter_id: chapterId,
                                                 content: commentText.trim()
                                             })
@@ -312,7 +312,7 @@ const ReadingPage = () => {
                                             setCommentText("")
                                             
                                             // Refresh comments list
-                                            const commentsResponse = await commentsAPI.getByChapter(chapterId)
+                                            const commentsResponse = await getCommentsByChapter(chapterId)
                                             setComments(commentsResponse.data || [])
                                         } catch (err) {
                                             console.error('Error posting comment:', err)

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Container, Row, Col, Card, Form, Button, Alert, Nav } from 'react-bootstrap';
-import { authAPI } from '../../services/api';
+import { loginUser, registerUser } from '../../services/api';
 
 // Input validation utilities
 const validateUsername = (username) => {
@@ -113,7 +113,7 @@ const AuthPage = () => {
 
         try {
             if (isLogin) {
-                const response = await authAPI.login({
+                const response = await loginUser({
                     username: sanitizeInput(formData.username),
                     password: formData.password // Don't sanitize password
                 });
@@ -124,7 +124,7 @@ const AuthPage = () => {
                     window.location.href = '/';
                 }, 1000);
             } else {
-                await authAPI.register({
+                await registerUser({
                     username: sanitizeInput(formData.username),
                     email: sanitizeInput(formData.email),
                     password: formData.password // Don't sanitize password
