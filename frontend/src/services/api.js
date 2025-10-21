@@ -101,7 +101,7 @@ export const chaptersAPI = {
     
     getById: async (id) => {
         const response = await apiRequest(`/chapters/${id}`);
-        return { chapter: response.data };
+        return { chapter: response.chapter };
     },
     
     create: async (chapterData) => {
@@ -149,14 +149,19 @@ export const usersAPI = {
 
 // Comments API
 export const commentsAPI = {
-    getByChapterId: async (chapterId) => {
+    getByStory: async (storyId) => {
+        return apiRequest(`/comments/story/${storyId}`);
+    },
+    
+    getByChapter: async (chapterId) => {
         return apiRequest(`/comments/chapter/${chapterId}`);
     },
     
     create: async (commentData) => {
-        return apiRequest('/comments', {
+        const { chapter_id, content } = commentData;
+        return apiRequest(`/comments/chapter/${chapter_id}`, {
             method: 'POST',
-            body: JSON.stringify(commentData),
+            body: JSON.stringify({ content }),
         });
     },
     

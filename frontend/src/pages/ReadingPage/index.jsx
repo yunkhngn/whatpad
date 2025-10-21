@@ -1,7 +1,7 @@
 "use client"
 import { useParams, useNavigate } from "react-router"
 import { useState, useEffect } from "react"
-import { chaptersAPI, storiesAPI } from "../../services/api"
+import { chaptersAPI, storiesAPI, commentsAPI } from "../../services/api"
 import { Link } from "react-router"
 import { Dropdown } from "react-bootstrap"
 import styles from "./ReadingPage.module.css"
@@ -58,6 +58,15 @@ const ReadingPage = () => {
                         const recsResponse = await storiesAPI.getAll({ tag, size: 6 })
                         setRecommendations(recsResponse.stories?.filter(s => s.id !== storyResponse.story.id) || [])
                     }
+                }
+
+                // Fetch comments for this chapter
+                try {
+                    const commentsResponse = await commentsAPI.getByChapter(chapterId)
+                    setComments(commentsResponse.data || [])
+                } catch (err) {
+                    console.error('Error fetching comments:', err)
+                    setComments([])
                 }
 
                 setError(null)
@@ -284,7 +293,7 @@ const ReadingPage = () => {
                         <div className={styles.commentActions}>
                             <button 
                                 className={styles.postCommentBtn}
-                                onClick={() => {
+                                onClick={async () => {
                                     if (!isLoggedIn()) {
                                         if (window.confirm('You need to login to comment. Go to login page?')) {
                                             navigate('/auth')
@@ -292,9 +301,23 @@ const ReadingPage = () => {
                                         return
                                     }
                                     if (commentText.trim()) {
-                                        // TODO: Implement post comment functionality
-                                        console.log('Posting comment:', commentText)
-                                        setCommentText("")
+                                        try {
+                                            // Post comment to backend
+                                            await commentsAPI.create({
+                                                chapter_id: chapterId,
+                                                content: commentText.trim()
+                                            })
+                                            
+                                            // Clear input
+                                            setCommentText("")
+                                            
+                                            // Refresh comments list
+                                            const commentsResponse = await commentsAPI.getByChapter(chapterId)
+                                            setComments(commentsResponse.data || [])
+                                        } catch (err) {
+                                            console.error('Error posting comment:', err)
+                                            alert('Failed to post comment. Please try again.')
+                                        }
                                     }
                                 }}
                                 disabled={!commentText.trim()}
@@ -312,13 +335,21 @@ const ReadingPage = () => {
                                 <div key={comment.id} className={styles.commentItem}>
                                     <div className={styles.commentHeader}>
                                         <img 
-                                            src={comment.user_avatar || '/default-avatar.png'} 
-                                            alt={comment.user_name}
+                                            src={comment.avatar_url || '/default-avatar.png'} 
+                                            alt={comment.username}
                                             className={styles.commentAvatar}
                                         />
                                         <div className={styles.commentMeta}>
-                                            <span className={styles.commentAuthor}>{comment.user_name}</span>
-                                            <span className={styles.commentTime}>{comment.created_at}</span>
+                                            <span className={styles.commentAuthor}>{comment.username}</span>
+                                            <span className={styles.commentTime}>
+                                                {new Date(comment.created_at).toLocaleDateString('vi-VN', {
+                                                    year: 'numeric',
+                                                    month: 'long',
+                                                    day: 'numeric',
+                                                    hour: '2-digit',
+                                                    minute: '2-digit'
+                                                })}
+                                            </span>
                                         </div>
                                     </div>
                                     <p className={styles.commentText}>{comment.content}</p>

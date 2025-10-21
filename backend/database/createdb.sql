@@ -86,15 +86,17 @@ CREATE TABLE review_likes (
   CONSTRAINT fk_review_likes_user FOREIGN KEY (user_id) REFERENCES users(id)
 ) ENGINE=InnoDB;
 
--- 8. Story Comments (threaded)
+-- 8. Story Comments (threaded) - Can be on story or specific chapter
 CREATE TABLE story_comments (
   id INT AUTO_INCREMENT PRIMARY KEY,
   story_id INT NOT NULL,
+  chapter_id INT NULL COMMENT 'NULL = comment on story, otherwise comment on specific chapter',
   user_id INT NOT NULL,
   content VARCHAR(1000) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   parent_comment_id INT NULL,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_comments_story FOREIGN KEY (story_id) REFERENCES stories(id),
+  CONSTRAINT fk_comments_chapter FOREIGN KEY (chapter_id) REFERENCES chapters(id),
   CONSTRAINT fk_comments_user FOREIGN KEY (user_id) REFERENCES users(id),
   CONSTRAINT fk_comments_parent FOREIGN KEY (parent_comment_id) REFERENCES story_comments(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -170,6 +172,7 @@ CREATE INDEX idx_story_reviews_story ON story_reviews(story_id);
 CREATE INDEX idx_story_reviews_user ON story_reviews(user_id);
 CREATE INDEX idx_review_likes_review ON review_likes(review_id);
 CREATE INDEX idx_story_comments_story ON story_comments(story_id);
+CREATE INDEX idx_story_comments_chapter ON story_comments(chapter_id);
 CREATE INDEX idx_story_tags_tag ON story_tags(tag_id);
 CREATE INDEX idx_follows_author ON follows(author_id);
 CREATE INDEX idx_favorite_lists_user ON favorite_lists(user_id);
