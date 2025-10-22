@@ -21,7 +21,7 @@ function Header() {
         if (token) {
             try {
                 const response = await authAPI.me()
-                setUser(response.user)
+                setUser(response.data)
             } catch (err) {
                 localStorage.removeItem('authToken')
                 setUser(null)

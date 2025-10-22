@@ -19,11 +19,11 @@ const apiRequest = async (endpoint, options = {}) => {
     };
 
     const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
-    
+
     if (!response.ok) {
         throw new Error(`API Error: ${response.status}`);
     }
-    
+
     return response.json();
 };
 
@@ -35,16 +35,33 @@ export const authAPI = {
             body: JSON.stringify(userData),
         });
     },
-    
+
     login: async (credentials) => {
-        return apiRequest('/auth/login', {
+        const res = await apiRequest('/auth/login', {
             method: 'POST',
             body: JSON.stringify(credentials),
         });
+
+        // Token backend trả về nằm ở res.data.access
+        const token = res.token;
+        if (token) {
+            localStorage.setItem('authToken', token);
+            console.log('✅ Token saved to localStorage:', token);
+        } else {
+            console.warn('⚠️ No token found in response:', res);
+        }
+
+        return res;
     },
-    
+
+
     me: async () => {
-        return apiRequest('/auth/me');
+        const token = localStorage.getItem('authToken');
+        return apiRequest('/auth/me', {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
     },
 };
 
@@ -53,38 +70,38 @@ export const storiesAPI = {
     getAll: async (params = {}) => {
         const queryString = new URLSearchParams(params).toString();
         const response = await apiRequest(`/stories${queryString ? `?${queryString}` : ''}`);
-        return { 
-            stories: response.data || [], 
-            page: response.page, 
-            size: response.size 
+        return {
+            stories: response.data || [],
+            page: response.page,
+            size: response.size
         };
     },
-    
+
     getById: async (id) => {
         const response = await apiRequest(`/stories/${id}`);
         return { story: response.data };
     },
-    
+
     create: async (storyData) => {
         return apiRequest('/stories', {
             method: 'POST',
             body: JSON.stringify(storyData),
         });
     },
-    
+
     update: async (id, storyData) => {
         return apiRequest(`/stories/${id}`, {
             method: 'PUT',
             body: JSON.stringify(storyData),
         });
     },
-    
+
     delete: async (id) => {
         return apiRequest(`/stories/${id}`, {
             method: 'DELETE',
         });
     },
-    
+
     publish: async (id) => {
         return apiRequest(`/stories/${id}/publish`, {
             method: 'PUT',
@@ -98,26 +115,26 @@ export const chaptersAPI = {
         const response = await apiRequest(`/chapters/story/${storyId}`);
         return { chapters: response.data || [] };
     },
-    
+
     getById: async (id) => {
         const response = await apiRequest(`/chapters/${id}`);
         return { chapter: response.data };
     },
-    
+
     create: async (chapterData) => {
         return apiRequest('/chapters', {
             method: 'POST',
             body: JSON.stringify(chapterData),
         });
     },
-    
+
     update: async (id, chapterData) => {
         return apiRequest(`/chapters/${id}`, {
             method: 'PUT',
             body: JSON.stringify(chapterData),
         });
     },
-    
+
     delete: async (id) => {
         return apiRequest(`/chapters/${id}`, {
             method: 'DELETE',
@@ -138,7 +155,7 @@ export const usersAPI = {
     getProfile: async (id) => {
         return apiRequest(`/users/${id}`);
     },
-    
+
     updateMe: async (userData) => {
         return apiRequest('/users/me', {
             method: 'PUT',
@@ -152,14 +169,14 @@ export const commentsAPI = {
     getByChapterId: async (chapterId) => {
         return apiRequest(`/comments/chapter/${chapterId}`);
     },
-    
+
     create: async (commentData) => {
         return apiRequest('/comments', {
             method: 'POST',
             body: JSON.stringify(commentData),
         });
     },
-    
+
     delete: async (id) => {
         return apiRequest(`/comments/${id}`, {
             method: 'DELETE',
@@ -175,7 +192,7 @@ export const votesAPI = {
             body: JSON.stringify({ chapter_id: chapterId }),
         });
     },
-    
+
     unvote: async (chapterId) => {
         return apiRequest(`/votes/chapter/${chapterId}`, {
             method: 'DELETE',
@@ -188,21 +205,21 @@ export const favoritesAPI = {
     getLists: async () => {
         return apiRequest('/favorites');
     },
-    
+
     createList: async (listData) => {
         return apiRequest('/favorites', {
             method: 'POST',
             body: JSON.stringify(listData),
         });
     },
-    
+
     addToList: async (listId, storyId) => {
         return apiRequest(`/favorites/${listId}/items`, {
             method: 'POST',
             body: JSON.stringify({ story_id: storyId }),
         });
     },
-    
+
     removeFromList: async (listId, storyId) => {
         return apiRequest(`/favorites/${listId}/items/${storyId}`, {
             method: 'DELETE',
@@ -218,17 +235,17 @@ export const followsAPI = {
             body: JSON.stringify({ following_id: userId }),
         });
     },
-    
+
     unfollow: async (userId) => {
         return apiRequest(`/follows/${userId}`, {
             method: 'DELETE',
         });
     },
-    
+
     getFollowers: async (userId) => {
         return apiRequest(`/follows/${userId}/followers`);
     },
-    
+
     getFollowing: async (userId) => {
         return apiRequest(`/follows/${userId}/following`);
     },
@@ -239,13 +256,13 @@ export const readingAPI = {
     updateProgress: async (chapterId, progress) => {
         return apiRequest('/reading', {
             method: 'POST',
-            body: JSON.stringify({ 
-                chapter_id: chapterId, 
-                progress_percentage: progress 
+            body: JSON.stringify({
+                chapter_id: chapterId,
+                progress_percentage: progress
             }),
         });
     },
-    
+
     getProgress: async (storyId) => {
         return apiRequest(`/reading/story/${storyId}`);
     },
@@ -256,7 +273,7 @@ export const uploadAPI = {
     uploadImage: async (file) => {
         const formData = new FormData();
         formData.append('image', file);
-        
+
         const token = getAuthToken();
         const response = await fetch(`${API_BASE_URL}/upload/image`, {
             method: 'POST',
@@ -265,11 +282,11 @@ export const uploadAPI = {
             },
             body: formData,
         });
-        
+
         if (!response.ok) {
             throw new Error(`Upload Error: ${response.status}`);
         }
-        
+
         return response.json();
     },
 };

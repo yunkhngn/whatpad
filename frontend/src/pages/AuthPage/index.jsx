@@ -117,7 +117,6 @@ const AuthPage = () => {
                     username: sanitizeInput(formData.username),
                     password: formData.password // Don't sanitize password
                 });
-                localStorage.setItem('authToken', response.token);
                 setSuccess('Login successful!');
                 // Redirect to home page
                 setTimeout(() => {

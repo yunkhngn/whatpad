@@ -34,7 +34,7 @@ const sanitizeInput = (input) => {
 router.post('/register', async (req, res, next) => {
   try {
     const { username, email, password } = req.body;
-    
+
     // Validate required fields
     if (!username || !email || !password) {
       return res.status(400).json({ ok: false, message: 'Missing required fields', errorCode: 'MISSING_FIELDS' });
@@ -46,26 +46,26 @@ router.post('/register', async (req, res, next) => {
 
     // Validate inputs
     if (!validateUsername(cleanUsername)) {
-      return res.status(400).json({ 
-        ok: false, 
-        message: 'Username must be 3-30 characters and contain only letters, numbers, and underscores', 
-        errorCode: 'INVALID_USERNAME' 
+      return res.status(400).json({
+        ok: false,
+        message: 'Username must be 3-30 characters and contain only letters, numbers, and underscores',
+        errorCode: 'INVALID_USERNAME'
       });
     }
 
     if (!validateEmail(cleanEmail)) {
-      return res.status(400).json({ 
-        ok: false, 
-        message: 'Invalid email format', 
-        errorCode: 'INVALID_EMAIL' 
+      return res.status(400).json({
+        ok: false,
+        message: 'Invalid email format',
+        errorCode: 'INVALID_EMAIL'
       });
     }
 
     if (!validatePassword(password)) {
-      return res.status(400).json({ 
-        ok: false, 
-        message: 'Password must be 6-100 characters', 
-        errorCode: 'INVALID_PASSWORD' 
+      return res.status(400).json({
+        ok: false,
+        message: 'Password must be 6-100 characters',
+        errorCode: 'INVALID_PASSWORD'
       });
     }
 
@@ -74,7 +74,7 @@ router.post('/register', async (req, res, next) => {
       'SELECT id FROM users WHERE email = ? OR username = ?',
       [cleanEmail, cleanUsername]
     );
-    
+
     if (existing.length > 0) {
       return res.status(409).json({ ok: false, message: 'User already exists', errorCode: 'USER_EXISTS' });
     }
@@ -91,10 +91,10 @@ router.post('/register', async (req, res, next) => {
     const [users] = await pool.query('SELECT id, username, email, bio, avatar_url, created_at FROM users WHERE id = ?', [result.insertId]);
     const user = users[0];
 
-    res.status(201).json({ 
-      ok: true, 
+    res.status(201).json({
+      ok: true,
       data: user,
-      message: 'User registered successfully' 
+      message: 'User registered successfully'
     });
   } catch (err) {
     next(err);
@@ -105,7 +105,7 @@ router.post('/register', async (req, res, next) => {
 router.post('/login', async (req, res, next) => {
   try {
     const { username, password } = req.body;
-    
+
     if (!username || !password) {
       return res.status(400).json({ ok: false, message: 'Missing username or password', errorCode: 'MISSING_CREDENTIALS' });
     }
@@ -124,24 +124,24 @@ router.post('/login', async (req, res, next) => {
 
     // Get user by username or email
     const [users] = await pool.query(
-      'SELECT * FROM users WHERE username = ? OR email = ?', 
+      'SELECT * FROM users WHERE username = ? OR email = ?',
       [cleanUsername, cleanUsername]
     );
     const user = users[0];
-    
+
     if (!user) {
       return res.status(401).json({ ok: false, message: 'Invalid credentials', errorCode: 'INVALID_CREDENTIALS' });
     }
 
     // Compare password
     const isMatch = await bcrypt.compare(password, user.password_hash);
-    
+
     if (!isMatch) {
       return res.status(401).json({ ok: false, message: 'Invalid credentials', errorCode: 'INVALID_CREDENTIALS' });
     }
 
     // Generate JWT (2 hours expiry)
-    const access = jwt.sign(
+    const token = jwt.sign(
       { id: user.id, username: user.username },
       process.env.JWT_SECRET || 'supersecret',
       { expiresIn: '2h' }
@@ -150,11 +150,8 @@ router.post('/login', async (req, res, next) => {
     delete user.password_hash;
 
     res.json({
-      ok: true,
-      data: {
-        user,
-        access
-      }
+      user,
+      token
     });
   } catch (err) {
     next(err);
@@ -168,9 +165,9 @@ router.get('/me', auth, async (req, res, next) => {
       'SELECT id, username, email, bio, avatar_url, created_at FROM users WHERE id = ?',
       [req.user.id]
     );
-    
+
     const user = users[0];
-    
+
     if (!user) {
       return res.status(404).json({ ok: false, message: 'User not found', errorCode: 'USER_NOT_FOUND' });
     }
