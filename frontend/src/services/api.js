@@ -19,11 +19,11 @@ const apiRequest = async (endpoint, options = {}) => {
     };
 
     const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
-    
+
     if (!response.ok) {
         throw new Error(`API Error: ${response.status}`);
     }
-    
+
     return response.json();
 };
 
@@ -96,7 +96,7 @@ export const getChaptersByStoryId = async (storyId) => {
 
 export const getChapterById = async (id) => {
     const response = await apiRequest(`/chapters/${id}`);
-    return { chapter: response.chapter };
+    return { chapter: response.data };
 };
 
 export const createChapter = async (chapterData) => {
@@ -138,19 +138,18 @@ export const updateCurrentUser = async (userData) => {
 };
 
 // Comments API
-export const getCommentsByStory = async (storyId) => {
+export const getCommentsByStoryId = async (storyId) => {
     return apiRequest(`/comments/story/${storyId}`);
 };
 
-export const getCommentsByChapter = async (chapterId) => {
+export const getCommentsByChapterId = async (chapterId) => {
     return apiRequest(`/comments/chapter/${chapterId}`);
 };
 
 export const createComment = async (commentData) => {
-    const { chapter_id, content } = commentData;
-    return apiRequest(`/comments/chapter/${chapter_id}`, {
+    return apiRequest('/comments', {
         method: 'POST',
-        body: JSON.stringify({ content }),
+        body: JSON.stringify(commentData),
     });
 };
 
@@ -186,14 +185,14 @@ export const createFavoriteList = async (listData) => {
     });
 };
 
-export const addStoryToFavoriteList = async (listId, storyId) => {
+export const addStoryToFavorite = async (listId, storyId) => {
     return apiRequest(`/favorites/${listId}/items`, {
         method: 'POST',
         body: JSON.stringify({ story_id: storyId }),
     });
 };
 
-export const removeStoryFromFavoriteList = async (listId, storyId) => {
+export const removeStoryFromFavorite = async (listId, storyId) => {
     return apiRequest(`/favorites/${listId}/items/${storyId}`, {
         method: 'DELETE',
     });
@@ -213,11 +212,11 @@ export const unfollowUser = async (userId) => {
     });
 };
 
-export const getFollowers = async (userId) => {
+export const getUserFollowers = async (userId) => {
     return apiRequest(`/follows/${userId}/followers`);
 };
 
-export const getFollowing = async (userId) => {
+export const getUserFollowing = async (userId) => {
     return apiRequest(`/follows/${userId}/following`);
 };
 

@@ -22,14 +22,20 @@ function Header() {
 
     const checkAuthStatus = async () => {
         const token = localStorage.getItem('authToken')
+        console.log('Auth Token:', token)
         if (token) {
             try {
                 const response = await getCurrentUser()
-                setUser(response.user)
+                console.log('Current User Response:', response)
+                console.log('Current User Data:', response.data)
+                setUser(response.data)
             } catch (err) {
+                console.error('Error fetching current user:', err)
                 localStorage.removeItem('authToken')
                 setUser(null)
             }
+        } else {
+            console.log('No auth token found')
         }
     }
 
@@ -237,30 +243,33 @@ function Header() {
                                 {/* User Avatar Dropdown */}
                                 <NavDropdown 
                                     title={
-                                        <img 
-                                            src={user.avatar_url || '/default-avatar.png'} 
-                                            alt="Avatar"
-                                            className="user-avatar"
-                                        />
+                                        <div className="user-avatar-wrapper">
+                                            <img 
+                                                src={user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}&background=f26500&color=fff&bold=true`} 
+                                                alt={user.username}
+                                                className="user-avatar"
+                                                onError={(e) => {
+                                                    e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}&background=f26500&color=fff&bold=true`;
+                                                }}
+                                            />
+                                            <span className="notification-badge"></span>
+                                        </div>
                                     } 
                                     id="user-dropdown"
                                     className="user-dropdown"
                                     align="end"
                                 >
-                                    <NavDropdown.Item as={Link} to="/profile">
-                                        Profile
+                                    <NavDropdown.Item as={Link} to={`/profile/${user.id}`}>
+                                        <i className="bi bi-person me-2"></i>
+                                        My Profile
                                     </NavDropdown.Item>
-                                    <NavDropdown.Item as={Link} to="/my-stories">
-                                        My Stories
-                                    </NavDropdown.Item>
-                                    <NavDropdown.Item as={Link} to="/library">
-                                        Library
-                                    </NavDropdown.Item>
-                                    <NavDropdown.Item as={Link} to="/messages">
-                                        Messages
+                                    <NavDropdown.Item as={Link} to="/settings">
+                                        <i className="bi bi-gear me-2"></i>
+                                        Settings
                                     </NavDropdown.Item>
                                     <NavDropdown.Divider />
                                     <NavDropdown.Item onClick={handleLogout}>
+                                        <i className="bi bi-box-arrow-right me-2"></i>
                                         Logout
                                     </NavDropdown.Item>
                                 </NavDropdown>

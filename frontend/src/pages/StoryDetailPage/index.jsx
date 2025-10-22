@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button, Badge, Alert, Spinner, ListGroup } from 'react-bootstrap';
 import { useParams, Link } from 'react-router';
-import { getStoryById, getChaptersByStoryId, followUser, unfollowUser, getCommentsByStory } from '../../services/api';
+import { getStoryById, getChaptersByStoryId, followUser, unfollowUser, getCommentsByStoryId } from '../../services/api';
 
 const StoryDetailPage = () => {
     const { id } = useParams();
@@ -22,7 +22,7 @@ const StoryDetailPage = () => {
             const [storyResponse, chaptersResponse, commentsResponse] = await Promise.all([
                 getStoryById(id),
                 getChaptersByStoryId(id),
-                getCommentsByStory(id)
+                getCommentsByStoryId(id)
             ]);
             
             setStory(storyResponse.story);

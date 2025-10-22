@@ -1,7 +1,7 @@
 "use client"
 import { useParams, useNavigate } from "react-router"
 import { useState, useEffect } from "react"
-import { getChapterById, getStoryById, getChaptersByStoryId, getStories, getCommentsByChapter, createComment } from "../../services/api"
+import { getChapterById, getStoryById, getChaptersByStoryId, getStories, getCommentsByChapterId, createComment } from "../../services/api"
 import { Link } from "react-router"
 import { Dropdown } from "react-bootstrap"
 import styles from "./ReadingPage.module.css"
@@ -62,7 +62,7 @@ const ReadingPage = () => {
 
                 // Fetch comments for this chapter
                 try {
-                    const commentsResponse = await getCommentsByChapter(chapterId)
+                    const commentsResponse = await getCommentsByChapterId(chapterId)
                     setComments(commentsResponse.data || [])
                 } catch (err) {
                     console.error('Error fetching comments:', err)
@@ -312,7 +312,7 @@ const ReadingPage = () => {
                                             setCommentText("")
                                             
                                             // Refresh comments list
-                                            const commentsResponse = await getCommentsByChapter(chapterId)
+                                            const commentsResponse = await getCommentsByChapterId(chapterId)
                                             setComments(commentsResponse.data || [])
                                         } catch (err) {
                                             console.error('Error posting comment:', err)

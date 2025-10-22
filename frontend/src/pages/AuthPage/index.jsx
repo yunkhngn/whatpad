@@ -117,7 +117,13 @@ const AuthPage = () => {
                     username: sanitizeInput(formData.username),
                     password: formData.password // Don't sanitize password
                 });
-                localStorage.setItem('authToken', response.token);
+                
+                // Save token to localStorage
+                if (response.token) {
+                    localStorage.setItem('authToken', response.token);
+                    console.log('Token saved:', response.token);
+                }
+                
                 setSuccess('Login successful!');
                 // Redirect to home page
                 setTimeout(() => {
