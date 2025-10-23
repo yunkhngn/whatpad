@@ -51,7 +51,7 @@ export const getStories = async (params = {}) => {
     const queryString = new URLSearchParams(params).toString();
     const response = await apiRequest(`/stories${queryString ? `?${queryString}` : ''}`);
     return { 
-        stories: response.data || [], 
+        stories: response.stories || response.data || [], 
         page: response.page, 
         size: response.size 
     };

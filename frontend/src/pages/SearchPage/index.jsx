@@ -46,21 +46,77 @@ const SearchPage = () => {
             if (tagFilter) params.tag = tagFilter
             
             const response = await getStories(params)
-            setStories(response.stories || [])
-            setResultCount(response.stories?.length || 0)
+            let filteredStories = response.stories || []
+            
+            console.log('Fetched stories:', filteredStories.length)
+            console.log('First story chapter_count:', filteredStories[0]?.chapter_count)
+            
+            // Apply length filters
+            if (selectedLengths.length > 0) {
+                filteredStories = filteredStories.filter(story => {
+                    const chapterCount = story.chapter_count || 0
+                    return selectedLengths.some(range => {
+                        if (range === '1-10') return chapterCount >= 1 && chapterCount <= 10
+                        if (range === '10-20') return chapterCount >= 10 && chapterCount <= 20
+                        if (range === '20-50') return chapterCount >= 20 && chapterCount <= 50
+                        if (range === '50+') return chapterCount >= 50
+                        return false
+                    })
+                })
+                console.log('After length filter:', filteredStories.length)
+            }
+            
+            // Apply update filters
+            if (!selectedUpdates.includes('anytime')) {
+                filteredStories = filteredStories.filter(story => {
+                    const updatedAt = new Date(story.updated_at)
+                    const now = new Date()
+                    
+                    return selectedUpdates.some(period => {
+                        if (period === 'today') {
+                            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+                            return updatedAt >= today
+                        }
+                        if (period === 'week') {
+                            const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+                            return updatedAt >= weekAgo
+                        }
+                        if (period === 'month') {
+                            const monthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate())
+                            return updatedAt >= monthAgo
+                        }
+                        if (period === 'year') {
+                            const yearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate())
+                            return updatedAt >= yearAgo
+                        }
+                        return false
+                    })
+                })
+            }
+            
+            // Apply tag filters
+            if (selectedTags.length > 0) {
+                filteredStories = filteredStories.filter(story => {
+                    if (!story.tags || story.tags.length === 0) return false
+                    return selectedTags.every(selectedTag => 
+                        story.tags.some(storyTag => storyTag.name === selectedTag)
+                    )
+                })
+            }
+            
+            setStories(filteredStories)
+            setResultCount(filteredStories.length)
         } catch (err) {
             console.error('Error fetching stories:', err)
             setStories([])
         } finally {
             setLoading(false)
         }
-    }, [query, tagFilter])
+    }, [query, tagFilter, selectedLengths, selectedUpdates, selectedTags])
 
     useEffect(() => {
-        if (query || tagFilter) {
-            fetchStories()
-        }
-    }, [query, tagFilter, selectedLengths, selectedUpdates, fetchStories])
+        fetchStories()
+    }, [fetchStories])
 
     const handleLengthChange = (value) => {
         setSelectedLengths(prev => 
@@ -99,6 +155,16 @@ const SearchPage = () => {
         }
     }
 
+    const clearAllFilters = () => {
+        setSelectedLengths([])
+        setSelectedUpdates(['anytime'])
+        setSelectedTags([])
+    }
+
+    const hasActiveFilters = selectedLengths.length > 0 || 
+                            !selectedUpdates.includes('anytime') || 
+                            selectedTags.length > 0
+
     return (
         <div className={styles.searchPage}>
             <Container fluid>
@@ -108,6 +174,35 @@ const SearchPage = () => {
                         <div className={styles.filterSection}>
                             <h5 className={styles.filterTitle}>"{query || 'All Stories'}"</h5>
                             <p className={styles.resultCount}>{resultCount} results</p>
+
+                            {hasActiveFilters && (
+                                <button 
+                                    onClick={clearAllFilters}
+                                    className={styles.clearFiltersBtn}
+                                >
+                                    <i className="bi bi-x-circle"></i> Clear all filters
+                                </button>
+                            )}
+
+                            {/* Active Tags */}
+                            {selectedTags.length > 0 && (
+                                <div className={styles.activeFilters}>
+                                    <p className={styles.activeFiltersTitle}>Active tags:</p>
+                                    <div className={styles.activeTagsList}>
+                                        {selectedTags.map(tag => (
+                                            <div key={tag} className={styles.activeTag}>
+                                                <span>{tag}</span>
+                                                <button 
+                                                    onClick={() => handleTagSelect(tag)}
+                                                    className={styles.removeTagBtn}
+                                                >
+                                                    <i className="bi bi-x"></i>
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Tabs */}
                             <div className={styles.tabs}>
@@ -303,7 +398,7 @@ const SearchPage = () => {
                                                     <i className="bi bi-star"></i> Votes: 0
                                                 </span>
                                                 <span className={styles.stat}>
-                                                    <i className="bi bi-book"></i> Chapters: 1
+                                                    <i className="bi bi-book"></i> Chapters: {story.chapter_count || 0}
                                                 </span>
                                                 <span className={styles.stat}>
                                                     <i className="bi bi-clock"></i> Time: &lt;5 mins

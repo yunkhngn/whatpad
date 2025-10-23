@@ -29,6 +29,91 @@
     margin-bottom: 1.5rem;
 }
 
+.clearFiltersBtn {
+    width: 100%;
+    padding: 0.5rem 1rem;
+    background-color: #fff;
+    border: 1px solid #f26500;
+    border-radius: 6px;
+    color: #f26500;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.clearFiltersBtn:hover {
+    background-color: #f26500;
+    color: white;
+}
+
+.clearFiltersBtn i {
+    font-size: 1rem;
+}
+
+/* Active Filters */
+.activeFilters {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background-color: #fff5f0;
+    border: 1px solid #ffe0cc;
+    border-radius: 6px;
+}
+
+.activeFiltersTitle {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #f26500;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+}
+
+.activeTagsList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.activeTag {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    background-color: #f26500;
+    color: white;
+    border-radius: 15px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.removeTagBtn {
+    background: none;
+    border: none;
+    color: white;
+    padding: 0;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: background-color 0.2s ease;
+}
+
+.removeTagBtn:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.removeTagBtn i {
+    font-size: 0.75rem;
+}
+
 /* Tabs */
 .tabs {
     display: flex;
