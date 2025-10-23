@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button, Badge, Alert, Spinner, ListGroup } from 'react-bootstrap';
 import { useParams, Link } from 'react-router';
-import { storiesAPI, chaptersAPI, followsAPI, favoritesAPI } from '../../services/api';
+import { getStoryById, getChaptersByStoryId, followUser, unfollowUser, getCommentsByStoryId } from '../../services/api';
 
 const StoryDetailPage = () => {
     const { id } = useParams();
     const [story, setStory] = useState(null);
     const [chapters, setChapters] = useState([]);
+    const [comments, setComments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [following, setFollowing] = useState(false);
@@ -18,13 +19,15 @@ const StoryDetailPage = () => {
     const fetchStoryDetails = async () => {
         try {
             setLoading(true);
-            const [storyResponse, chaptersResponse] = await Promise.all([
-                storiesAPI.getById(id),
-                chaptersAPI.getByStoryId(id)
+            const [storyResponse, chaptersResponse, commentsResponse] = await Promise.all([
+                getStoryById(id),
+                getChaptersByStoryId(id),
+                getCommentsByStoryId(id)
             ]);
             
             setStory(storyResponse.story);
             setChapters(chaptersResponse.chapters || []);
+            setComments(commentsResponse.data || []);
         } catch (err) {
             setError('Failed to load story details');
             console.error(err);
@@ -36,10 +39,10 @@ const StoryDetailPage = () => {
     const handleFollowToggle = async () => {
         try {
             if (following) {
-                await followsAPI.unfollow(story.user_id);
+                await unfollowUser(story.user_id);
                 setFollowing(false);
             } else {
-                await followsAPI.follow(story.user_id);
+                await followUser(story.user_id);
                 setFollowing(true);
             }
         } catch (err) {
@@ -172,6 +175,57 @@ const StoryDetailPage = () => {
                                     </ListGroup.Item>
                                 )}
                             </ListGroup>
+                        </Card.Body>
+                    </Card>
+                    
+                    {/* Comments Section */}
+                    <Card className="mt-4">
+                        <Card.Header>
+                            <h4 className="mb-0">Recent Comments ({comments.length})</h4>
+                        </Card.Header>
+                        <Card.Body>
+                            {comments.length > 0 ? (
+                                <div>
+                                    {comments.map(comment => (
+                                        <div key={comment.id} className="mb-3 pb-3 border-bottom">
+                                            <div className="d-flex align-items-start">
+                                                <img 
+                                                    src={comment.avatar_url || '/default-avatar.png'} 
+                                                    alt={comment.username}
+                                                    className="rounded-circle me-3"
+                                                    style={{ width: '40px', height: '40px' }}
+                                                />
+                                                <div className="flex-grow-1">
+                                                    <div className="d-flex justify-content-between align-items-start mb-1">
+                                                        <div>
+                                                            <strong>{comment.username}</strong>
+                                                            {comment.chapter_title && (
+                                                                <span className="text-muted ms-2">
+                                                                    commented on{' '}
+                                                                    <Link 
+                                                                        to={`/read/${comment.chapter_id}`}
+                                                                        className="text-decoration-none"
+                                                                    >
+                                                                        Chapter {comment.chapter_order}: {comment.chapter_title}
+                                                                    </Link>
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <small className="text-muted">
+                                                            {new Date(comment.created_at).toLocaleDateString('vi-VN')}
+                                                        </small>
+                                                    </div>
+                                                    <p className="mb-0">{comment.content}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-center text-muted mb-0">
+                                    No comments yet. Be the first to comment!
+                                </p>
+                            )}
                         </Card.Body>
                     </Card>
                 </Col>

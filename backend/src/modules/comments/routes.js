@@ -4,8 +4,27 @@ const auth = require('../../mw/auth');
 
 const router = express.Router();
 
-// GET /chapters/:id/comments - Get comments for a chapter
-router.get('/chapters/:id/comments', async (req, res, next) => {
+// GET /comments/story/:id - Get all comments for a story (from all chapters)
+router.get('/story/:id', async (req, res, next) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT c.*, u.username, u.avatar_url, ch.title as chapter_title, ch.chapter_order
+      FROM story_comments c
+      JOIN users u ON c.user_id = u.id
+      JOIN chapters ch ON c.chapter_id = ch.id
+      WHERE ch.story_id = ?
+      ORDER BY c.created_at DESC
+      LIMIT 50
+    `, [req.params.id]);
+
+    res.json({ ok: true, data: rows });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /comments/chapter/:id - Get comments for a chapter
+router.get('/chapter/:id', async (req, res, next) => {
   try {
     const [rows] = await pool.query(`
       SELECT c.*, u.username, u.avatar_url
@@ -21,8 +40,8 @@ router.get('/chapters/:id/comments', async (req, res, next) => {
   }
 });
 
-// POST /chapters/:id/comments - Create comment (auth)
-router.post('/chapters/:id/comments', auth, async (req, res, next) => {
+// POST /comments/chapter/:id - Create comment (auth)
+router.post('/chapter/:id', auth, async (req, res, next) => {
   try {
     const { content, parent_comment_id } = req.body;
     

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react"
 import { Container, Row, Col, Button, Alert, Spinner, Carousel, Badge } from "react-bootstrap"
-import { storiesAPI, tagsAPI } from "../../services/api"
+import { getStories, getTags } from "../../services/api"
 import styles from "./HomePage.module.css"
 import GenreSection from "../../components/GenreSection"
 
@@ -15,8 +15,8 @@ const HomePage = () => {
         try {
             setLoading(true)
             const [tagsResponse, storiesResponse] = await Promise.all([
-                tagsAPI.getAll(),
-                storiesAPI.getAll({ page: 1, size: 50, sort: 'created_at', order: 'desc' })
+                getTags(),
+                getStories({ page: 1, size: 50, sort: 'created_at', order: 'desc' })
             ])
             
             console.log('=== HOMEPAGE DATA DEBUG ===')
@@ -89,13 +89,12 @@ const HomePage = () => {
             const container = genreScrollRef.current
             const itemWidth = container.querySelector('.col-lg-custom')?.offsetWidth || 200
             const gap = 16 // 1rem gap
-            
-            // Calculate items per view based on screen width
-            let itemsPerView = 5 // Desktop: 5 items
+
+            let itemsPerView = 5 
             if (window.innerWidth <= 576) {
-                itemsPerView = 2 // Mobile: 2 items
+                itemsPerView = 2 
             } else if (window.innerWidth <= 768) {
-                itemsPerView = 3 // Tablet: 3 items
+                itemsPerView = 3 
             }
             
             const scrollAmount = (itemWidth + gap) * itemsPerView

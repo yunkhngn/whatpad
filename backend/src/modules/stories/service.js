@@ -10,7 +10,12 @@ async function checkStoryOwnership(storyId, userId) {
 }
 
 async function getStoryWithTags(storyId) {
-  const [stories] = await pool.query('SELECT * FROM stories WHERE id = ?', [storyId]);
+  const [stories] = await pool.query(`
+    SELECT s.*, u.username as author_name, u.avatar_url as author_avatar, u.bio as author_bio
+    FROM stories s
+    JOIN users u ON s.user_id = u.id
+    WHERE s.id = ?
+  `, [storyId]);
   
   if (stories.length === 0) return null;
   

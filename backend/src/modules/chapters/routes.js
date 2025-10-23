@@ -105,7 +105,24 @@ router.get('/:id', async (req, res, next) => {
       return res.status(404).json({ ok: false, message: 'Chapter not found', errorCode: 'CHAPTER_NOT_FOUND' });
     }
 
-    res.json({ ok: true, data: chapter });
+    // Get votes count
+    const [votesCount] = await pool.query(
+      'SELECT COUNT(*) as count FROM votes WHERE chapter_id = ?',
+      [req.params.id]
+    );
+    
+    // Get comments count
+    const [commentsCount] = await pool.query(
+      'SELECT COUNT(*) as count FROM story_comments WHERE chapter_id = ?',
+      [req.params.id]
+    );
+
+    // Add computed fields to chapter
+    chapter.votes = votesCount[0].count;
+    chapter.comments_count = commentsCount[0].count;
+    chapter.views = 0; // TODO: Implement views tracking
+
+    res.json({ ok: true, chapter: chapter });
   } catch (err) {
     next(err);
   }
