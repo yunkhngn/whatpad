@@ -130,8 +130,8 @@
 /* Notification Badge */
 .notification-badge {
   position: absolute;
-  top: 0;
-  right: 0;
+  top: 2px;
+  right: 2px;
   width: 10px;
   height: 10px;
   background-color: #ff3b30;
