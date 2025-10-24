@@ -176,6 +176,7 @@
     font-size: 0.875rem;
     color: #333;
     cursor: pointer;
+    -webkit-user-select: none;
     user-select: none;
 }
 
