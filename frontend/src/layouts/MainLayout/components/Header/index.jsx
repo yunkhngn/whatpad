@@ -142,37 +142,37 @@ function Header() {
             <Container fluid className="px-4">
                 {/* Logo */}
                 <Navbar.Brand as={Link} to="/" className="me-4">
-                    <img 
-                        src="/Hompage/main_logo.svg" 
-                        alt="Whatpad" 
+                    <img
+                        src="/Hompage/main_logo.svg"
+                        alt="Whatpad"
                         height="28"
                         className="d-inline-block align-top"
                     />
                 </Navbar.Brand>
 
                 <Navbar.Toggle aria-controls="navbar-content" />
-                
+
                 <Navbar.Collapse id="navbar-content">
                     {/* Navigation Links */}
                     <Nav className="me-auto">
-                        <NavDropdown 
-                            title="Browse" 
+                        <NavDropdown
+                            title="Browse"
                             id="browse-dropdown"
                             className="header-dropdown"
                         >
                             <NavDropdown.Item as={Link} to="/">Home</NavDropdown.Item>
                             <NavDropdown.Divider />
                             {tags.slice(0, 10).map(tag => (
-                                <NavDropdown.Item 
-                                    key={tag.id} 
-                                    as={Link} 
+                                <NavDropdown.Item
+                                    key={tag.id}
+                                    as={Link}
                                     to={`/search?tag=${tag.id}`}
                                 >
                                     {tag.name}
                                 </NavDropdown.Item>
                             ))}
                         </NavDropdown>
-                        
+
                         {/* Search Bar - Moved next to Browse */}
                         <Form className="d-flex search-form ms-3" onSubmit={handleSearch}>
                             <div className="search-wrapper" ref={searchWrapperRef}>
@@ -203,8 +203,8 @@ function Header() {
                                                 >
                                                     <div className="suggestion-content">
                                                         {story.cover_url && (
-                                                            <img 
-                                                                src={story.cover_url} 
+                                                            <img
+                                                                src={story.cover_url}
                                                                 alt={story.title}
                                                                 className="suggestion-cover"
                                                             />
@@ -241,11 +241,11 @@ function Header() {
                                 </Nav.Link>
 
                                 {/* User Avatar Dropdown */}
-                                <NavDropdown 
+                                <NavDropdown
                                     title={
                                         <div className="user-avatar-wrapper">
-                                            <img 
-                                                src={user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}&background=f26500&color=fff&bold=true`} 
+                                            <img
+                                                src={user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}&background=f26500&color=fff&bold=true`}
                                                 alt={user.username}
                                                 className="user-avatar"
                                                 onError={(e) => {
@@ -254,7 +254,7 @@ function Header() {
                                             />
                                             <span className="notification-badge"></span>
                                         </div>
-                                    } 
+                                    }
                                     id="user-dropdown"
                                     className="user-dropdown"
                                     align="end"
