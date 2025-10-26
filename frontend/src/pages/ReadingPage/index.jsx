@@ -1,7 +1,7 @@
 "use client"
 import { useParams, useNavigate } from "react-router"
 import { useState, useEffect } from "react"
-import { getChapterById, getStoryById, getChaptersByStoryId, getStories, getCommentsByChapterId, createComment } from "../../services/api"
+import { getChapterById, getStoryById, getChaptersByStoryId, getStories, getCommentsByChapterId, createComment, checkVote, voteChapter, unvoteChapter, updateReadingProgress } from "../../services/api"
 import { Link } from "react-router"
 import { Dropdown } from "react-bootstrap"
 import styles from "./ReadingPage.module.css"
@@ -18,10 +18,14 @@ const ReadingPage = () => {
     const [readProgress, setReadProgress] = useState(0)
     const [commentText, setCommentText] = useState("")
     const [comments, setComments] = useState([])
+    const [hasVoted, setHasVoted] = useState(false)
+    const [votingLoading, setVotingLoading] = useState(false)
 
     // Check if user is logged in
     const isLoggedIn = () => {
-        return !!localStorage.getItem('authToken')
+        const token = localStorage.getItem('authToken')
+        console.log('Checking if logged in, token exists:', !!token)
+        return !!token
     }
 
     // Handle actions that require authentication
@@ -39,6 +43,8 @@ const ReadingPage = () => {
         const fetchChapterAndStory = async () => {
             try {
                 setLoading(true)
+                setHasVoted(false) // Reset vote state when changing chapters
+                
                 // Fetch chapter
                 const chapterResponse = await getChapterById(chapterId)
                 setChapter(chapterResponse.chapter)
@@ -67,6 +73,34 @@ const ReadingPage = () => {
                 } catch (err) {
                     console.error('Error fetching comments:', err)
                     setComments([])
+                }
+
+                // Check if user has voted (only if logged in)
+                if (isLoggedIn()) {
+                    try {
+                        console.log('Checking vote status for chapter:', chapterId)
+                        const voteResponse = await checkVote(chapterId)
+                        console.log('Vote response:', voteResponse)
+                        setHasVoted(voteResponse.hasVoted)
+                    } catch (err) {
+                        console.error('Error checking vote:', err)
+                        setHasVoted(false)
+                    }
+
+                    // Save reading history
+                    if (chapterResponse.chapter?.story_id) {
+                        try {
+                            await updateReadingProgress(
+                                chapterResponse.chapter.story_id,
+                                chapterId
+                            )
+                            console.log('Reading progress saved')
+                        } catch (err) {
+                            console.error('Error saving reading progress:', err)
+                        }
+                    }
+                } else {
+                    console.log('User not logged in, skipping vote check')
                 }
 
                 setError(null)
@@ -128,6 +162,53 @@ const ReadingPage = () => {
     const prevChapter = currentChapterIndex > 0 ? chapters[currentChapterIndex - 1] : null
     const nextChapter = currentChapterIndex < chapters.length - 1 ? chapters[currentChapterIndex + 1] : null
 
+    // Handle vote toggle
+    const handleVote = async () => {
+        if (!handleAuthAction('vote')) return
+
+        console.log('Toggling vote, current state:', hasVoted)
+        setVotingLoading(true)
+        try {
+            if (hasVoted) {
+                console.log('Removing vote for chapter:', chapterId)
+                await unvoteChapter(chapterId)
+                setHasVoted(false)
+                // Update vote count in UI
+                if (chapter) {
+                    setChapter({ ...chapter, votes: (chapter.votes || 0) - 1 })
+                }
+                console.log('Vote removed successfully')
+            } else {
+                console.log('Adding vote for chapter:', chapterId)
+                await voteChapter(chapterId)
+                setHasVoted(true)
+                // Update vote count in UI
+                if (chapter) {
+                    setChapter({ ...chapter, votes: (chapter.votes || 0) + 1 })
+                }
+                console.log('Vote added successfully')
+            }
+        } catch (err) {
+            console.error('Error toggling vote:', err)
+            alert('Failed to update vote. Please try again.')
+        } finally {
+            setVotingLoading(false)
+        }
+    }
+
+    // Handle share
+    const handleShare = () => {
+        const storyUrl = `${window.location.origin}/story/${story?.id}`
+        navigator.clipboard.writeText(storyUrl)
+            .then(() => {
+                alert('Story link copied to clipboard!')
+            })
+            .catch(err => {
+                console.error('Failed to copy:', err)
+                alert('Failed to copy link. Please try again.')
+            })
+    }
+
     if (loading) {
         return (
             <div className={styles.readingPage}>
@@ -148,6 +229,8 @@ const ReadingPage = () => {
             </div>
         )
     }
+
+    console.log('Rendering page with hasVoted state:', hasVoted, 'for chapter:', chapterId)
 
     return (
         <div className={styles.readingPage}>
@@ -248,19 +331,19 @@ const ReadingPage = () => {
                             <i className="bi bi-plus-lg"></i> Add to library
                         </button>
                         <button 
-                            className={styles.actionButton}
-                            onClick={() => {
-                                if (handleAuthAction('vote')) {
-                                    // TODO: Implement vote functionality
-                                    console.log('Vote')
-                                }
-                            }}
+                            className={`${styles.actionButton} ${hasVoted ? styles.voted : ''}`}
+                            onClick={handleVote}
+                            disabled={votingLoading}
                         >
-                            <i className="bi bi-star"></i> Vote
+                            <i className={`bi ${hasVoted ? 'bi-star-fill' : 'bi-star'}`}></i> 
+                            {hasVoted ? 'Voted' : 'Vote'}
                         </button>
                     </div>
                     <div className={styles.shareSection}>
-                        <button className={styles.shareButton}>
+                        <button 
+                            className={styles.shareButton}
+                            onClick={handleShare}
+                        >
                             <i className="bi bi-share"></i> Share
                         </button>
                     </div>

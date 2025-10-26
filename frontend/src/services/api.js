@@ -161,17 +161,44 @@ export const deleteComment = async (id) => {
 };
 
 // Votes API
+export const checkVote = async (chapterId) => {
+    console.log('checkVote API called for chapter:', chapterId);
+    try {
+        const result = await apiRequest(`/votes/chapters/${chapterId}/vote/check`);
+        console.log('checkVote API response:', result);
+        return result;
+    } catch (error) {
+        console.error('checkVote API error:', error);
+        throw error;
+    }
+};
+
 export const voteChapter = async (chapterId) => {
-    return apiRequest('/votes', {
-        method: 'POST',
-        body: JSON.stringify({ chapter_id: chapterId }),
-    });
+    console.log('voteChapter API called for chapter:', chapterId);
+    try {
+        const result = await apiRequest(`/votes/chapters/${chapterId}/vote`, {
+            method: 'POST',
+        });
+        console.log('voteChapter API response:', result);
+        return result;
+    } catch (error) {
+        console.error('voteChapter API error:', error);
+        throw error;
+    }
 };
 
 export const unvoteChapter = async (chapterId) => {
-    return apiRequest(`/votes/chapter/${chapterId}`, {
-        method: 'DELETE',
-    });
+    console.log('unvoteChapter API called for chapter:', chapterId);
+    try {
+        const result = await apiRequest(`/votes/chapters/${chapterId}/vote`, {
+            method: 'DELETE',
+        });
+        console.log('unvoteChapter API response:', result);
+        return result;
+    } catch (error) {
+        console.error('unvoteChapter API error:', error);
+        throw error;
+    }
 };
 
 // Favorites API
@@ -222,14 +249,18 @@ export const getUserFollowing = async (userId) => {
 };
 
 // Reading API
-export const updateReadingProgress = async (chapterId, progress) => {
+export const updateReadingProgress = async (storyId, chapterId) => {
     return apiRequest('/reading', {
         method: 'POST',
         body: JSON.stringify({ 
-            chapter_id: chapterId, 
-            progress_percentage: progress 
+            story_id: storyId,
+            last_chapter_id: chapterId
         }),
     });
+};
+
+export const getReadingHistory = async () => {
+    return apiRequest('/reading/me/reading-history');
 };
 
 export const getReadingProgress = async (storyId) => {

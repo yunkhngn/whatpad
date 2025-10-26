@@ -1,15 +1,24 @@
 import React, { useState, useEffect, useCallback, useRef } from "react"
 import { Container, Row, Col, Button, Alert, Spinner, Carousel, Badge } from "react-bootstrap"
-import { getStories, getTags } from "../../services/api"
+import { getStories, getTags, getReadingHistory } from "../../services/api"
 import styles from "./HomePage.module.css"
 import GenreSection from "../../components/GenreSection"
+import ContinueReading from "../../components/ContinueReading"
 
 const HomePage = () => {
     const [stories, setStories] = useState([])
     const [tags, setTags] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
+    const [continueReading, setContinueReading] = useState([])
+    const [isLoggedIn, setIsLoggedIn] = useState(false)
     const genreScrollRef = useRef(null)
+
+    // Check if user is logged in
+    useEffect(() => {
+        const token = localStorage.getItem('authToken')
+        setIsLoggedIn(!!token)
+    }, [])
 
     const fetchData = useCallback(async () => {
         try {
@@ -35,9 +44,31 @@ const HomePage = () => {
         }
     }, [])
 
+    // Fetch reading history for logged in users
+    const fetchReadingHistory = useCallback(async () => {
+        if (!isLoggedIn) {
+            setContinueReading([])
+            return
+        }
+
+        try {
+            const response = await getReadingHistory()
+            console.log('Reading history:', response.data)
+            // Limit to 6 most recent
+            setContinueReading((response.data || []).slice(0, 6))
+        } catch (err) {
+            console.error('Error fetching reading history:', err)
+            setContinueReading([])
+        }
+    }, [isLoggedIn])
+
     useEffect(() => {
         fetchData()
     }, [fetchData])
+
+    useEffect(() => {
+        fetchReadingHistory()
+    }, [fetchReadingHistory])
 
     const groupStoriesByTag = () => {
         const grouped = []
@@ -135,6 +166,11 @@ const HomePage = () => {
 
             {!loading && (
                 <>
+                    {/* Continue Reading Section - Only for logged in users */}
+                    {isLoggedIn && continueReading.length > 0 && (
+                        <ContinueReading stories={continueReading} />
+                    )}
+
                     {/* Carousel Section */}
                     <div className={styles.carouselSection}>
                         <Container>
