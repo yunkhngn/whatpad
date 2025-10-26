@@ -87,14 +87,16 @@ const HomePage = () => {
     const scrollGenres = (direction) => {
         if (genreScrollRef.current) {
             const container = genreScrollRef.current
-            const itemWidth = container.querySelector('.col-lg-custom')?.offsetWidth || 200
-            const gap = 16 // 1rem gap
+            const itemWidth = 116 // Fixed genre card width
+            const gap = 12 // 0.75rem gap
 
-            let itemsPerView = 5 
+            let itemsPerView = 8 // Show more items on desktop with smaller cards
             if (window.innerWidth <= 576) {
-                itemsPerView = 2 
-            } else if (window.innerWidth <= 768) {
                 itemsPerView = 3 
+            } else if (window.innerWidth <= 768) {
+                itemsPerView = 5 
+            } else if (window.innerWidth <= 992) {
+                itemsPerView = 6
             }
             
             const scrollAmount = (itemWidth + gap) * itemsPerView

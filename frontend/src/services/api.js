@@ -96,7 +96,7 @@ export const getChaptersByStoryId = async (storyId) => {
 
 export const getChapterById = async (id) => {
     const response = await apiRequest(`/chapters/${id}`);
-    return { chapter: response.data };
+    return { chapter: response.chapter };
 };
 
 export const createChapter = async (chapterData) => {
@@ -147,9 +147,10 @@ export const getCommentsByChapterId = async (chapterId) => {
 };
 
 export const createComment = async (commentData) => {
-    return apiRequest('/comments', {
+    const { chapter_id, content, parent_comment_id } = commentData;
+    return apiRequest(`/comments/chapter/${chapter_id}`, {
         method: 'POST',
-        body: JSON.stringify(commentData),
+        body: JSON.stringify({ content, parent_comment_id }),
     });
 };
 
