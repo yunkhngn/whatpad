@@ -27,7 +27,7 @@ const apiRequest = async (endpoint, options = {}) => {
     return response.json();
 };
 
-// Auth API
+// ================== Auth API ==================
 export const registerUser = async (userData) => {
     return apiRequest('/auth/register', {
         method: 'POST',
@@ -46,7 +46,7 @@ export const getCurrentUser = async () => {
     return apiRequest('/auth/me');
 };
 
-// Stories API
+// ================== Stories API ==================
 export const getStories = async (params = {}) => {
     const queryString = new URLSearchParams(params).toString();
     const response = await apiRequest(`/stories${queryString ? `?${queryString}` : ''}`);
@@ -88,7 +88,7 @@ export const publishStory = async (id) => {
     });
 };
 
-// Chapters API
+// ================== Chapters API ==================
 export const getChaptersByStoryId = async (storyId) => {
     const response = await apiRequest(`/chapters/story/${storyId}`);
     return { chapters: response.data || [] };
@@ -119,13 +119,13 @@ export const deleteChapter = async (id) => {
     });
 };
 
-// Tags API
+// ================== Tags API ==================
 export const getTags = async () => {
     const response = await apiRequest('/tags');
     return { tags: response.data || [] };
 };
 
-// Users API
+// ================== Users API ==================
 export const getUserProfile = async (id) => {
     return apiRequest(`/users/${id}`);
 };
@@ -137,7 +137,7 @@ export const updateCurrentUser = async (userData) => {
     });
 };
 
-// Comments API
+// ================== Comments API ==================
 export const getCommentsByStoryId = async (storyId) => {
     return apiRequest(`/comments/story/${storyId}`);
 };
@@ -159,7 +159,7 @@ export const deleteComment = async (id) => {
     });
 };
 
-// Votes API
+// ================== Votes API ==================
 export const voteChapter = async (chapterId) => {
     return apiRequest('/votes', {
         method: 'POST',
@@ -173,7 +173,7 @@ export const unvoteChapter = async (chapterId) => {
     });
 };
 
-// Favorites API
+// ================== Favorites API ==================
 export const getFavoriteLists = async () => {
     return apiRequest('/favorites');
 };
@@ -198,7 +198,7 @@ export const removeStoryFromFavorite = async (listId, storyId) => {
     });
 };
 
-// Follows API
+// ================== Follows API ==================
 export const followUser = async (userId) => {
     return apiRequest('/follows', {
         method: 'POST',
@@ -220,7 +220,7 @@ export const getUserFollowing = async (userId) => {
     return apiRequest(`/follows/${userId}/following`);
 };
 
-// Reading API
+// ================== Reading API ==================
 export const updateReadingProgress = async (chapterId, progress) => {
     return apiRequest('/reading', {
         method: 'POST',
@@ -235,7 +235,7 @@ export const getReadingProgress = async (storyId) => {
     return apiRequest(`/reading/story/${storyId}`);
 };
 
-// Upload API
+// ================== Upload API ==================
 export const uploadImage = async (file) => {
     const formData = new FormData();
     formData.append('image', file);

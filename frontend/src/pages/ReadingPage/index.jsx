@@ -1,41 +1,9 @@
 "use client"
-import { useParams, useNavigate } from "react-router"
+import { useParams, useNavigate, Link } from "react-router"
 import { useState, useEffect } from "react"
 import { getChapterById, getStoryById, getChaptersByStoryId, getStories, getCommentsByChapterId, createComment } from "../../services/api"
-import { Link } from "react-router"
 import { Dropdown } from "react-bootstrap"
 import styles from "./ReadingPage.module.css"
-import Button from "../../components/Button"
-import UserImage from "../../components/UserImage"
-import avatarPlaceholder from '../../assests/images/avatar-placeholder.jpg'
-
-const currentUser = {}
-const comments = [
-    {
-        id: 1,
-        user: 'Jonathan',
-        rating: '4',
-        title: 'Good',
-        content: 'i like this story',
-        createAt: '14/10/2025'
-    },
-    {
-        id: 2,
-        user: 'Bob',
-        rating: '4',
-        title: 'Good',
-        content: 'i like this story',
-        createAt: '14/10/2025'
-    },
-    {
-        id: 3,
-        user: 'Mary',
-        rating: '4',
-        title: 'Good',
-        content: 'i like this story',
-        createAt: '14/10/2025'
-    },
-]
 
 const ReadingPage = () => {
     const { chapterId } = useParams()
