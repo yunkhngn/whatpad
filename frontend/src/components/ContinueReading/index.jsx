@@ -22,7 +22,7 @@ const ContinueReading = ({ stories }) => {
                 <div className="stories-container">
                     {stories.map((item) => (
                         <Card 
-                            key={item.story_id}
+                            key={item.id}
                             className="continue-reading-card" 
                             onClick={() => handleCardClick(item.chapter_id)}
                         >

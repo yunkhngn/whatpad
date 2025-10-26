@@ -24,7 +24,6 @@ const ReadingPage = () => {
     // Check if user is logged in
     const isLoggedIn = () => {
         const token = localStorage.getItem('authToken')
-        console.log('Checking if logged in, token exists:', !!token)
         return !!token
     }
 
@@ -78,9 +77,7 @@ const ReadingPage = () => {
                 // Check if user has voted (only if logged in)
                 if (isLoggedIn()) {
                     try {
-                        console.log('Checking vote status for chapter:', chapterId)
                         const voteResponse = await checkVote(chapterId)
-                        console.log('Vote response:', voteResponse)
                         setHasVoted(voteResponse.hasVoted)
                     } catch (err) {
                         console.error('Error checking vote:', err)
@@ -94,13 +91,10 @@ const ReadingPage = () => {
                                 chapterResponse.chapter.story_id,
                                 chapterId
                             )
-                            console.log('Reading progress saved')
                         } catch (err) {
                             console.error('Error saving reading progress:', err)
                         }
                     }
-                } else {
-                    console.log('User not logged in, skipping vote check')
                 }
 
                 setError(null)
@@ -136,6 +130,8 @@ const ReadingPage = () => {
 
     // Calculate reading progress based on scroll and save to localStorage
     useEffect(() => {
+        let scrollTimeout = null
+        
         const handleScroll = () => {
             const windowHeight = window.innerHeight
             const documentHeight = document.documentElement.scrollHeight
@@ -144,14 +140,26 @@ const ReadingPage = () => {
             const progress = Math.min(100, Math.max(0, scrollPercentage))
             setReadProgress(progress)
             
-            // Save scroll progress to localStorage
-            if (chapterId) {
-                localStorage.setItem(`chapter_${chapterId}_scroll`, progress.toString())
+            // Debounce localStorage save - only save after user stops scrolling for 500ms
+            if (scrollTimeout) {
+                clearTimeout(scrollTimeout)
             }
+            
+            scrollTimeout = setTimeout(() => {
+                if (chapterId) {
+                    localStorage.setItem(`chapter_${chapterId}_scroll`, progress.toString())
+                }
+            }, 500)
         }
 
-        window.addEventListener('scroll', handleScroll)
-        return () => window.removeEventListener('scroll', handleScroll)
+        window.addEventListener('scroll', handleScroll, { passive: true })
+        
+        return () => {
+            window.removeEventListener('scroll', handleScroll)
+            if (scrollTimeout) {
+                clearTimeout(scrollTimeout)
+            }
+        }
     }, [chapterId])
 
     const handleChapterChange = (newChapterId) => {

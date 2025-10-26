@@ -14,10 +14,35 @@ const HomePage = () => {
     const [isLoggedIn, setIsLoggedIn] = useState(false)
     const genreScrollRef = useRef(null)
 
-    // Check if user is logged in
+    // Check if user is logged in and listen for auth events
     useEffect(() => {
-        const token = localStorage.getItem('authToken')
-        setIsLoggedIn(!!token)
+        const checkLoginStatus = () => {
+            const token = localStorage.getItem('authToken')
+            const isUserLoggedIn = !!token
+            setIsLoggedIn(isUserLoggedIn)
+        }
+
+        // Check initially
+        checkLoginStatus()
+
+        // Listen for logout events
+        const handleLogout = () => {
+            checkLoginStatus()
+        }
+
+        // Listen for login events
+        const handleLogin = () => {
+            checkLoginStatus()
+        }
+
+        window.addEventListener('userLogout', handleLogout)
+        window.addEventListener('userLogin', handleLogin)
+
+        // Cleanup
+        return () => {
+            window.removeEventListener('userLogout', handleLogout)
+            window.removeEventListener('userLogin', handleLogin)
+        }
     }, [])
 
     const fetchData = useCallback(async () => {
@@ -53,12 +78,17 @@ const HomePage = () => {
 
         try {
             const response = await getReadingHistory()
-            console.log('Reading history:', response.data)
             // Limit to 6 most recent
-            setContinueReading((response.data || []).slice(0, 6))
+            const limitedData = (response.data || []).slice(0, 6)
+            setContinueReading(limitedData)
         } catch (err) {
-            console.error('Error fetching reading history:', err)
+            // Silently fail - Continue Reading is optional
+            // Just log the error for debugging
+            console.error('Could not fetch reading history:', err.message)
             setContinueReading([])
+            
+            // If it's a token issue, don't force logout
+            // Let user continue using the site
         }
     }, [isLoggedIn])
 
@@ -66,9 +96,14 @@ const HomePage = () => {
         fetchData()
     }, [fetchData])
 
+    // Fetch reading history when login status changes
     useEffect(() => {
-        fetchReadingHistory()
-    }, [fetchReadingHistory])
+        if (isLoggedIn) {
+            fetchReadingHistory()
+        } else {
+            setContinueReading([])
+        }
+    }, [isLoggedIn, fetchReadingHistory])
 
     const groupStoriesByTag = () => {
         const grouped = []

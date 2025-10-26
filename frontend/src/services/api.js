@@ -21,7 +21,11 @@ const apiRequest = async (endpoint, options = {}) => {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
 
     if (!response.ok) {
-        throw new Error(`API Error: ${response.status}`);
+        const errorMessage = `API Error: ${response.status} ${response.statusText}`;
+        if (response.status === 401) {
+            throw new Error('401 Unauthorized');
+        }
+        throw new Error(errorMessage);
     }
 
     return response.json();
@@ -162,43 +166,19 @@ export const deleteComment = async (id) => {
 
 // Votes API
 export const checkVote = async (chapterId) => {
-    console.log('checkVote API called for chapter:', chapterId);
-    try {
-        const result = await apiRequest(`/votes/chapters/${chapterId}/vote/check`);
-        console.log('checkVote API response:', result);
-        return result;
-    } catch (error) {
-        console.error('checkVote API error:', error);
-        throw error;
-    }
+    return apiRequest(`/votes/chapters/${chapterId}/vote/check`);
 };
 
 export const voteChapter = async (chapterId) => {
-    console.log('voteChapter API called for chapter:', chapterId);
-    try {
-        const result = await apiRequest(`/votes/chapters/${chapterId}/vote`, {
-            method: 'POST',
-        });
-        console.log('voteChapter API response:', result);
-        return result;
-    } catch (error) {
-        console.error('voteChapter API error:', error);
-        throw error;
-    }
+    return apiRequest(`/votes/chapters/${chapterId}/vote`, {
+        method: 'POST',
+    });
 };
 
 export const unvoteChapter = async (chapterId) => {
-    console.log('unvoteChapter API called for chapter:', chapterId);
-    try {
-        const result = await apiRequest(`/votes/chapters/${chapterId}/vote`, {
-            method: 'DELETE',
-        });
-        console.log('unvoteChapter API response:', result);
-        return result;
-    } catch (error) {
-        console.error('unvoteChapter API error:', error);
-        throw error;
-    }
+    return apiRequest(`/votes/chapters/${chapterId}/vote`, {
+        method: 'DELETE',
+    });
 };
 
 // Favorites API
@@ -260,7 +240,16 @@ export const updateReadingProgress = async (storyId, chapterId) => {
 };
 
 export const getReadingHistory = async () => {
-    return apiRequest('/reading/me/reading-history');
+    // Add cache busting parameter to prevent browser caching
+    const timestamp = new Date().getTime();
+    const response = await apiRequest(`/reading/me/reading-history?_t=${timestamp}`, {
+        headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+        }
+    });
+    return response;
 };
 
 export const getReadingProgress = async (storyId) => {
