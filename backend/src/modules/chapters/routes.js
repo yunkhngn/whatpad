@@ -49,6 +49,51 @@ router.get('/stories/:storyId/chapters', async (req, res, next) => {
   }
 });
 
+// GET /chapters/story/:storyId - List chapters for a story (alternative endpoint)
+router.get('/story/:storyId', async (req, res, next) => {
+  try {
+    const storyId = req.params.storyId;
+    
+    // Check if user is the author
+    let isAuthor = false;
+    if (req.headers.authorization) {
+      try {
+        const jwt = require('jsonwebtoken');
+        const token = req.headers.authorization.substring(7);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'supersecret');
+        
+        const [authorCheck] = await pool.query(
+          'SELECT id FROM stories WHERE id = ? AND user_id = ?',
+          [storyId, decoded.id]
+        );
+        
+        isAuthor = authorCheck.length > 0;
+      } catch (err) {
+        // Token invalid, continue as guest
+      }
+    }
+    
+    // Build query based on authorization
+    let query = `
+      SELECT id, story_id, title, chapter_order, created_at, updated_at
+      FROM chapters 
+      WHERE story_id = ?
+    `;
+    
+    if (!isAuthor) {
+      query += ` AND is_published = 1`;
+    }
+    
+    query += ' ORDER BY chapter_order ASC';
+    
+    const [rows] = await pool.query(query, [storyId]);
+
+    res.json({ ok: true, data: rows });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // GET /chapters/:id - Get single chapter
 router.get('/:id', async (req, res, next) => {
   try {
@@ -60,7 +105,24 @@ router.get('/:id', async (req, res, next) => {
       return res.status(404).json({ ok: false, message: 'Chapter not found', errorCode: 'CHAPTER_NOT_FOUND' });
     }
 
-    res.json({ ok: true, data: chapter });
+    // Get votes count
+    const [votesCount] = await pool.query(
+      'SELECT COUNT(*) as count FROM votes WHERE chapter_id = ?',
+      [req.params.id]
+    );
+    
+    // Get comments count
+    const [commentsCount] = await pool.query(
+      'SELECT COUNT(*) as count FROM story_comments WHERE chapter_id = ?',
+      [req.params.id]
+    );
+
+    // Add computed fields to chapter
+    chapter.votes = votesCount[0].count;
+    chapter.comments_count = commentsCount[0].count;
+    chapter.views = 0; // TODO: Implement views tracking
+
+    res.json({ ok: true, chapter: chapter });
   } catch (err) {
     next(err);
   }

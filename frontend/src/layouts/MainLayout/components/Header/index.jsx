@@ -1,130 +1,298 @@
-"use client"
-
-import { useState, useEffect, useRef } from "react"
+import React, { useState, useEffect, useCallback, useRef } from "react"
+import { Navbar, Nav, NavDropdown, Form, Button, Container } from "react-bootstrap"
 import { Link, useNavigate } from "react-router"
+import { getCurrentUser, getTags } from "../../../../services/api"
 import "./Header.css"
-import avatarPlaceholder from '../../../../assests/images/avatar-placeholder.jpg'
 
 function Header() {
+    const [user, setUser] = useState(null)
+    const [tags, setTags] = useState([])
     const [searchQuery, setSearchQuery] = useState("")
-    const [isUserProfileOpen, setIsUserProfileOpen] = useState(false)
-    const [isCategoryOpen, setIsCategoryOpen] = useState(false)
+    const [suggestions, setSuggestions] = useState([])
+    const [showSuggestions, setShowSuggestions] = useState(false)
+    const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false)
     const navigate = useNavigate()
-
-    const categoryRef = useRef(null)
-    const profileRef = useRef(null)
-
-    const categories = ["Romance", "Fantasy", "Mystery", "Horror", "Adventure", "Sci-Fi", "Comedy", "Drama"]
+    const debounceTimerRef = useRef(null)
+    const searchWrapperRef = useRef(null)
 
     useEffect(() => {
+        checkAuthStatus()
+        fetchTags()
+    }, [])
 
-        const handleClickOutside = (event) => {
-            if (categoryRef.current && !categoryRef.current.contains(event.target)) {
-                setIsCategoryOpen(false)
+    const checkAuthStatus = async () => {
+        const token = localStorage.getItem('authToken')
+        console.log('Auth Token:', token)
+        if (token) {
+            try {
+                const response = await getCurrentUser()
+                console.log('Current User Response:', response)
+                console.log('Current User Data:', response.data)
+                setUser(response.data)
+            } catch (err) {
+                console.error('Error fetching current user:', err)
+                localStorage.removeItem('authToken')
+                setUser(null)
             }
-            if (profileRef.current && !profileRef.current.contains(event.target)) {
-                setIsUserProfileOpen(false)
-            }
+        } else {
+            console.log('No auth token found')
+        }
+    }
+
+    const fetchTags = async () => {
+        try {
+            const response = await getTags()
+            setTags(response.tags || [])
+        } catch (err) {
+            console.error('Error fetching tags:', err)
+        }
+    }
+
+    const fetchSuggestions = useCallback(async (query) => {
+        if (!query || query.trim().length < 2) {
+            setSuggestions([])
+            setShowSuggestions(false)
+            setIsLoadingSuggestions(false)
+            return
         }
 
-        document.addEventListener("click", handleClickOutside)
-        return () => {
-            document.removeEventListener("click", handleClickOutside)
+        setIsLoadingSuggestions(true)
+        try {
+            const response = await fetch(
+                `http://localhost:4000/stories?q=${encodeURIComponent(query)}&size=5`
+            )
+            const data = await response.json()
+            setSuggestions(data.data || [])
+            setShowSuggestions(true)
+        } catch (err) {
+            console.error('Error fetching suggestions:', err)
+            setSuggestions([])
+        } finally {
+            setIsLoadingSuggestions(false)
         }
     }, [])
 
     const handleSearch = (e) => {
         e.preventDefault()
-        console.log("Searching for:", searchQuery)
-        // TODO: Implement search functionality
+        if (searchQuery.trim()) {
+            navigate(`/search?q=${encodeURIComponent(searchQuery)}`)
+            setShowSuggestions(false)
+        }
     }
 
-    const handleCategorySelect = (category) => {
-        console.log("Selected category:", category)
-        setIsCategoryOpen(false)
-        // TODO: Implement category filtering
+    // Debounced search handler
+    const handleSearchInput = useCallback((value) => {
+        // Clear existing timer
+        if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current)
+        }
+
+        // Set new timer
+        debounceTimerRef.current = setTimeout(() => {
+            if (value.trim()) {
+                fetchSuggestions(value)
+            }
+        }, 300) // 300ms delay
+    }, [fetchSuggestions])
+
+    const handleSearchChange = (e) => {
+        const value = e.target.value
+        setSearchQuery(value)
+        handleSearchInput(value)
     }
+
+    const handleSuggestionClick = (story) => {
+        navigate(`/story/${story.id}`)
+        setSearchQuery("")
+        setSuggestions([])
+        setShowSuggestions(false)
+    }
+
+    // Close suggestions when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (searchWrapperRef.current && !searchWrapperRef.current.contains(event.target)) {
+                setShowSuggestions(false)
+            }
+        }
+
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside)
+        }
+    }, [])
+
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current)
+            }
+        }
+    }, [])
 
     const handleLogout = () => {
-        console.log("User logged out")
-        setIsUserProfileOpen(false)
-        // TODO: Implement actual logout logic
-    }
-
-    const handleProfileClick = () => {
-        // navigate("/profile")
-        setIsUserProfileOpen(false)
+        localStorage.removeItem('authToken')
+        setUser(null)
+        navigate('/')
     }
 
     return (
-        <header className="topbar">
-            <div className="container">
-                <div className="topbar-content">
-                    {/* Topbar left */}
-                    <div className="topbar-left">
-                        <Link to="/" className="site-logo">
-                            <h1>Whattpad</h1>
-                        </Link>
+        <Navbar bg="white" expand="lg" className="header-wattpad border-bottom">
+            <Container fluid className="px-4">
+                {/* Logo */}
+                <Navbar.Brand as={Link} to="/" className="me-4">
+                    <img 
+                        src="/Hompage/main_logo.svg" 
+                        alt="Whatpad" 
+                        height="28"
+                        className="d-inline-block align-top"
+                    />
+                </Navbar.Brand>
 
-                        {/* Category section */}
-                        <div className="category-dropdown" ref={categoryRef}>
-                            <button className="category-button" onClick={() => setIsCategoryOpen(!isCategoryOpen)}>
-                                <i className="bi bi-list category-icon"></i>
-                                Category
-                                <i className={`bi bi-chevron-down chevron-icon ${isCategoryOpen ? "open" : ""}`}></i>
-                            </button>
-                            {isCategoryOpen && (
-                                <div className="category-menu">
-                                    {categories.map((category) => (
-                                        <button key={category} className="category-item" onClick={() => handleCategorySelect(category)}>
-                                            {category}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Search section */}
-                        <form onSubmit={handleSearch} className="search-form">
-                            <div className="search-input-wrapper">
+                <Navbar.Toggle aria-controls="navbar-content" />
+                
+                <Navbar.Collapse id="navbar-content">
+                    {/* Navigation Links */}
+                    <Nav className="me-auto">
+                        <NavDropdown 
+                            title="Browse" 
+                            id="browse-dropdown"
+                            className="header-dropdown"
+                        >
+                            <NavDropdown.Item as={Link} to="/">Home</NavDropdown.Item>
+                            <NavDropdown.Divider />
+                            {tags.slice(0, 10).map(tag => (
+                                <NavDropdown.Item 
+                                    key={tag.id} 
+                                    as={Link} 
+                                    to={`/search?tag=${tag.id}`}
+                                >
+                                    {tag.name}
+                                </NavDropdown.Item>
+                            ))}
+                        </NavDropdown>
+                        
+                        {/* Search Bar - Moved next to Browse */}
+                        <Form className="d-flex search-form ms-3" onSubmit={handleSearch}>
+                            <div className="search-wrapper" ref={searchWrapperRef}>
                                 <i className="bi bi-search search-icon"></i>
-                                <input
-                                    type="text"
-                                    placeholder="Search stories..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                <Form.Control
+                                    type="search"
+                                    placeholder="Search"
                                     className="search-input"
+                                    value={searchQuery}
+                                    onChange={handleSearchChange}
+                                    autoComplete="off"
                                 />
+                                {showSuggestions && (
+                                    <div className="search-suggestions">
+                                        {isLoadingSuggestions ? (
+                                            <div className="suggestion-loading">
+                                                <div className="spinner-border spinner-border-sm text-primary" role="status">
+                                                    <span className="visually-hidden">Loading...</span>
+                                                </div>
+                                                <span className="ms-2">Searching...</span>
+                                            </div>
+                                        ) : suggestions.length > 0 ? (
+                                            suggestions.map((story) => (
+                                                <div
+                                                    key={story.id}
+                                                    className="suggestion-item"
+                                                    onClick={() => handleSuggestionClick(story)}
+                                                >
+                                                    <div className="suggestion-content">
+                                                        {story.cover_url && (
+                                                            <img 
+                                                                src={story.cover_url} 
+                                                                alt={story.title}
+                                                                className="suggestion-cover"
+                                                            />
+                                                        )}
+                                                        <div className="suggestion-text">
+                                                            <div className="suggestion-title">{story.title}</div>
+                                                            <div className="suggestion-author">by {story.author_name}</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="suggestion-empty">
+                                                <i className="bi bi-search"></i>
+                                                <span>No stories found</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
-                        </form>
-                    </div>
+                        </Form>
+                    </Nav>
 
-                    {/* Topbar right */}
-                    <div className="topbar-right">
-                        <button className="btn btn-create">Create Story</button>
+                    {/* Right Side Nav */}
+                    <Nav className="ms-auto align-items-center">
+                        {user ? (
+                            <>
+                                {/* Write Button */}
+                                <Nav.Link as={Link} to="/create-story" className="me-2">
+                                    <Button variant="link" className="write-btn">
+                                        <i className="bi bi-pencil me-1"></i>
+                                        Write
+                                    </Button>
+                                </Nav.Link>
 
-                        {/* Profile menu */}
-                        <div className="user-profile" ref={profileRef}>
-                            <button className="profile-button" onClick={() => setIsUserProfileOpen(!isUserProfileOpen)}>
-                                <img src={avatarPlaceholder} alt="User Avatar" className="user-avatar" />
-                                <i className="bi bi-chevron-down dropdown-icon"></i>
-                            </button>
-
-                            {isUserProfileOpen && (
-                                <div className="dropdown-menu">
-                                    <button className="dropdown-item" onClick={handleProfileClick}>
+                                {/* User Avatar Dropdown */}
+                                <NavDropdown 
+                                    title={
+                                        <div className="user-avatar-wrapper">
+                                            <img 
+                                                src={user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}&background=f26500&color=fff&bold=true`} 
+                                                alt={user.username}
+                                                className="user-avatar"
+                                                onError={(e) => {
+                                                    e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}&background=f26500&color=fff&bold=true`;
+                                                }}
+                                            />
+                                            <span className="notification-badge"></span>
+                                        </div>
+                                    } 
+                                    id="user-dropdown"
+                                    className="user-dropdown"
+                                    align="end"
+                                >
+                                    <NavDropdown.Item as={Link} to={`/profile/${user.id}`}>
+                                        <i className="bi bi-person me-2"></i>
                                         My Profile
-                                    </button>
-                                    <button className="dropdown-item" onClick={handleLogout}>
+                                    </NavDropdown.Item>
+                                    <NavDropdown.Item as={Link} to="/settings">
+                                        <i className="bi bi-gear me-2"></i>
+                                        Settings
+                                    </NavDropdown.Item>
+                                    <NavDropdown.Divider />
+                                    <NavDropdown.Item onClick={handleLogout}>
+                                        <i className="bi bi-box-arrow-right me-2"></i>
                                         Logout
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </header>
+                                    </NavDropdown.Item>
+                                </NavDropdown>
+                            </>
+                        ) : (
+                            <>
+                                <Nav.Link as={Link} to="/create-story" className="me-2">
+                                    <Button variant="link" className="write-btn">
+                                        <i className="bi bi-pencil me-1"></i>
+                                        Write
+                                    </Button>
+                                </Nav.Link>
+                                <Nav.Link as={Link} to="/auth">
+                                    <Button variant="link" className="login-btn">
+                                        Login
+                                    </Button>
+                                </Nav.Link>
+                            </>
+                        )}
+                    </Nav>
+                </Navbar.Collapse>
+            </Container>
+        </Navbar>
     )
 }
 

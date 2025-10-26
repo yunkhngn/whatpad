@@ -1,7 +1,8 @@
-"use client"
+import React from "react"
 import { useNavigate } from "react-router"
-import "./StoryCard.css"
+import { Card } from "react-bootstrap"
 import bookCoverPlaceholder from '../../assests/images/book-cover-placeholder.png'
+import './StoryCard.css'
 
 const StoryCard = ({ story, showProgress = false, progress = 0 }) => {
     const navigate = useNavigate()
@@ -11,20 +12,29 @@ const StoryCard = ({ story, showProgress = false, progress = 0 }) => {
     }
 
     return (
-        <div className="story-card" onClick={handleClick}>
+        <Card
+            className="story-card"
+            onClick={handleClick}
+        >
             <div className="story-cover">
-                <img src={story.coverImage || bookCoverPlaceholder} alt={story.title} />
+                <Card.Img
+                    variant="top"
+                    src={story.cover_url || bookCoverPlaceholder}
+                    alt={story.title}
+                />
                 {showProgress && (
                     <div className="progress-overlay">
-                        <div className="progress-bar" style={{ width: `${progress}%` }} />
+                        <div className="progress-bar" style={{ width: `${progress}%` }}></div>
                     </div>
                 )}
             </div>
             <div className="story-info">
-                <h4 className="story-title">{story.title}</h4>
-                <p className="story-genre">{story?.tag}</p>
+                <h3 className="story-title">{story.title}</h3>
+                <p className="story-genre">
+                    {story.tags && story.tags.length > 0 ? story.tags[0].name : 'Story'}
+                </p>
             </div>
-        </div>
+        </Card>
     )
 }
 

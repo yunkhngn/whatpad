@@ -13,7 +13,8 @@ router.get('/', async (req, res, next) => {
     const { q, tag } = req.query;
     
     let query = `
-      SELECT DISTINCT s.*, u.username as author_name
+      SELECT DISTINCT s.*, u.username as author_name,
+        (SELECT COUNT(*) FROM chapters WHERE story_id = s.id) as chapter_count
       FROM stories s
       JOIN users u ON s.user_id = u.id
       WHERE s.status = 'published'
@@ -22,8 +23,8 @@ router.get('/', async (req, res, next) => {
     const params = [];
     
     if (q) {
-      query += ` AND (s.title LIKE ? OR s.description LIKE ?)`;
-      params.push(`%${q}%`, `%${q}%`);
+      query += ` AND (s.title LIKE ? OR s.description LIKE ? OR u.username LIKE ?)`;
+      params.push(`%${q}%`, `%${q}%`, `%${q}%`);
     }
     
     if (tag) {
@@ -42,7 +43,18 @@ router.get('/', async (req, res, next) => {
     
     const [rows] = await pool.query(query, params);
 
-    res.json({ ok: true, data: rows, page, size });
+    // Fetch tags for each story
+    for (const story of rows) {
+      const [tags] = await pool.query(`
+        SELECT t.id, t.name 
+        FROM tags t
+        JOIN story_tags st ON t.id = st.tag_id
+        WHERE st.story_id = ?
+      `, [story.id]);
+      story.tags = tags;
+    }
+
+    res.json({ ok: true, stories: rows, page, size });
   } catch (err) {
     next(err);
   }
