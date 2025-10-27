@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router'
 import { Button } from "react-bootstrap"
 import styles from './CreateStoryHeader.module.css'
 
-export default function CreateStoryHeader({ storyTitle, isDirty, onCancel, onSkipNext }) {
+export default function CreateStoryHeader({ storyTitle, onCancel, onNext }) {
     const navigate = useNavigate()
 
     function handleGoBack() {
@@ -24,8 +24,8 @@ export default function CreateStoryHeader({ storyTitle, isDirty, onCancel, onSki
                 <Button variant="light" onClick={onCancel} className={styles.cancelBtn}>
                     Cancel
                 </Button>
-                <Button variant="primary" onClick={onSkipNext} className={styles.nextBtn}>
-                    {isDirty ? "Next" : "Skip"}
+                <Button variant="primary" onClick={onNext} className={styles.nextBtn}>
+                    Next
                 </Button>
             </div>
         </header>

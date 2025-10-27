@@ -117,6 +117,11 @@
     color: #999;
 }
 
+.titleNoti {
+    font-size: 0.9rem;
+    color: red;
+}
+
 /* Tags Section */
 .tagsSection {
     display: flex;

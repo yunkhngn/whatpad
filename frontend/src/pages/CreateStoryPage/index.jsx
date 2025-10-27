@@ -6,6 +6,8 @@ import { getTags } from "../../services/api"
 import CreateStoryHeader from "./components/CreateStoryHeader"
 import CreateStoryForm from "./components/CreateStoryForm"
 import CancelModal from "./components/CancelModal"
+import { toast, Toaster } from "sonner"
+import Loading from "../../components/Loading/Loading"
 // import "./CreateStory.module.css"
 
 export default function CreateStoryPage() {
@@ -19,9 +21,7 @@ export default function CreateStoryPage() {
     const [previewUrl, setPreviewUrl] = useState(null)
     const [allTags, setAllTags] = useState([])
     const [showCancelModal, setShowCancelModal] = useState(false)
-
-    // Check if form has unsaved changes
-    const isDirty = storyDetails.title || storyDetails.description || storyDetails.cover || storyDetails.tags.length > 0
+    const [titleEmpty, setTitleEmpty] = useState(true)
 
     useEffect(() => {
         fetchTags()
@@ -36,10 +36,11 @@ export default function CreateStoryPage() {
         }
     }
 
-    const handleSkipNext = () => {
-        // TODO: Implement navigation to next step or skip logic
-        console.log("Skip/Next clicked with story details:", storyDetails)
-        // For now, navigate to home
+    const handleNext = () => {
+        if (titleEmpty) {
+            toast.error("Title is required")
+            return
+        }
         navigate("/")
     }
 
@@ -54,11 +55,12 @@ export default function CreateStoryPage() {
 
     return (
         <div className="create-story-page">
+            <Toaster />
             <CreateStoryHeader
                 storyTitle={storyDetails.title}
-                isDirty={isDirty}
                 onCancel={handleCancel}
-                onSkipNext={handleSkipNext}
+                onNext={handleNext}
+                titleEmpty={titleEmpty}
             />
 
             <CreateStoryForm
@@ -67,6 +69,8 @@ export default function CreateStoryPage() {
                 allTags={allTags}
                 previewUrl={previewUrl}
                 setPreviewUrl={setPreviewUrl}
+                titleEmpty={titleEmpty}
+                setTitleEmpty={setTitleEmpty}
             />
 
             <CancelModal

@@ -2,9 +2,24 @@
 
 import { Form, Container, Row, Col, Badge } from "react-bootstrap"
 import styles from "./CreateStoryForm.module.css"
+import { toast } from "sonner"
 
-export default function CreateStoryForm({ storyDetails, setStoryDetails, allTags, previewUrl, setPreviewUrl }) {
+export default function CreateStoryForm({
+    storyDetails,
+    setStoryDetails,
+    allTags,
+    previewUrl,
+    setPreviewUrl,
+    titleEmpty,
+    setTitleEmpty,
+}) {
     const handleTitleChange = (e) => {
+        if (e.target.value.length === 0) {
+            setTitleEmpty(true)
+        } else {
+            setTitleEmpty(false)
+        }
+
         setStoryDetails({
             ...storyDetails,
             title: e.target.value,
@@ -91,6 +106,9 @@ export default function CreateStoryForm({ storyDetails, setStoryDetails, allTags
                                         onChange={handleTitleChange}
                                         className={styles.formControlCustom}
                                     />
+                                    {titleEmpty && (
+                                        <p className={styles.titleNoti}>* Title is required</p>
+                                    )}
                                 </Form.Group>
 
                                 {/* Description Field */}

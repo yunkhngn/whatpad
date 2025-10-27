@@ -1,0 +1,65 @@
+.overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: all;
+    /* block interactions */
+}
+
+.backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.137);
+    backdrop-filter: blur(2px);
+}
+
+.container {
+    position: relative;
+    z-index: 2001;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 20px 28px;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.25);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+    color: #fff;
+}
+
+.spinner {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 8px solid rgba(255, 255, 255, 0.15);
+    border-top-color: #ffffff;
+    animation: spin 0.9s linear infinite;
+}
+
+.message {
+    font-size: 14px;
+    color: #fff;
+    text-align: center;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* small screens */
+@media (max-width: 480px) {
+    .spinner {
+        width: 48px;
+        height: 48px;
+        border-width: 6px;
+    }
+
+    .container {
+        padding: 14px 18px;
+    }
+}
