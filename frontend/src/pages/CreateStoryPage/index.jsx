@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router"
-import { getTags } from "../../services/api"
+import { createStory, getTags, uploadImage } from "../../services/api"
 import CreateStoryHeader from "./components/CreateStoryHeader"
 import CreateStoryForm from "./components/CreateStoryForm"
 import CancelModal from "./components/CancelModal"
@@ -22,6 +22,7 @@ export default function CreateStoryPage() {
     const [allTags, setAllTags] = useState([])
     const [showCancelModal, setShowCancelModal] = useState(false)
     const [titleEmpty, setTitleEmpty] = useState(true)
+    const [loading, setLoading] = useState(false)
 
     useEffect(() => {
         fetchTags()
@@ -36,12 +37,44 @@ export default function CreateStoryPage() {
         }
     }
 
-    const handleNext = () => {
+    const handleSubmitStory = async () => {
         if (titleEmpty) {
             toast.error("Title is required")
             return
         }
-        navigate("/")
+
+        try {
+            setLoading(true)
+            // let imageUrl = null
+
+            // // Upload cover image if provided
+            // if (storyDetails.cover) {
+            //     const uploadResponse = await uploadImage(storyDetails.cover)
+            //     imageUrl = uploadResponse.image_url || uploadResponse.url
+            // }
+
+            // // Prepare story data with tag IDs
+            // const tagIds = storyDetails.tags.map((tag) => tag.id)
+            // const storyData = {
+            //     title: storyDetails.title,
+            //     description: storyDetails.description,
+            //     cover_image: imageUrl,
+            //     tag_ids: tagIds,
+            // }
+
+            // // Create story
+            // const createResponse = await createStory(storyData)
+            // const newStoryId = createResponse.data?.id || createResponse.id
+
+            // Navigate to chapter creation page
+            const newStoryId = 1
+            navigate(`/stories/${newStoryId}/chapters/1`)
+        } catch (error) {
+            console.error("Error creating story:", error)
+            toast.error("Failed to create story. Please try again.")
+        } finally {
+            setLoading(false)
+        }
     }
 
     const handleCancel = () => {
@@ -56,10 +89,13 @@ export default function CreateStoryPage() {
     return (
         <div className="create-story-page">
             <Toaster />
+
+            {loading && <Loading />}
+
             <CreateStoryHeader
                 storyTitle={storyDetails.title}
                 onCancel={handleCancel}
-                onNext={handleNext}
+                onNext={handleSubmitStory}
                 titleEmpty={titleEmpty}
             />
 

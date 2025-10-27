@@ -1,4 +1,4 @@
-import Footer from '../MainLayout/components/Footer'
+import Footer from '../components/Footer'
 import styles from './CreateStoryLayout.module.css'
 
 export default function CreateStoryLayout({ children }) {

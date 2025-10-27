@@ -8,6 +8,8 @@ import StoryDetailPage from '../../pages/StoryDetailPage'
 import SearchPage from '../../pages/SearchPage'
 import ProfilePage from '../../pages/ProfilePage'
 import CreateStoryPage from "../../pages/CreateStoryPage"
+import UserStoryPage from "../../pages/UserStoryPage"
+import CreateChapterPage from "../../pages/CreateChapterPage"
 
 const AppRouter = () => {
     return (
@@ -50,10 +52,22 @@ const AppRouter = () => {
                     </MainLayout>
                 } />
 
+                <Route path="/my-stories" element={
+                    <MainLayout>
+                        <UserStoryPage />
+                    </MainLayout>
+                } />
+
                 {/* Create Story Layout */}
                 <Route path="/create-story" element={
                     <CreateStoryLayout>
                         <CreateStoryPage />
+                    </CreateStoryLayout>
+                } />
+
+                <Route path="/stories/:storyId/chapters/:chapterId" element={
+                    <CreateStoryLayout>
+                        <CreateChapterPage />
                     </CreateStoryLayout>
                 } />
 

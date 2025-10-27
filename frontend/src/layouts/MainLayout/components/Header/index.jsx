@@ -263,6 +263,10 @@ function Header() {
                                         <i className="bi bi-person me-2"></i>
                                         My Profile
                                     </NavDropdown.Item>
+                                    <NavDropdown.Item as={Link} to={`/my-stories`}>
+                                        <i className="bi bi-journal-text me-2"></i>
+                                        My Stories
+                                    </NavDropdown.Item>
                                     <NavDropdown.Item as={Link} to="/settings">
                                         <i className="bi bi-gear me-2"></i>
                                         Settings

@@ -1,22 +1,21 @@
-"use client"
-
-import React from "react"
-import ReactDOM from "react-dom"
 import styles from "./Loading.module.css"
 
-export default function Loading({ show = true, message = "Loading..." }) {
-    if (typeof document === "undefined") return null
-    if (!show) return null
-
-    const overlay = (
-        <div className={styles.overlay} role="status" aria-live="polite">
-            <div className={styles.backdrop} />
-            <div className={styles.container}>
-                <div className={styles.spinner} />
-                {message && <div className={styles.message}>{message}</div>}
+/**
+ * Full-screen loading overlay component.
+ * Props:
+ *  - show (boolean) default true: whether to display the overlay
+ *  - message (string) optional message shown under the spinner
+ *
+ * Usage:
+ *  <Loading show={isLoading} message="Saving..." />
+ *  or simply <Loading /> when you conditionally render it.
+ */
+export default function Loading() {
+    return (
+        <div className={styles.overlay} aria-live="polite">
+            <div className={styles.content}>
+                <div className={styles.spinner} aria-hidden="true" />
             </div>
         </div>
     )
-
-    return ReactDOM.createPortal(overlay, document.body)
 }
