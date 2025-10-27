@@ -57,6 +57,16 @@ export const getStories = async (params = {}) => {
     };
 };
 
+export const getStoriesByUserId = async (userId, params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const response = await apiRequest(`/users/${userId}/stories${queryString ? `?${queryString}` : ''}`);
+    return { 
+        stories: response.stories || [], 
+        page: response.page, 
+        size: response.size 
+    };
+};
+
 export const getStoryById = async (id) => {
     const response = await apiRequest(`/stories/${id}`);
     return { story: response.data };
