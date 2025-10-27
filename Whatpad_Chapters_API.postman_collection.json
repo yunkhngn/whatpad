@@ -1,0 +1,544 @@
+{
+	"info": {
+		"_postman_id": "whatpad-chapters-api-2024",
+		"name": "Whatpad - Chapters API",
+		"description": "Collection để test Chapters API với nested routes\n\n## Setup:\n1. Import collection này vào Postman\n2. Tạo Environment với variables:\n   - base_url: http://localhost:4000\n   - token: (sẽ tự động set sau khi login)\n   - story_id: (ID của story để test)\n   - chapter_id: (ID của chapter để test)\n\n## Test Flow:\n1. Register/Login để lấy token\n2. Create Story để có story_id\n3. Test Chapter CRUD với story_id",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Register",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201 || pm.response.code === 200) {",
+									"    const jsonData = pm.response.json();",
+									"    if (jsonData.token) {",
+									"        pm.environment.set('token', jsonData.token);",
+									"        console.log('✅ Token saved:', jsonData.token.substring(0, 20) + '...');",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"testuser\",\n  \"email\": \"test@example.com\",\n  \"password\": \"Test123456\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/register",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						},
+						"description": "Đăng ký user mới. Token sẽ tự động lưu vào environment."
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const jsonData = pm.response.json();",
+									"    if (jsonData.token) {",
+									"        pm.environment.set('token', jsonData.token);",
+									"        console.log('✅ Token saved:', jsonData.token.substring(0, 20) + '...');",
+									"    }",
+									"    if (jsonData.user && jsonData.user.id) {",
+									"        pm.environment.set('user_id', jsonData.user.id);",
+									"        console.log('✅ User ID saved:', jsonData.user.id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"Test123456\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"description": "Login để lấy JWT token"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Current User",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/auth/me",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"me"
+							]
+						},
+						"description": "Lấy thông tin user hiện tại (test token)"
+					},
+					"response": []
+				}
+			],
+			"description": "Authentication endpoints"
+		},
+		{
+			"name": "Stories",
+			"item": [
+				{
+					"name": "Create Story",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201 || pm.response.code === 200) {",
+									"    const jsonData = pm.response.json();",
+									"    if (jsonData.data && jsonData.data.id) {",
+									"        pm.environment.set('story_id', jsonData.data.id);",
+									"        console.log('✅ Story ID saved:', jsonData.data.id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Test Story for Chapters\",\n  \"description\": \"Story để test chapter API\",\n  \"status\": \"draft\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/stories",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"stories"
+							]
+						},
+						"description": "Tạo story mới. Story ID sẽ tự động lưu vào environment."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Story by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/stories/{{story_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"stories",
+								"{{story_id}}"
+							]
+						},
+						"description": "Lấy thông tin story theo ID"
+					},
+					"response": []
+				},
+				{
+					"name": "List All Stories",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/stories?page=1&size=10",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"stories"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Lấy danh sách stories"
+					},
+					"response": []
+				}
+			],
+			"description": "Story endpoints - cần có story trước khi test chapters"
+		},
+		{
+			"name": "Chapters - Nested Routes (NEW)",
+			"item": [
+				{
+					"name": "Create Chapter",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201 || pm.response.code === 200) {",
+									"    const jsonData = pm.response.json();",
+									"    if (jsonData.data && jsonData.data.id) {",
+									"        pm.environment.set('chapter_id', jsonData.data.id);",
+									"        console.log('✅ Chapter ID saved:', jsonData.data.id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Chapter 1: Beginning\",\n  \"content\": \"Đây là nội dung chapter đầu tiên.\\n\\nParagraph thứ hai với nhiều nội dung hơn.\\n\\nParagraph thứ ba kết thúc chapter.\",\n  \"chapter_order\": 1,\n  \"is_published\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/stories/{{story_id}}/chapters",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"stories",
+								"{{story_id}}",
+								"chapters"
+							]
+						},
+						"description": "✅ Tạo chapter mới cho story.\n\n**Nested Route:** POST /stories/:storyId/chapters\n\n**Validation:**\n- Require authentication\n- User phải là owner của story\n- storyId được validate từ URL"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Chapter (with validation)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/stories/{{story_id}}/chapters/{{chapter_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"stories",
+								"{{story_id}}",
+								"chapters",
+								"{{chapter_id}}"
+							]
+						},
+						"description": "✅ Lấy chapter với validation.\n\n**Nested Route:** GET /stories/:storyId/chapters/:chapterId\n\n**Validation:**\n- Validate chapter thuộc về story\n- Return 404 nếu chapter không thuộc story này"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Chapter - Wrong Story (Should Fail)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/stories/99999/chapters/{{chapter_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"stories",
+								"99999",
+								"chapters",
+								"{{chapter_id}}"
+							]
+						},
+						"description": "❌ Test validation: Lấy chapter từ story sai.\n\nExpected: 404 - Chapter not found or does not belong to this story"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Chapter",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Chapter 1: Updated Title\",\n  \"content\": \"Nội dung đã được cập nhật.\\n\\nThêm paragraph mới.\",\n  \"is_published\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/stories/{{story_id}}/chapters/{{chapter_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"stories",
+								"{{story_id}}",
+								"chapters",
+								"{{chapter_id}}"
+							]
+						},
+						"description": "✅ Cập nhật chapter.\n\n**Nested Route:** PUT /stories/:storyId/chapters/:chapterId\n\n**Validation:**\n- Require authentication\n- User phải là owner\n- Chapter phải thuộc về story"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Chapter - Wrong Story (Should Fail)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Should not update\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/stories/99999/chapters/{{chapter_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"stories",
+								"99999",
+								"chapters",
+								"{{chapter_id}}"
+							]
+						},
+						"description": "❌ Test validation: Update chapter từ story sai.\n\nExpected: 404 - Chapter not found or does not belong to this story"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Chapter",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/stories/{{story_id}}/chapters/{{chapter_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"stories",
+								"{{story_id}}",
+								"chapters",
+								"{{chapter_id}}"
+							]
+						},
+						"description": "✅ Xóa chapter.\n\n**Nested Route:** DELETE /stories/:storyId/chapters/:chapterId\n\n**Validation:**\n- Require authentication\n- User phải là owner\n- Chapter phải thuộc về story\n\n⚠️ Run này cuối cùng vì sẽ xóa chapter!"
+					},
+					"response": []
+				}
+			],
+			"description": "Nested route endpoints mới cho Chapter CRUD"
+		},
+		{
+			"name": "Chapters - List & Legacy",
+			"item": [
+				{
+					"name": "List Chapters by Story",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/chapters/story/{{story_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"chapters",
+								"story",
+								"{{story_id}}"
+							]
+						},
+						"description": "Lấy danh sách tất cả chapters của một story.\n\nEndpoint: GET /chapters/story/:storyId"
+					},
+					"response": []
+				},
+				{
+					"name": "List Chapters (Alternative)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/stories/{{story_id}}/chapters",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"stories",
+								"{{story_id}}",
+								"chapters"
+							]
+						},
+						"description": "Alternative endpoint để list chapters.\n\nEndpoint: GET /stories/:storyId/chapters"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Chapter by ID (Legacy)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/chapters/{{chapter_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"chapters",
+								"{{chapter_id}}"
+							]
+						},
+						"description": "📖 Legacy endpoint - Lấy chapter chỉ bằng ID.\n\n**Dùng cho:** Reading page\n**Không validate:** storyId\n\nEndpoint: GET /chapters/:id"
+					},
+					"response": []
+				}
+			],
+			"description": "List chapters và legacy endpoints"
+		},
+		{
+			"name": "Health Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/health",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"health"
+					]
+				},
+				"description": "Kiểm tra server có đang chạy không"
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:4000",
+			"type": "string"
+		}
+	]
+}
+

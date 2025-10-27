@@ -98,27 +98,34 @@ export const getChaptersByStoryId = async (storyId) => {
     return { chapters: response.data || [] };
 };
 
-export const getChapterById = async (id) => {
-    const response = await apiRequest(`/chapters/${id}`);
+// Get chapter by ID (legacy - for reading page)
+export const getChapterById = async (chapterId) => {
+    const response = await apiRequest(`/chapters/${chapterId}`);
     return { chapter: response.chapter };
 };
 
-export const createChapter = async (chapterData) => {
-    return apiRequest('/chapters', {
+// Get chapter by story and chapter ID (with validation)
+export const getChapterByStoryAndId = async (storyId, chapterId) => {
+    const response = await apiRequest(`/stories/${storyId}/chapters/${chapterId}`);
+    return { chapter: response.chapter };
+};
+
+export const createChapter = async (storyId, chapterData) => {
+    return apiRequest(`/stories/${storyId}/chapters`, {
         method: 'POST',
         body: JSON.stringify(chapterData),
     });
 };
 
-export const updateChapter = async (id, chapterData) => {
-    return apiRequest(`/chapters/${id}`, {
+export const updateChapter = async (storyId, chapterId, chapterData) => {
+    return apiRequest(`/stories/${storyId}/chapters/${chapterId}`, {
         method: 'PUT',
         body: JSON.stringify(chapterData),
     });
 };
 
-export const deleteChapter = async (id) => {
-    return apiRequest(`/chapters/${id}`, {
+export const deleteChapter = async (storyId, chapterId) => {
+    return apiRequest(`/stories/${storyId}/chapters/${chapterId}`, {
         method: 'DELETE',
     });
 };
