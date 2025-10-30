@@ -3,6 +3,7 @@ import { Container, Row, Col, Button, Alert, Spinner, Carousel, Badge } from "re
 import { getStories, getTags } from "../../services/api"
 import styles from "./HomePage.module.css"
 import GenreSection from "../../components/GenreSection"
+import ContinueReading from "../../components/ContinueReading"
 
 const HomePage = () => {
     const [stories, setStories] = useState([])
@@ -133,6 +134,9 @@ const HomePage = () => {
 
             {!loading && (
                 <>
+                    {/* Continue Reading Section */}
+                    <ContinueReading />
+
                     {/* Carousel Section */}
                     <div className={styles.carouselSection}>
                         <Container>

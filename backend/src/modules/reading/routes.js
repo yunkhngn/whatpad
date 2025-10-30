@@ -10,7 +10,7 @@ router.get('/me/reading-history', auth, async (req, res, next) => {
     const { story_id } = req.query;
     
     let query = `
-      SELECT rh.*, s.title as story_title, c.title as chapter_title
+      SELECT rh.*, s.title as story_title, s.cover_url, c.title as chapter_title
       FROM reading_history rh
       JOIN stories s ON rh.story_id = s.id
       LEFT JOIN chapters c ON rh.last_chapter_id = c.id

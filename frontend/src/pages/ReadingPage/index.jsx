@@ -1,7 +1,7 @@
 "use client"
 import { useParams, useNavigate } from "react-router"
 import { useState, useEffect } from "react"
-import { getChapterById, getStoryById, getChaptersByStoryId, getStories, getCommentsByChapterId, createComment, checkVoteStatus, voteChapter, unvoteChapter } from "../../services/api"
+import { getChapterById, getStoryById, getChaptersByStoryId, getStories, getCommentsByChapterId, createComment, checkVoteStatus, voteChapter, unvoteChapter, updateReadingProgress } from "../../services/api"
 import { Link } from "react-router"
 import { Dropdown } from "react-bootstrap"
 import styles from "./ReadingPage.module.css"
@@ -81,6 +81,16 @@ const ReadingPage = () => {
                 } catch (err) {
                     console.error('Error fetching comments:', err)
                     setComments([])
+                }
+
+                // Update reading progress (only if logged in)
+                if (isLoggedIn() && chapterResponse.chapter?.story_id) {
+                    try {
+                        await updateReadingProgress(chapterResponse.chapter.story_id, chapterId)
+                        console.log('Reading progress updated')
+                    } catch (err) {
+                        console.error('Error updating reading progress:', err)
+                    }
                 }
 
                 setError(null)

@@ -235,13 +235,31 @@ export const getUserFollowing = async (userId) => {
 };
 
 // Reading API
-export const updateReadingProgress = async (chapterId, progress) => {
+export const updateReadingProgress = async (storyId, lastChapterId) => {
     return apiRequest('/reading', {
         method: 'POST',
         body: JSON.stringify({ 
-            chapter_id: chapterId, 
-            progress_percentage: progress 
+            story_id: storyId, 
+            last_chapter_id: lastChapterId 
         }),
+    });
+};
+
+export const getReadingHistory = async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = `/reading/me/reading-history${queryString ? `?${queryString}` : ''}`;
+    return apiRequest(endpoint);
+};
+
+export const followStory = async (storyId) => {
+    return apiRequest(`/reading/followed-stories/${storyId}`, {
+        method: 'POST',
+    });
+};
+
+export const unfollowStory = async (storyId) => {
+    return apiRequest(`/reading/followed-stories/${storyId}`, {
+        method: 'DELETE',
     });
 };
 
@@ -291,3 +309,4 @@ export const getDraftStoriesByUserId = (userId, params = {}) => {
 export const getAllStoriesByUserId = (userId, params = {}) => {
     return getStoriesByUserId(userId, params);
 };
+
