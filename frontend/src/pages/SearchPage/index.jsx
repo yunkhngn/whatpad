@@ -410,7 +410,7 @@ const SearchPage = () => {
                                             </p>
 
                                             <div className={styles.storyAuthor}>
-                                                by <Link to={`/profile/${story.user_id}`}>{story.author_name}</Link>
+                                                by <Link to={`/user/${story.user_id}`}>{story.author_name}</Link>
                                             </div>
                                         </div>
                                     </div>

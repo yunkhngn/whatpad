@@ -89,7 +89,9 @@ const StoryDetailPage = () => {
                                 <div className="flex-grow-1">
                                     <h1 className="mb-2">{story.title}</h1>
                                     <p className="text-muted mb-2">
-                                        by <strong>{story.author_name || story.username}</strong>
+                                        by <Link to={`/user/${story.user_id}`} style={{ textDecoration: 'none' }}>
+                                            <strong>{story.author_name || story.username}</strong>
+                                        </Link>
                                     </p>
                                     
                                     {/* Tags */}
@@ -245,7 +247,9 @@ const StoryDetailPage = () => {
                                     style={{ width: '50px', height: '50px' }}
                                 />
                                 <div>
-                                    <h6 className="mb-0">{story.author_name || story.username}</h6>
+                                    <Link to={`/user/${story.user_id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                                        <h6 className="mb-0">{story.author_name || story.username}</h6>
+                                    </Link>
                                     <small className="text-muted">Author</small>
                                 </div>
                             </div>
@@ -264,9 +268,11 @@ const StoryDetailPage = () => {
                             <p className="text-muted">
                                 Discover more stories by {story.author_name || story.username}
                             </p>
-                            <Button variant="outline-primary" size="sm" className="w-100">
-                                View All Stories
-                            </Button>
+                            <Link to={`/user/${story.user_id}`}>
+                                <Button variant="outline-primary" size="sm" className="w-100">
+                                    View All Stories
+                                </Button>
+                            </Link>
                         </Card.Body>
                     </Card>
                 </Col>

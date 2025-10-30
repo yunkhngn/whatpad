@@ -61,9 +61,10 @@ export const getStoriesByUserId = async (userId, params = {}) => {
     const queryString = new URLSearchParams(params).toString();
     const response = await apiRequest(`/users/${userId}/stories${queryString ? `?${queryString}` : ''}`);
     return { 
-        stories: response.stories || [], 
+        stories: response.stories || response.data || [], 
         page: response.page, 
-        size: response.size 
+        size: response.size,
+        total: response.total
     };
 };
 
@@ -106,7 +107,7 @@ export const getChaptersByStoryId = async (storyId) => {
 
 export const getChapterById = async (id) => {
     const response = await apiRequest(`/chapters/${id}`);
-    return { chapter: response.data };
+    return { chapter: response.chapter || response.data };
 };
 
 export const createChapter = async (chapterData) => {
@@ -156,8 +157,8 @@ export const getCommentsByChapterId = async (chapterId) => {
     return apiRequest(`/comments/chapter/${chapterId}`);
 };
 
-export const createComment = async (commentData) => {
-    return apiRequest('/comments', {
+export const createComment = async (chapterId, commentData) => {
+    return apiRequest(`/comments/chapter/${chapterId}`, {
         method: 'POST',
         body: JSON.stringify(commentData),
     });
@@ -170,10 +171,13 @@ export const deleteComment = async (id) => {
 };
 
 // Votes API
+export const checkVoteStatus = async (chapterId) => {
+    return apiRequest(`/votes/chapter/${chapterId}`);
+};
+
 export const voteChapter = async (chapterId) => {
-    return apiRequest('/votes', {
+    return apiRequest(`/votes/chapter/${chapterId}`, {
         method: 'POST',
-        body: JSON.stringify({ chapter_id: chapterId }),
     });
 };
 
@@ -273,4 +277,17 @@ export const searchStories = (query) => {
 
 export const getStoriesByGenre = (genre) => {
     return getStories({ tag: genre });
+};
+
+// Helper functions for user stories
+export const getPublishedStoriesByUserId = (userId, params = {}) => {
+    return getStoriesByUserId(userId, { ...params, status: 'published' });
+};
+
+export const getDraftStoriesByUserId = (userId, params = {}) => {
+    return getStoriesByUserId(userId, { ...params, status: 'draft' });
+};
+
+export const getAllStoriesByUserId = (userId, params = {}) => {
+    return getStoriesByUserId(userId, params);
 };

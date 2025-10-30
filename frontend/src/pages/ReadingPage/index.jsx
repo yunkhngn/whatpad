@@ -1,7 +1,7 @@
 "use client"
 import { useParams, useNavigate } from "react-router"
 import { useState, useEffect } from "react"
-import { getChapterById, getStoryById, getChaptersByStoryId, getStories, getCommentsByChapterId, createComment } from "../../services/api"
+import { getChapterById, getStoryById, getChaptersByStoryId, getStories, getCommentsByChapterId, createComment, checkVoteStatus, voteChapter, unvoteChapter } from "../../services/api"
 import { Link } from "react-router"
 import { Dropdown } from "react-bootstrap"
 import styles from "./ReadingPage.module.css"
@@ -18,6 +18,8 @@ const ReadingPage = () => {
     const [readProgress, setReadProgress] = useState(0)
     const [commentText, setCommentText] = useState("")
     const [comments, setComments] = useState([])
+    const [hasVoted, setHasVoted] = useState(false)
+    const [votesCount, setVotesCount] = useState(0)
 
     // Check if user is logged in
     const isLoggedIn = () => {
@@ -42,6 +44,18 @@ const ReadingPage = () => {
                 // Fetch chapter
                 const chapterResponse = await getChapterById(chapterId)
                 setChapter(chapterResponse.chapter)
+                setVotesCount(chapterResponse.chapter?.votes || 0)
+
+                // Check if user has voted (only if logged in)
+                if (isLoggedIn()) {
+                    try {
+                        const voteStatus = await checkVoteStatus(chapterId)
+                        setHasVoted(voteStatus.hasVoted || false)
+                    } catch (err) {
+                        console.error('Error checking vote status:', err)
+                        setHasVoted(false)
+                    }
+                }
 
                 // Fetch story details
                 if (chapterResponse.chapter?.story_id) {
@@ -120,6 +134,28 @@ const ReadingPage = () => {
         return () => window.removeEventListener('scroll', handleScroll)
     }, [chapterId])
 
+    // Handle vote toggle
+    const handleVoteToggle = async () => {
+        if (!handleAuthAction('vote')) return
+
+        try {
+            if (hasVoted) {
+                // Unvote
+                await unvoteChapter(chapterId)
+                setHasVoted(false)
+                setVotesCount(prev => Math.max(0, prev - 1))
+            } else {
+                // Vote
+                await voteChapter(chapterId)
+                setHasVoted(true)
+                setVotesCount(prev => prev + 1)
+            }
+        } catch (err) {
+            console.error('Error toggling vote:', err)
+            alert('Failed to update vote. Please try again.')
+        }
+    }
+
     const handleChapterChange = (newChapterId) => {
         navigate(`/read/${newChapterId}`)
     }
@@ -130,9 +166,14 @@ const ReadingPage = () => {
 
     if (loading) {
         return (
-            <div className={styles.readingPage}>
-                <div className="container">
-                    <div className={styles.loading}>Loading chapter...</div>
+            <div className="container">
+                <div className="row justify-content-center align-items-center" style={{ minHeight: '80vh' }}>
+                    <div className="col-md-6 text-center">
+                        <div className="spinner-border text-primary" role="status" style={{ width: '3rem', height: '3rem' }}>
+                            <span className="visually-hidden">Loading...</span>
+                        </div>
+                        <p className="mt-3 text-muted">Loading chapter...</p>
+                    </div>
                 </div>
             </div>
         )
@@ -140,10 +181,21 @@ const ReadingPage = () => {
 
     if (error || !chapter) {
         return (
-            <div className={styles.readingPage}>
-                <div className="container">
-                    <h2>{error || 'Chapter not found'}</h2>
-                    <button className={styles.backButton} onClick={() => navigate(-1)}>Back</button>
+            <div className="container">
+                <div className="row justify-content-center align-items-center" style={{ minHeight: '80vh' }}>
+                    <div className="col-md-6 text-center">
+                        <div className="alert alert-warning" role="alert">
+                            <h2 className="alert-heading">Chapter not found</h2>
+                            <p>Sorry, we couldn't find the chapter you're looking for.</p>
+                            <hr />
+                            <button 
+                                className="btn btn-primary btn-lg" 
+                                onClick={() => navigate(-1)}
+                            >
+                                Back to Previous Page
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         )
@@ -200,7 +252,7 @@ const ReadingPage = () => {
                     <h2 className={styles.chapterTitle}>{chapter.title}</h2>
                     <div className={styles.chapterMeta}>
                         <span><i className="bi bi-eye"></i> {chapter.views || 0} reads</span>
-                        <span><i className="bi bi-star"></i> {chapter.votes || 0} votes</span>
+                        <span><i className="bi bi-star"></i> {votesCount} votes</span>
                         <span><i className="bi bi-chat"></i> {chapter.comments_count || 0} comments</span>
                     </div>
 
@@ -248,15 +300,12 @@ const ReadingPage = () => {
                             <i className="bi bi-plus-lg"></i> Add to library
                         </button>
                         <button 
-                            className={styles.actionButton}
-                            onClick={() => {
-                                if (handleAuthAction('vote')) {
-                                    // TODO: Implement vote functionality
-                                    console.log('Vote')
-                                }
-                            }}
+                            className={`${styles.actionButton} ${hasVoted ? styles.voted : ''}`}
+                            onClick={handleVoteToggle}
+                            title={hasVoted ? 'Click to unvote' : 'Click to vote'}
                         >
-                            <i className="bi bi-star"></i> Vote
+                            <i className={`bi ${hasVoted ? 'bi-star-fill' : 'bi-star'}`}></i> 
+                            {hasVoted ? 'Voted' : 'Vote'}
                         </button>
                     </div>
                     <div className={styles.shareSection}>
@@ -303,8 +352,7 @@ const ReadingPage = () => {
                                     if (commentText.trim()) {
                                         try {
                                             // Post comment to backend
-                                            await createComment({
-                                                chapter_id: chapterId,
+                                            await createComment(chapterId, {
                                                 content: commentText.trim()
                                             })
                                             
