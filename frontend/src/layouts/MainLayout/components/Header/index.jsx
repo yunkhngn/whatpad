@@ -134,6 +134,8 @@ function Header() {
     const handleLogout = () => {
         localStorage.removeItem('authToken')
         setUser(null)
+        // Dispatch custom event to notify components about logout
+        window.dispatchEvent(new Event('userLogout'))
         navigate('/')
     }
 

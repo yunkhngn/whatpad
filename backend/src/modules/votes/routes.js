@@ -4,6 +4,20 @@ const auth = require('../../mw/auth');
 
 const router = express.Router();
 
+// GET /chapters/:id/vote/check - Check if user has voted
+router.get('/chapters/:id/vote/check', auth, async (req, res, next) => {
+  try {
+    const [rows] = await pool.query(
+      'SELECT * FROM votes WHERE chapter_id = ? AND user_id = ?',
+      [req.params.id, req.user.id]
+    );
+
+    res.json({ ok: true, hasVoted: rows.length > 0 });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // POST /chapters/:id/vote - Vote (like) a chapter
 router.post('/chapters/:id/vote', auth, async (req, res, next) => {
   try {

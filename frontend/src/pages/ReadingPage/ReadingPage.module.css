@@ -220,10 +220,20 @@
     border-color: #ccc;
 }
 
+.actionButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 .actionButton.voted {
     background-color: #ff6b35;
     color: white;
     border-color: #ff6b35;
+}
+
+.actionButton.voted:hover {
+    background-color: #ff5520;
+    border-color: #ff5520;
 }
 
 .shareSection {

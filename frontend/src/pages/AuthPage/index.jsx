@@ -122,6 +122,8 @@ const AuthPage = () => {
                 if (response.token) {
                     localStorage.setItem('authToken', response.token);
                     console.log('Token saved:', response.token);
+                    // Dispatch custom event to notify components about login
+                    window.dispatchEvent(new Event('userLogin'))
                 }
                 
                 setSuccess('Login successful!');

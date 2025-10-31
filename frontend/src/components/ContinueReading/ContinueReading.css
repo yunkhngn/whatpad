@@ -1,0 +1,150 @@
+/* Continue Reading Section */
+.continue-reading-section {
+    background-color: #fff;
+    padding: 2rem 0;
+}
+
+.section-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 1.5rem;
+}
+
+.stories-container {
+    display: flex;
+    gap: 1.5rem;
+    overflow-x: auto;
+    padding-bottom: 1rem;
+    scroll-behavior: smooth;
+}
+
+.stories-container::-webkit-scrollbar {
+    height: 8px;
+}
+
+.stories-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.stories-container::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.stories-container::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+.continue-reading-card {
+    cursor: pointer;
+    width: 218px;
+    height: 315.5px;
+    flex-shrink: 0;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: #f0f0f0;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.continue-reading-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.continue-reading-card .story-cover {
+    width: 218px;
+    height: 210px;
+    overflow: hidden;
+    background: #f0f0f0;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.continue-reading-card .story-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.continue-reading-card .story-info {
+    padding: 0.75rem 0.5rem;
+    color: #333;
+    background: white;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.continue-reading-card .story-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 0.25rem 0;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.continue-reading-card .story-chapter {
+    font-size: 0.75rem;
+    color: #ff6b35;
+    margin: 0;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .continue-reading-section {
+        padding: 1.5rem 0;
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+        margin-bottom: 1rem;
+    }
+
+    .stories-container {
+        gap: 1rem;
+    }
+
+    .continue-reading-card {
+        width: 180px;
+        height: 280px;
+    }
+
+    .continue-reading-card .story-cover {
+        width: 180px;
+        height: 175px;
+    }
+}
+
+@media (max-width: 576px) {
+    .continue-reading-card {
+        width: 160px;
+        height: 250px;
+    }
+
+    .continue-reading-card .story-cover {
+        width: 160px;
+        height: 155px;
+    }
+
+    .continue-reading-card .story-title {
+        font-size: 0.8rem;
+    }
+
+    .continue-reading-card .story-chapter {
+        font-size: 0.7rem;
+    }
+}
