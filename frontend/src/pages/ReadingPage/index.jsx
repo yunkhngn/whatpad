@@ -13,7 +13,6 @@ import {
   unvoteChapter,
   updateReadingProgress,
 } from "../../services/api";
-import { Link } from "react-router";
 import { Dropdown } from "react-bootstrap";
 import styles from "./ReadingPage.module.css";
 

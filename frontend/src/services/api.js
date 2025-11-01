@@ -118,6 +118,13 @@ export const getChapterById = async (chapterId) => {
   return { chapter: response.chapter };
 };
 
+export const getChapterOfStory = async (storyId, chapterId) => {
+  const response = await apiRequest(
+    `/stories/${storyId}/chapters/${chapterId}`
+  );
+  return { chapter: response.chapter };
+};
+
 // Get chapter by story and chapter ID (with validation)
 export const getChapterByStoryAndId = async (storyId, chapterId) => {
   const response = await apiRequest(
@@ -251,7 +258,7 @@ export const getUserFollowing = async (userId) => {
   return apiRequest(`/follows/${userId}/following`);
 };
 
-// Reading API
+// ================== Reading API ==================
 export const updateReadingProgress = async (storyId, chapterId) => {
   return apiRequest("/reading", {
     method: "POST",
@@ -295,7 +302,6 @@ export const uploadImage = async (file) => {
     },
     body: formData,
   });
-
   if (!response.ok) {
     throw new Error(`Upload Error: ${response.status}`);
   }
