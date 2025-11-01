@@ -154,10 +154,20 @@ router.post('/stories/:storyId/chapters', auth, async (req, res, next) => {
       return res.status(403).json({ ok: false, message: 'Not authorized', errorCode: 'NOT_AUTHORIZED' });
     }
     
+    // AUTO-INCREMENT chapter_order: Get max chapter_order for this story
+    let finalChapterOrder = chapter_order;
+    if (!chapter_order) {
+      const [maxOrder] = await pool.query(
+        'SELECT COALESCE(MAX(chapter_order), 0) + 1 as next_order FROM chapters WHERE story_id = ?',
+        [storyId]
+      );
+      finalChapterOrder = maxOrder[0].next_order;
+    }
+    
     const [result] = await pool.query(
       `INSERT INTO chapters (story_id, title, content, chapter_order, is_published, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, NOW(), NOW())`,
-      [storyId, title, content, chapter_order || 1, is_published || 0]
+      [storyId, title, content, finalChapterOrder, is_published || 0]
     );
     
     const [chapters] = await pool.query('SELECT * FROM chapters WHERE id = ?', [result.insertId]);
