@@ -6,21 +6,36 @@ const { checkStoryOwnership, getStoryWithTags } = require('./service');
 
 const router = express.Router();
 
-// GET /stories - List published stories with search and pagination
+// GET /stories - List stories with search and pagination
 router.get('/', async (req, res, next) => {
   try {
     const { page, size, offset } = getPagination(req);
-    const { q, tag } = req.query;
+    const { q, tag, user_id, status } = req.query;
     
     let query = `
       SELECT DISTINCT s.*, u.username as author_name,
         (SELECT COUNT(*) FROM chapters WHERE story_id = s.id) as chapter_count
       FROM stories s
       JOIN users u ON s.user_id = u.id
-      WHERE s.status = 'published'
+      WHERE 1=1
     `;
     
     const params = [];
+    
+    // Filter by user_id if provided
+    if (user_id) {
+      query += ` AND s.user_id = ?`;
+      params.push(user_id);
+    } else {
+      // Only show published stories if not filtering by user
+      query += ` AND s.status = 'published'`;
+    }
+    
+    // Filter by status if provided (useful for user's own stories)
+    if (status) {
+      query += ` AND s.status = ?`;
+      params.push(status);
+    }
     
     if (q) {
       query += ` AND (s.title LIKE ? OR s.description LIKE ? OR u.username LIKE ?)`;
@@ -55,6 +70,51 @@ router.get('/', async (req, res, next) => {
     }
 
     res.json({ ok: true, stories: rows, page, size });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /users/:userId/stories - Get stories by user (nested route)
+router.get('/users/:userId/stories', async (req, res, next) => {
+  try {
+    const { page, size, offset } = getPagination(req);
+    const { status } = req.query;
+    const userId = req.params.userId;
+    
+    let query = `
+      SELECT s.*, u.username as author_name,
+        (SELECT COUNT(*) FROM chapters WHERE story_id = s.id) as chapter_count
+      FROM stories s
+      JOIN users u ON s.user_id = u.id
+      WHERE s.user_id = ?
+    `;
+    
+    const params = [userId];
+    
+    // Filter by status if provided
+    if (status) {
+      query += ` AND s.status = ?`;
+      params.push(status);
+    }
+    
+    query += ` ORDER BY s.created_at DESC LIMIT ? OFFSET ?`;
+    params.push(size, offset);
+    
+    const [rows] = await pool.query(query, params);
+
+    // Fetch tags for each story
+    for (const story of rows) {
+      const [tags] = await pool.query(`
+        SELECT t.id, t.name 
+        FROM tags t
+        JOIN story_tags st ON t.id = st.tag_id
+        WHERE st.story_id = ?
+      `, [story.id]);
+      story.tags = tags;
+    }
+
+    res.json({ ok: true, stories: rows, page, size, user_id: userId });
   } catch (err) {
     next(err);
   }
