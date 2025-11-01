@@ -46,6 +46,8 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(openapiSpec));
 app.use('/auth', authRoutes);
 app.use('/users', usersRoutes);
 app.use('/stories', storiesRoutes);
+// Mount stories routes again at root for nested routes (/users/:userId/stories)
+app.use('/', storiesRoutes);
 app.use('/chapters', chaptersRoutes);
 // Mount chapters routes again at root for nested routes (/stories/:storyId/chapters/...)
 app.use('/', chaptersRoutes);
