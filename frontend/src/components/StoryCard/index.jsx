@@ -12,14 +12,14 @@ const StoryCard = ({ story, showProgress = false, progress = 0 }) => {
     }
 
     return (
-        <Card 
-            className="story-card" 
+        <Card
+            className="story-card"
             onClick={handleClick}
         >
             <div className="story-cover">
-                <Card.Img 
-                    variant="top" 
-                    src={story.cover_url || bookCoverPlaceholder} 
+                <Card.Img
+                    variant="top"
+                    src={story.cover_url || bookCoverPlaceholder}
                     alt={story.title}
                 />
                 {showProgress && (

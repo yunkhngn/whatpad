@@ -1,0 +1,27 @@
+.user-image {
+    border-radius: 100%;
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    overflow: hidden;
+}
+
+.image-sm {
+    width: 40px;
+    height: 40px;
+}
+
+.image-md {
+    width: 80px;
+    height: 80px;
+}
+
+.image-lg {
+    width: 200px;
+    height: 200px;
+}
+
+.image-xl {
+    width: 320px;
+    height: 320px;
+}

@@ -1,0 +1,93 @@
+.createStoryHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    border-bottom: 1px solid #e0e0e0;
+    background-color: #fff;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.headerLeft {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+}
+
+.backBtn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #333;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+}
+
+.back-btn:hover {
+    color: #666;
+}
+
+.headerRight {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.cancelBtn {
+    padding: 0.5rem 1.5rem;
+    font-weight: 500;
+}
+
+.nextBtn {
+    padding: 0.5rem 1.5rem;
+    font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .createStoryHeader {
+        padding: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .storyTitle {
+        font-size: 1.25rem;
+    }
+
+    .headerRight {
+        gap: 0.5rem;
+    }
+
+    .cancelBtn,
+    .nextBtn {
+        padding: 0.4rem 1rem;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .createStoryHeader {
+        padding: 0.75rem;
+    }
+
+    .storyTitle {
+        font-size: 1rem;
+    }
+
+    .headerLeft {
+        gap: 0.5rem;
+    }
+
+    .cancelBtn,
+    .nextBtn {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.85rem;
+    }
+}

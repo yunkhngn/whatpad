@@ -1,0 +1,46 @@
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.151);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    /* high so it covers UI */
+    pointer-events: all;
+    /* capture all pointer events */
+}
+
+.hidden {
+    display: none;
+}
+
+.spinner {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    border: 8px solid rgba(0, 0, 0, 0.15);
+    border-top-color: #ffffffb6;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.content {
+    text-align: center;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+    border-radius: 50%;
+}
+
+.message {
+    font-size: 0.95rem;
+    opacity: 0.95;
+}
