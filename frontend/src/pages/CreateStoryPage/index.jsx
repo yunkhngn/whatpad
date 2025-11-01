@@ -55,7 +55,7 @@ export default function CreateStoryPage() {
       // Upload cover image if provided
       if (storyDetails.cover) {
         const uploadResponse = await uploadImage(storyDetails.cover);
-        imageUrl = uploadResponse.image_url || uploadResponse.url;
+        imageUrl = uploadResponse.data.image_url || uploadResponse.data.url;
       }
 
       // Prepare story data with tag IDs
@@ -63,8 +63,8 @@ export default function CreateStoryPage() {
       const storyData = {
         title: storyDetails.title,
         description: storyDetails.description,
-        cover_image: imageUrl,
-        tag_ids: tagIds,
+        cover_url: imageUrl,
+        tags: tagIds,
       };
 
       // Create story

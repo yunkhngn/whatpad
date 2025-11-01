@@ -2,11 +2,23 @@
 
 import { Button } from "react-bootstrap";
 import styles from "./CreateChapterHeader.module.css";
+import bookCoverPlaceHolder from "../../../../assests/images/book-cover-placeholder.png";
 
-function CreateChapterHeader({ storyTitle, onCancel, onSave, onNextChapter }) {
+function CreateChapterHeader({
+  storyTitle,
+  onCancel,
+  onSave,
+  onNextChapter,
+  storyCover,
+}) {
   return (
     <header className={styles.createChapterHeader}>
       <div className={styles.headerLeft}>
+        <img
+          src={storyCover || bookCoverPlaceHolder}
+          alt="story cover"
+          className={styles.storyCover}
+        />
         <h2 className={styles.storyTitle}>{storyTitle}</h2>
       </div>
       <div className={styles.headerRight}>

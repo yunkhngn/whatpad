@@ -27,18 +27,21 @@ export default function CreateChapterPage() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [chapterId]);
 
   const fetchData = async () => {
     try {
       setIsLoading(true);
       const storyResponse = await getStoryById(storyId);
       const chapterResponse = await getChapterOfStory(storyId, chapterId);
-      console.log(chapterResponse);
       setFetchedStory(storyResponse.story);
       setFetchedChapter(chapterResponse.chapter);
+
       setChapterEdit({
-        title: chapterResponse.chapter.title,
+        title:
+          chapterResponse.chapter.title === "Untitled"
+            ? ""
+            : chapterResponse.chapter.title,
         content:
           chapterResponse.chapter.content === "empty"
             ? ""
@@ -59,7 +62,6 @@ export default function CreateChapterPage() {
     try {
       setIsLoading(true);
       const response = await updateChapter(storyId, chapterId, chapterEdit);
-      console.log(response.data);
     } catch (error) {
       toast.error(error);
     } finally {
@@ -70,6 +72,7 @@ export default function CreateChapterPage() {
   const handleNextChapter = async () => {
     try {
       setIsLoading(true);
+
       // Create chapter
       const newChapterData = {
         title: "Untitled",
@@ -79,9 +82,9 @@ export default function CreateChapterPage() {
         storyId,
         newChapterData
       );
-      const newChapterId = createChapterResponse.data.id;
+
       // Navigate to chapter creation page
-      navigate(`/stories/${storyId}/chapters/${newChapterId}`);
+      navigate(`/stories/${storyId}/chapters/${createChapterResponse.data.id}`);
     } catch (error) {
       toast.error(error);
     } finally {
@@ -98,6 +101,7 @@ export default function CreateChapterPage() {
         onCancel={handleCancel}
         onSave={handleSave}
         onNextChapter={handleNextChapter}
+        storyCover={fetchedStory.cover_url}
       />
       <ChapterEditor
         chapterEdit={chapterEdit}
