@@ -3,7 +3,7 @@
 import { Button } from "react-bootstrap";
 import styles from "./CreateChapterHeader.module.css";
 
-function CreateChapterHeader({ storyTitle, onCancel, onSave }) {
+function CreateChapterHeader({ storyTitle, onCancel, onSave, onNextChapter }) {
   return (
     <header className={styles.createChapterHeader}>
       <div className={styles.headerLeft}>
@@ -16,7 +16,11 @@ function CreateChapterHeader({ storyTitle, onCancel, onSave }) {
         <Button variant="secondary" onClick={onSave} className={styles.saveBtn}>
           Save
         </Button>
-        <Button variant="primary" onClick={onSave} className={styles.saveBtn}>
+        <Button
+          variant="primary"
+          onClick={onNextChapter}
+          className={styles.saveBtn}
+        >
           Next chapter
         </Button>
       </div>

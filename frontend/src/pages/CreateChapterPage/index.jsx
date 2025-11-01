@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router";
 import {
+  createChapter,
   getChapterOfStory,
   getStoryById,
   updateChapter,
@@ -66,17 +67,37 @@ export default function CreateChapterPage() {
     }
   };
 
-  if (isLoading) {
-    return <div className={styles.createChapterPage}>Loading...</div>;
-  }
+  const handleNextChapter = async () => {
+    try {
+      setIsLoading(true);
+      // Create chapter
+      const newChapterData = {
+        title: "Untitled",
+        content: "empty",
+      };
+      const createChapterResponse = await createChapter(
+        storyId,
+        newChapterData
+      );
+      const newChapterId = createChapterResponse.data.id;
+      // Navigate to chapter creation page
+      navigate(`/stories/${storyId}/chapters/${newChapterId}`);
+    } catch (error) {
+      toast.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className={styles.createChapterPage}>
       {isLoading && <Loading />}
+
       <CreateChapterHeader
         storyTitle={fetchedStory?.title || "Loading..."}
         onCancel={handleCancel}
         onSave={handleSave}
+        onNextChapter={handleNextChapter}
       />
       <ChapterEditor
         chapterEdit={chapterEdit}
