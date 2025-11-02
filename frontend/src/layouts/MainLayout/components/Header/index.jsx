@@ -29,7 +29,6 @@ function Header() {
 
   const checkAuthStatus = async () => {
     const token = localStorage.getItem("authToken");
-    console.log("Auth Token:", token);
     if (token) {
       try {
         const response = await getCurrentUser();
@@ -255,7 +254,7 @@ function Header() {
             {user ? (
               <>
                 {/* Write Button */}
-                <Nav.Link as={Link} to="/create/story" className="me-2">
+                <Nav.Link as={Link} to="/work/story" className="me-2">
                   <Button variant="link" className="write-btn">
                     <i className="bi bi-pencil me-1"></i>
                     Create Story

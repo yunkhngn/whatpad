@@ -17,6 +17,8 @@ const ChapterListItem = ({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  console.log(storyId);
+
   const handleDelete = async () => {
     try {
       setDeleting(true);
@@ -33,7 +35,7 @@ const ChapterListItem = ({
   };
 
   const handleEdit = () => {
-    navigate(`/stories/${storyId}/chapters/${chapter.id}`);
+    navigate(`/work/story/${storyId}/chapter/${chapter.id}`);
   };
 
   return (
@@ -48,14 +50,13 @@ const ChapterListItem = ({
             <strong>
               Chapter {chapterOrder}: {chapter.title}
             </strong>
-            {!chapter.is_published && (
-              <Badge bg="warning" className="ms-2">
-                Draft
-              </Badge>
-            )}
-            {chapter.is_published && (
+            {chapter.is_published ? (
               <Badge bg="success" className="ms-2">
                 Published
+              </Badge>
+            ) : (
+              <Badge bg="warning" className="ms-2">
+                Draft
               </Badge>
             )}
           </div>
@@ -65,10 +66,6 @@ const ChapterListItem = ({
         </div>
 
         <div className="d-flex gap-2">
-          <Button variant="outline-primary" size="sm" onClick={handleEdit}>
-            <i className="bi bi-pencil me-1"></i>
-            Edit
-          </Button>
           <Button
             variant="outline-danger"
             size="sm"

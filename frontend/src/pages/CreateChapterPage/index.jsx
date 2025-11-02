@@ -36,14 +36,14 @@ export default function CreateChapterPage() {
       const chapterResponse = await getChapterOfStory(storyId, chapterId);
       setFetchedStory(storyResponse.story);
       setFetchedChapter(chapterResponse.chapter);
-
+      "rfea".toLowerCase();
       setChapterEdit({
         title:
-          chapterResponse.chapter.title === "Untitled"
+          chapterResponse?.chapter?.title?.toLowerCase() === "untitled"
             ? ""
-            : chapterResponse.chapter.title,
+            : chapterResponse?.chapter?.title,
         content:
-          chapterResponse.chapter.content === "empty"
+          chapterResponse?.chapter?.content?.toLowerCase() === "empty"
             ? ""
             : chapterResponse.chapter.content,
       });
@@ -55,7 +55,7 @@ export default function CreateChapterPage() {
   };
 
   const handleCancel = () => {
-    navigate("/");
+    navigate(`/my-stories/story/${storyId}`);
   };
 
   const handleSave = async () => {
@@ -84,7 +84,9 @@ export default function CreateChapterPage() {
       );
 
       // Navigate to chapter creation page
-      navigate(`/stories/${storyId}/chapters/${createChapterResponse.data.id}`);
+      navigate(
+        `/work/story/${storyId}/chapter/${createChapterResponse.data.id}`
+      );
     } catch (error) {
       toast.error(error);
     } finally {

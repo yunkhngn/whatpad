@@ -38,7 +38,7 @@ const UserStoryPage = () => {
   };
 
   const handleNewStory = () => {
-    navigate("/create-story");
+    navigate("/work/story");
   };
 
   const handleViewStory = (storyId) => {

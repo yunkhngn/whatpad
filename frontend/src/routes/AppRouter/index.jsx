@@ -91,7 +91,7 @@ const AppRouter = () => {
 
         {/* Create Story Layout */}
         <Route
-          path="/create/story"
+          path="/work/story"
           element={
             <CreateStoryLayout>
               <CreateStoryPage />
@@ -100,7 +100,7 @@ const AppRouter = () => {
         />
 
         <Route
-          path="/create/stories/:storyId/chapters/:chapterId"
+          path="/work/story/:storyId/chapter/:chapterId"
           element={
             <CreateStoryLayout>
               <CreateChapterPage />

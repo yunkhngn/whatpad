@@ -1,21 +1,20 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Container, Tab, Nav, Alert, Spinner } from "react-bootstrap";
+import { Container, Tab, Nav, Alert, Spinner, Button } from "react-bootstrap";
 import { useParams, useNavigate } from "react-router";
 import {
   getStoryById,
   getStoryChapters,
   getCurrentUser,
 } from "../../services/api";
-import StoryDetailHeader from "./components/StoryDetailHeader";
 import StoryDetailsTab from "./components/StoryDetailsTab";
 import StoryChaptersTab from "./components/StoryChaptersTab";
 
 const UserStoryDetailPage = () => {
   const { storyId } = useParams();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("details");
+  const [activeTab, setActiveTab] = useState("chapters");
   const [story, setStory] = useState(null);
   const [chapters, setChapters] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -48,6 +47,10 @@ const UserStoryDetailPage = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGoBack = () => {
+    navigate("/my-stories");
   };
 
   const handleDeleteChapter = (chapterId) => {
@@ -93,38 +96,50 @@ const UserStoryDetailPage = () => {
   }
 
   return (
-    <>
-      <StoryDetailHeader title={story.title} />
+    <Container className="my-4">
+      {error && <Alert variant="danger">{error}</Alert>}
+      <Button
+        variant="outline-secondary"
+        className="d-flex align-items-center mb-4"
+        onClick={handleGoBack}
+      >
+        <i className="bi bi-chevron-left me-2" />
+        Back
+      </Button>
 
-      <Container className="my-4">
-        {error && <Alert variant="danger">{error}</Alert>}
+      <Tab.Container activeKey={activeTab} onSelect={(k) => setActiveTab(k)}>
+        <Nav variant="underline" className="mb-4">
+          <Nav.Item>
+            <Nav.Link className="fs-4 fw-bold text-dark" eventKey="chapters">
+              Chapters
+            </Nav.Link>
+          </Nav.Item>
+          <Nav.Item>
+            <Nav.Link className="fs-4 fw-bold text-dark" eventKey="details">
+              Story Details
+            </Nav.Link>
+          </Nav.Item>
+        </Nav>
 
-        <Tab.Container activeKey={activeTab} onSelect={(k) => setActiveTab(k)}>
-          <Nav variant="pills" className="mb-4">
-            <Nav.Item>
-              <Nav.Link eventKey="details">Story Details</Nav.Link>
-            </Nav.Item>
-            <Nav.Item>
-              <Nav.Link eventKey="chapters">Chapters</Nav.Link>
-            </Nav.Item>
-          </Nav>
-
-          <Tab.Content>
-            <Tab.Pane eventKey="details">
-              <StoryDetailsTab story={story} onUpdate={handleStoryUpdate} />
-            </Tab.Pane>
-            <Tab.Pane eventKey="chapters">
-              <StoryChaptersTab
-                storyId={storyId}
-                chapters={chapters}
-                onDeleteChapter={handleDeleteChapter}
-                onChapterUpdate={handleStoryUpdate}
-              />
-            </Tab.Pane>
-          </Tab.Content>
-        </Tab.Container>
-      </Container>
-    </>
+        <Tab.Content>
+          <Tab.Pane eventKey="details">
+            <StoryDetailsTab
+              story={story}
+              setStory={setStory}
+              onUpdate={handleStoryUpdate}
+            />
+          </Tab.Pane>
+          <Tab.Pane eventKey="chapters">
+            <StoryChaptersTab
+              storyId={storyId}
+              chapters={chapters}
+              onDeleteChapter={handleDeleteChapter}
+              onChapterUpdate={handleStoryUpdate}
+            />
+          </Tab.Pane>
+        </Tab.Content>
+      </Tab.Container>
+    </Container>
   );
 };
 

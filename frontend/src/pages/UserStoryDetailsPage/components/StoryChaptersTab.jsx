@@ -1,7 +1,11 @@
 "use client";
 import { ListGroup, Card, Button } from "react-bootstrap";
 import { useNavigate } from "react-router";
+import { createChapter } from "../../../services/api";
 import ChapterListItem from "./ChapterListItem";
+import { toast } from "sonner";
+import Loading from "../../../components/Loading";
+import { useState } from "react";
 
 const StoryChaptersTab = ({
   storyId,
@@ -10,12 +14,30 @@ const StoryChaptersTab = ({
   onChapterUpdate,
 }) => {
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleAddChapter = () => {
-    // Navigate to create chapter page
-    navigate(`/`);
-    // navigate(`/stories/${storyId}/chapters/new`);
+  const handleAddChapter = async () => {
+    try {
+      setIsLoading(true);
+      const response = await createChapter(storyId, {
+        title: "Untitled",
+        content: "Empty",
+      });
+      const newChapter = response.data;
+
+      // Navigate to create chapter page
+      navigate(`/work/story/${storyId}/chapter/${newChapter.id}`);
+    } catch (error) {
+      console.error(error);
+      toast.error("Cannot create new chapter yet. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  if (isLoading) {
+    return <Loading />;
+  }
 
   if (!chapters || chapters.length === 0) {
     return (
@@ -47,6 +69,7 @@ const StoryChaptersTab = ({
       <ListGroup>
         {chapters.map((chapter, index) => (
           <ChapterListItem
+            storyId={storyId}
             key={chapter.id}
             chapter={chapter}
             chapterOrder={index + 1}
