@@ -45,6 +45,7 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(openapiSpec));
 // Mount routes
 app.use('/auth', authRoutes);
 app.use('/users', usersRoutes);
+app.use('/tags', tagsRoutes); // Mount tags BEFORE stories to avoid route conflict
 app.use('/stories', storiesRoutes);
 // Mount stories routes again at root for nested routes (/users/:userId/stories)
 app.use('/', storiesRoutes);
@@ -54,7 +55,6 @@ app.use('/', chaptersRoutes);
 app.use('/comments', commentsRoutes);
 app.use('/votes', votesRoutes);
 app.use('/follows', followsRoutes);
-app.use('/tags', tagsRoutes);
 app.use('/favorites', favoritesRoutes);
 app.use('/reading', readingRoutes);
 app.use('/reviews', reviewsRoutes);
