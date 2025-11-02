@@ -5,17 +5,23 @@ const { slugify } = require('../../utils/slugify');
 
 const router = express.Router();
 
-// GET /tags - Get all tags
+// ========================================
+// GENERIC ROUTES (tags-related)
+// ========================================
+
+// GET / - Get all tags
 router.get('/', async (req, res, next) => {
   try {
+    console.log('GET /tags route hit'); // Debug log
     const [rows] = await pool.query('SELECT id, name FROM tags ORDER BY name ASC');
     res.json({ ok: true, data: rows });
   } catch (err) {
+    console.error('Error in GET /tags:', err);
     next(err);
   }
 });
 
-// POST /tags - Create tag (auth, admin stub)
+// POST / - Create tag (auth, admin stub)
 router.post('/', auth, async (req, res, next) => {
   try {
     const { name } = req.body;
@@ -39,67 +45,48 @@ router.post('/', auth, async (req, res, next) => {
   }
 });
 
-// POST /stories/:id/tags - Add tags to story (owner only)
-router.post('/stories/:id/tags', auth, async (req, res, next) => {
+// PUT /:id - Update tag (auth, admin)
+router.put('/:id', auth, async (req, res, next) => {
   try {
-    const { tags } = req.body;
+    const { name } = req.body;
     
-    if (!tags || !Array.isArray(tags)) {
-      return res.status(400).json({ ok: false, message: 'Tags must be an array', errorCode: 'INVALID_TAGS' });
+    if (!name) {
+      return res.status(400).json({ ok: false, message: 'Name is required', errorCode: 'MISSING_NAME' });
     }
+
+    const slug = slugify(name);
     
-    // Check ownership
-    const [ownerCheck] = await pool.query(
-      'SELECT id FROM stories WHERE id = ? AND user_id = ?',
-      [req.params.id, req.user.id]
+    const [result] = await pool.query(
+      'UPDATE tags SET name = ? WHERE id = ?',
+      [slug, req.params.id]
     );
     
-    if (ownerCheck.length === 0) {
-      return res.status(403).json({ ok: false, message: 'Not authorized', errorCode: 'NOT_AUTHORIZED' });
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ ok: false, message: 'Tag not found', errorCode: 'TAG_NOT_FOUND' });
     }
+    
+    const [tags] = await pool.query('SELECT * FROM tags WHERE id = ?', [req.params.id]);
 
-    // Upsert tags
-    for (const tagName of tags) {
-      const slug = slugify(tagName);
-      await pool.query(
-        'INSERT INTO tags (name) VALUES (?) ON DUPLICATE KEY UPDATE name = name',
-        [slug]
-      );
-      
-      const [tagRows] = await pool.query('SELECT id FROM tags WHERE name = ?', [slug]);
-      const tagId = tagRows[0].id;
-      
-      await pool.query(
-        'INSERT IGNORE INTO story_tags (story_id, tag_id) VALUES (?, ?)',
-        [req.params.id, tagId]
-      );
-    }
-
-    res.json({ ok: true, message: 'Tags added' });
+    res.json({ ok: true, data: tags[0] });
   } catch (err) {
     next(err);
   }
 });
 
-// DELETE /stories/:id/tags/:tagId - Remove tag from story (owner only)
-router.delete('/stories/:id/tags/:tagId', auth, async (req, res, next) => {
+// DELETE /:id - Delete tag (auth, admin)
+router.delete('/:id', auth, async (req, res, next) => {
   try {
-    // Check ownership
-    const [ownerCheck] = await pool.query(
-      'SELECT id FROM stories WHERE id = ? AND user_id = ?',
-      [req.params.id, req.user.id]
-    );
+    // First delete all story_tags associations
+    await pool.query('DELETE FROM story_tags WHERE tag_id = ?', [req.params.id]);
     
-    if (ownerCheck.length === 0) {
-      return res.status(403).json({ ok: false, message: 'Not authorized', errorCode: 'NOT_AUTHORIZED' });
+    // Then delete the tag
+    const [result] = await pool.query('DELETE FROM tags WHERE id = ?', [req.params.id]);
+    
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ ok: false, message: 'Tag not found', errorCode: 'TAG_NOT_FOUND' });
     }
 
-    await pool.query(
-      'DELETE FROM story_tags WHERE story_id = ? AND tag_id = ?',
-      [req.params.id, req.params.tagId]
-    );
-
-    res.json({ ok: true, message: 'Tag removed' });
+    res.json({ ok: true, message: 'Tag deleted' });
   } catch (err) {
     next(err);
   }
