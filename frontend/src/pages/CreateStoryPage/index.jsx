@@ -83,7 +83,7 @@ export default function CreateStoryPage() {
       const newChapterId = createChapterResponse.data.id;
 
       // Navigate to chapter creation page
-      navigate(`/stories/${newStoryId}/chapters/${newChapterId}`);
+      navigate(`create/story/${newStoryId}/chapter/${newChapterId}`);
     } catch (error) {
       console.error("Error creating story:", error);
       toast.error("Failed to create story. Please try again.");

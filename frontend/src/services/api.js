@@ -107,8 +107,8 @@ export const publishStory = async (id) => {
 };
 
 // ================== Chapters API ==================
-export const getChaptersByStoryId = async (storyId) => {
-  const response = await apiRequest(`/chapters/story/${storyId}`);
+export const getStoryChapters = async (storyId) => {
+  const response = await apiRequest(`/stories/${storyId}/chapters`);
   return { chapters: response.data || [] };
 };
 

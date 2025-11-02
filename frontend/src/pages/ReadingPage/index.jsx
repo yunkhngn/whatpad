@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import {
   getChapterById,
   getStoryById,
-  getChaptersByStoryId,
+  getStoryChapters,
   getStories,
   getCommentsByChapterId,
   createComment,
@@ -70,7 +70,7 @@ const ReadingPage = () => {
           setStory(storyResponse.story);
 
           // Fetch all chapters of this story
-          const chaptersResponse = await getChaptersByStoryId(
+          const chaptersResponse = await getStoryChapters(
             chapterResponse.chapter.story_id
           );
           setChapters(chaptersResponse.chapters || []);
