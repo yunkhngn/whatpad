@@ -9,7 +9,6 @@ const router = express.Router();
 router.get('/', async (req, res, next) => {
   try {
     const [rows] = await pool.query('SELECT id, name FROM tags ORDER BY name ASC');
-
     res.json({ ok: true, data: rows });
   } catch (err) {
     next(err);
@@ -61,12 +60,13 @@ router.post('/stories/:id/tags', auth, async (req, res, next) => {
 
     // Upsert tags
     for (const tagName of tags) {
+      const slug = slugify(tagName);
       await pool.query(
         'INSERT INTO tags (name) VALUES (?) ON DUPLICATE KEY UPDATE name = name',
-        [tagName]
+        [slug]
       );
       
-      const [tagRows] = await pool.query('SELECT id FROM tags WHERE name = ?', [tagName]);
+      const [tagRows] = await pool.query('SELECT id FROM tags WHERE name = ?', [slug]);
       const tagId = tagRows[0].id;
       
       await pool.query(
