@@ -6,7 +6,7 @@ import ReadingPage from "../../pages/ReadingPage";
 import AuthPage from "../../pages/AuthPage";
 import StoryDetailPage from "../../pages/StoryDetailPage";
 import SearchPage from "../../pages/SearchPage";
-import ProfilePage from "../../pages/ProfilePage";
+import UserProfilePage from "../../pages/UserProfilePage";
 import CreateStoryPage from "../../pages/CreateStoryPage";
 import UserStoriesPage from "../../pages/UserStoriesPage";
 import CreateChapterPage from "../../pages/CreateChapterPage";
@@ -66,7 +66,7 @@ const AppRouter = () => {
           path="/profile"
           element={
             <MainLayout>
-              <ProfilePage />
+              <UserProfilePage />
             </MainLayout>
           }
         />
