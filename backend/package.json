@@ -6,7 +6,8 @@
   "description": "Wattpad-like backend with Express and MSSQL",
   "scripts": {
     "start": "node src/app.js",
-    "dev": "nodemon src/app.js"
+    "dev": "nodemon src/app.js",
+    "migrate:tags": "node scripts/run-tags-migration.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
