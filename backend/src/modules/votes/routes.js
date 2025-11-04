@@ -18,8 +18,8 @@ router.get('/chapter/:id', auth, async (req, res, next) => {
   }
 });
 
-// POST /votes/chapter/:id - Vote (like) a chapter
-router.post('/chapter/:id', auth, async (req, res, next) => {
+// POST /chapters/:id/vote - Vote (like) a chapter
+router.post('/chapters/:id/vote', auth, async (req, res, next) => {
   try {
     await pool.query(
       'INSERT IGNORE INTO votes (chapter_id, user_id, created_at) VALUES (?, ?, NOW())',
