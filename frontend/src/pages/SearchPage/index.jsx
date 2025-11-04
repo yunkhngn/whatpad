@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react"
-import { Container, Row, Col, Form, Spinner, Badge } from "react-bootstrap"
+import { Container, Row, Col, Form, Spinner, Badge, Pagination } from "react-bootstrap"
 import { useSearchParams, Link } from "react-router"
 import { getStories, getTags } from "../../services/api"
 import styles from "./SearchPage.module.css"
@@ -10,6 +10,8 @@ const SearchPage = () => {
     const [tags, setTags] = useState([])
     const [loading, setLoading] = useState(true)
     const [resultCount, setResultCount] = useState(0)
+    const [currentPage, setCurrentPage] = useState(1)
+    const ITEMS_PER_PAGE = 10
     
     // Filter states
     const [selectedLengths, setSelectedLengths] = useState([])
@@ -17,6 +19,8 @@ const SearchPage = () => {
     const [selectedTags, setSelectedTags] = useState([])
     const [tagSearchInput, setTagSearchInput] = useState('')
     const [activeTab, setActiveTab] = useState('stories')
+    const [filteredSuggestions, setFilteredSuggestions] = useState([])
+    const [showSuggestions, setShowSuggestions] = useState(false)
 
     const query = searchParams.get('q') || ''
     const tagFilter = searchParams.get('tag') || ''
@@ -106,6 +110,7 @@ const SearchPage = () => {
             
             setStories(filteredStories)
             setResultCount(filteredStories.length)
+            setCurrentPage(1) // Reset to first page when filters change
         } catch (err) {
             console.error('Error fetching stories:', err)
             setStories([])
@@ -147,12 +152,56 @@ const SearchPage = () => {
         )
     }
 
+    const handleTagInputChange = (e) => {
+        const value = e.target.value
+        setTagSearchInput(value)
+        
+        if (value.trim().length >= 1) {
+            // Filter tags that match the input
+            const filtered = tags.filter(tag => 
+                tag.name.toLowerCase().includes(value.toLowerCase())
+            ).slice(0, 5) // Show max 5 suggestions
+            
+            setFilteredSuggestions(filtered)
+            setShowSuggestions(filtered.length > 0)
+        } else {
+            setFilteredSuggestions([])
+            setShowSuggestions(false)
+        }
+    }
+
+    const handleSuggestionClick = (tagName) => {
+        handleTagSelect(tagName)
+        setTagSearchInput('')
+        setShowSuggestions(false)
+        setFilteredSuggestions([])
+    }
+
     const handleTagSearch = (e) => {
         e.preventDefault()
-        if (tagSearchInput.trim()) {
-            handleTagSelect(tagSearchInput.trim())
-            setTagSearchInput('')
+        const trimmedInput = tagSearchInput.trim()
+        
+        // Validate tag input
+        if (!trimmedInput) {
+            return
         }
+        
+        // Check if input is only numbers
+        if (/^\d+$/.test(trimmedInput)) {
+            console.warn('Tag name cannot be only numbers')
+            return
+        }
+        
+        // Check minimum length
+        if (trimmedInput.length < 2) {
+            console.warn('Tag name must be at least 2 characters')
+            return
+        }
+        
+        handleTagSelect(trimmedInput)
+        setTagSearchInput('')
+        setShowSuggestions(false)
+        setFilteredSuggestions([])
     }
 
     const clearAllFilters = () => {
@@ -332,13 +381,32 @@ const SearchPage = () => {
 
                                 <Form onSubmit={handleTagSearch} className={styles.tagSearchForm}>
                                     <div className={styles.tagSearchWrapper}>
-                                        <Form.Control
-                                            type="text"
-                                            placeholder="Add a tag to refine by"
-                                            value={tagSearchInput}
-                                            onChange={(e) => setTagSearchInput(e.target.value)}
-                                            className={styles.tagSearchInput}
-                                        />
+                                        <div className={styles.tagInputContainer}>
+                                            <Form.Control
+                                                type="text"
+                                                placeholder="Add a tag to refine by"
+                                                value={tagSearchInput}
+                                                onChange={handleTagInputChange}
+                                                onFocus={() => tagSearchInput && setShowSuggestions(filteredSuggestions.length > 0)}
+                                                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                                                className={styles.tagSearchInput}
+                                            />
+                                            {showSuggestions && filteredSuggestions.length > 0 && (
+                                                <div className={styles.suggestionsList}>
+                                                    {filteredSuggestions.map(tag => (
+                                                        <button
+                                                            key={tag.id}
+                                                            type="button"
+                                                            className={styles.suggestionItem}
+                                                            onClick={() => handleSuggestionClick(tag.name)}
+                                                        >
+                                                            <i className="bi bi-tag"></i>
+                                                            <span>{tag.name}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
                                         <button 
                                             type="submit" 
                                             className={styles.tagSearchButton}
@@ -360,8 +428,11 @@ const SearchPage = () => {
                                 <p className="mt-3">Loading stories...</p>
                             </div>
                         ) : stories.length > 0 ? (
-                            <div className={styles.resultsContainer}>
-                                {stories.map((story) => (
+                            <>
+                                <div className={styles.resultsContainer}>
+                                    {stories
+                                        .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+                                        .map((story) => (
                                     <div key={story.id} className={styles.storyItem}>
                                         <Link to={`/story/${story.id}`} className={styles.storyLink}>
                                             {story.cover_url && (
@@ -416,6 +487,59 @@ const SearchPage = () => {
                                     </div>
                                 ))}
                             </div>
+                            
+                            {/* Pagination */}
+                            {stories.length > ITEMS_PER_PAGE && (
+                                <div className="d-flex justify-content-center mt-4 mb-4">
+                                    <Pagination>
+                                        <Pagination.First 
+                                            onClick={() => setCurrentPage(1)} 
+                                            disabled={currentPage === 1}
+                                        />
+                                        <Pagination.Prev 
+                                            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} 
+                                            disabled={currentPage === 1}
+                                        />
+                                        
+                                        {[...Array(Math.ceil(stories.length / ITEMS_PER_PAGE))].map((_, index) => {
+                                            const pageNum = index + 1
+                                            // Show first, last, current, and adjacent pages
+                                            const totalPages = Math.ceil(stories.length / ITEMS_PER_PAGE)
+                                            if (
+                                                pageNum === 1 || 
+                                                pageNum === totalPages ||
+                                                (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                                            ) {
+                                                return (
+                                                    <Pagination.Item
+                                                        key={pageNum}
+                                                        active={pageNum === currentPage}
+                                                        onClick={() => setCurrentPage(pageNum)}
+                                                    >
+                                                        {pageNum}
+                                                    </Pagination.Item>
+                                                )
+                                            } else if (
+                                                pageNum === currentPage - 2 || 
+                                                pageNum === currentPage + 2
+                                            ) {
+                                                return <Pagination.Ellipsis key={pageNum} disabled />
+                                            }
+                                            return null
+                                        })}
+                                        
+                                        <Pagination.Next 
+                                            onClick={() => setCurrentPage(prev => Math.min(Math.ceil(stories.length / ITEMS_PER_PAGE), prev + 1))} 
+                                            disabled={currentPage === Math.ceil(stories.length / ITEMS_PER_PAGE)}
+                                        />
+                                        <Pagination.Last 
+                                            onClick={() => setCurrentPage(Math.ceil(stories.length / ITEMS_PER_PAGE))} 
+                                            disabled={currentPage === Math.ceil(stories.length / ITEMS_PER_PAGE)}
+                                        />
+                                    </Pagination>
+                                </div>
+                            )}
+                        </>
                         ) : (
                             <div className={styles.emptyState}>
                                 <i className="bi bi-search"></i>

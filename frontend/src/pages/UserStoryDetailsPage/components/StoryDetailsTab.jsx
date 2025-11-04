@@ -162,7 +162,7 @@ const StoryDetailsTab = ({ story, setStory, onUpdate }) => {
             <Form.Group className="mb-3">
               <Form.Label>Story Cover</Form.Label>
               <div
-                className="border rounded-2 overflow-hidden text-center"
+                className="border rounded-2 overflow-hidden text-center d-flex align-items-center"
                 style={{
                   cursor: "pointer",
                   backgroundColor: "#f8f9fa",
