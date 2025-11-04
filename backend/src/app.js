@@ -47,8 +47,6 @@ app.use('/auth', authRoutes);
 app.use('/users', usersRoutes);
 app.use('/tags', tagsRoutes); // Mount tags BEFORE stories to avoid route conflict
 app.use('/stories', storiesRoutes);
-// Mount stories routes again at root for nested routes (/users/:userId/stories)
-app.use('/', storiesRoutes);
 app.use('/chapters', chaptersRoutes);
 // Mount chapters routes again at root for nested routes (/stories/:storyId/chapters/...)
 app.use('/', chaptersRoutes);
