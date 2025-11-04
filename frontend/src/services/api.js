@@ -69,7 +69,7 @@ export const getStoriesByUserId = async (userId, params = {}) => {
     `/users/${userId}/stories${queryString ? `?${queryString}` : ""}`
   );
   return {
-    stories: response.stories || [],
+    stories: response.data || [],
     page: response.page,
     size: response.size,
   };
