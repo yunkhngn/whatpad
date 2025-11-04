@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Badge, Spinner, Alert } from 'react-bootstrap';
 import { getReadingHistory } from '../../services/api';
 import { useNavigate } from 'react-router';
+import { getStoryCoverUrl } from '../../utils/cloudinaryUtils';
 import './ContinueReading.css';
 
 const ContinueReading = () => {
@@ -102,7 +103,7 @@ const ContinueReading = () => {
                             >
                                 <div className="card-image-wrapper">
                                     <img
-                                        src={item.cover_url || '/assests/icons/default-cover.png'}
+                                        src={getStoryCoverUrl(item.cover_url) || '/assests/icons/default-cover.png'}
                                         alt={item.story_title}
                                         className="card-img-top"
                                         style={{ height: '200px', objectFit: 'cover' }}

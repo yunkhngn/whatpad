@@ -2,6 +2,7 @@ import React from "react"
 import { useNavigate } from "react-router"
 import { Card } from "react-bootstrap"
 import bookCoverPlaceholder from '../../assests/images/book-cover-placeholder.png'
+import { getStoryCoverUrl } from '../../utils/cloudinaryUtils'
 import './StoryCard.css'
 
 const StoryCard = ({ story, showProgress = false, progress = 0 }) => {
@@ -11,6 +12,9 @@ const StoryCard = ({ story, showProgress = false, progress = 0 }) => {
         navigate(`/story/${story.id}`)
     }
 
+    // Get optimized cover URL
+    const coverUrl = getStoryCoverUrl(story.cover_url) || bookCoverPlaceholder
+
     return (
         <Card 
             className="story-card" 
@@ -19,7 +23,7 @@ const StoryCard = ({ story, showProgress = false, progress = 0 }) => {
             <div className="story-cover">
                 <Card.Img 
                     variant="top" 
-                    src={story.cover_url || bookCoverPlaceholder} 
+                    src={coverUrl} 
                     alt={story.title}
                 />
                 {showProgress && (
