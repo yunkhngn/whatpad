@@ -20,7 +20,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.75rem;
 }
 
 .titleWrapper {
@@ -172,19 +172,19 @@
     gap: 0.75rem;
 }
 
-/* Fixed width for genre cards - same as story cards */
+/* Fixed width for genre cards - smaller size to fit more cards */
 .genreCardsContainer :global(.col-lg-custom) {
     flex: 0 0 auto;
-    width: 140px;
-    min-width: 140px;
+    width: 116px;
+    min-width: 116px;
     scroll-snap-align: start; /* Snap to start of each item */
 }
 
 /* Ensure columns don't wrap on smaller screens */
 .genreCardsContainer :global([class*="col-"]) {
     flex-shrink: 0;
-    width: 140px;
-    min-width: 140px;
+    width: 116px;
+    min-width: 116px;
 }
 
 .genreCard {
@@ -203,7 +203,7 @@
 
 .genreThumbnail {
     width: 100%;
-    height: 140px;
+    height: 48px;
     position: relative;
     border-radius: var(--radius-md);
     overflow: hidden;
@@ -228,23 +228,25 @@
     bottom: 0;
     left: 0;
     right: 0;
-    padding: 0.5rem;
+    padding: 0.35rem 0.5rem;
     color: white;
     z-index: 2;
 }
 
 .genreName {
-    font-size: 0.875rem;
+    font-size: 0.75rem;
     font-weight: bold;
-    margin-bottom: 0.15rem;
+    margin-bottom: 0;
     text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+    line-height: 1.2;
 }
 
 .genreCount {
-    font-size: 0.75rem;
+    font-size: 0.65rem;
     margin-bottom: 0;
     opacity: 0.95;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+    display: none; /* Hide story count due to limited space */
 }
 
 .genreButton {
@@ -320,8 +322,12 @@
 /* Latest Stories Section */
 .latestStoriesSection {
     background: white;
-    padding: 2rem 0;
+    padding: 1rem 0;
     margin-bottom: 0.5rem;
+}
+
+.latestStoriesSection .genresHeader {
+    margin-bottom: 0.75rem;
 }
 
 @media (max-width: 768px) {
@@ -343,21 +349,22 @@
     }
 
     .genreThumbnail {
-        height: 150px;
+        height: 48px;
     }
 
     .genreName {
-        font-size: 0.875rem;
+        font-size: 0.7rem;
     }
 
     .genreCount {
-        font-size: 0.75rem;
+        font-size: 0.6rem;
+        display: none;
     }
 
-    /* Adjust card width for mobile - show 3 items */
+    /* Adjust card width for mobile - show more items */
     .genreCardsContainer :global(.col-lg-custom) {
-        width: calc(33.333% - 0.67rem);
-        min-width: calc(33.333% - 0.67rem);
+        width: 110px;
+        min-width: 110px;
     }
 
     .carouselPlaceholder {
@@ -386,13 +393,13 @@
 
 @media (max-width: 576px) {
     .genreThumbnail {
-        height: 120px;
+        height: 48px;
     }
 
-    /* Smaller cards on mobile - show 2 items */
+    /* Smaller cards on mobile - still show multiple items */
     .genreCardsContainer :global(.col-lg-custom) {
-        width: calc(50% - 0.5rem);
-        min-width: calc(50% - 0.5rem);
+        width: 100px;
+        min-width: 100px;
     }
 
     .carouselPlaceholder {
@@ -425,6 +432,7 @@
 
 @media (min-width: 992px) {
     .genreCardsContainer :global(.col-lg-custom) {
-        width: 20%;
+        width: 116px;
+        min-width: 116px;
     }
 }

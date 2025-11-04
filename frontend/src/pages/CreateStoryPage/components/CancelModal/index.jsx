@@ -1,25 +1,23 @@
-import React from 'react';
-import { Modal, Button } from 'react-bootstrap';
+import { Button, Modal } from "react-bootstrap";
+import styles from './CancelModal.module.css'
 
-const CancelModal = ({ show, onHide, onConfirm }) => {
-  return (
-    <Modal show={show} onHide={onHide} centered>
-      <Modal.Header closeButton>
-        <Modal.Title>Cancel Story Creation</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        Are you sure you want to cancel? All unsaved changes will be lost.
-      </Modal.Body>
-      <Modal.Footer>
-        <Button variant="secondary" onClick={onHide}>
-          Continue Editing
-        </Button>
-        <Button variant="danger" onClick={onConfirm}>
-          Yes, Cancel
-        </Button>
-      </Modal.Footer>
-    </Modal>
-  );
-};
-
-export default CancelModal;
+export default function CancelModal({ show, onHide, onConfirm }) {
+    return (
+        <Modal show={show} onHide={onHide} centered className={styles.cancelModal}>
+            <Modal.Header closeButton className={styles.modalHeader}>
+                <Modal.Title className={styles.modalTitle}>Cancel Creation</Modal.Title>
+            </Modal.Header>
+            <Modal.Body className={styles.modalBody}>
+                <p>Are you sure you want to cancel? Any unsaved progress will be lost.</p>
+            </Modal.Body>
+            <Modal.Footer className={styles.modalFooter}>
+                <Button variant="light" onClick={onHide} className={styles.modalBtnNo}>
+                    No
+                </Button>
+                <Button variant="danger" onClick={onConfirm} className={styles.modalBtnYes}>
+                    Yes, Cancel
+                </Button>
+            </Modal.Footer>
+        </Modal>
+    )
+}

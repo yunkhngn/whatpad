@@ -1,15 +1,21 @@
-import React from 'react';
-import './Loading.css';
+import styles from "./Loading.module.css"
 
-const Loading = ({ message = 'Loading...' }) => {
-  return (
-    <div className="loading-container">
-      <div className="spinner-border text-primary" role="status" style={{ width: '3rem', height: '3rem' }}>
-        <span className="visually-hidden">Loading...</span>
-      </div>
-      {message && <p className="loading-message">{message}</p>}
-    </div>
-  );
-};
-
-export default Loading;
+/**
+ * Full-screen loading overlay component.
+ * Props:
+ *  - show (boolean) default true: whether to display the overlay
+ *  - message (string) optional message shown under the spinner
+ *
+ * Usage:
+ *  <Loading show={isLoading} message="Saving..." />
+ *  or simply <Loading /> when you conditionally render it.
+ */
+export default function Loading() {
+    return (
+        <div className={styles.overlay} aria-live="polite">
+            <div className={styles.content}>
+                <div className={styles.spinner} aria-hidden="true" />
+            </div>
+        </div>
+    )
+}

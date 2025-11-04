@@ -1,14 +1,11 @@
-import React from 'react';
-import './CreateStoryLayout.css';
+import Footer from '../components/Footer'
+import styles from './CreateStoryLayout.module.css'
 
-const CreateStoryLayout = ({ children }) => {
-  return (
-    <div className="create-story-layout">
-      <div className="create-story-container">
-        {children}
-      </div>
-    </div>
-  );
-};
-
-export default CreateStoryLayout;
+export default function CreateStoryLayout({ children }) {
+    return (
+        <div className={styles.createStoryLayoutContainer}>
+            <main className={styles.createStoryMainContent}>{children}</main>
+            <Footer />
+        </div>
+    )
+}

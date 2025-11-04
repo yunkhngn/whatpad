@@ -1,41 +1,43 @@
-import React from 'react';
+"use client";
 
-const CreateChapterHeader = ({ storyTitle, onCancel, onSave, isSaving, disabled }) => {
+import { Button } from "react-bootstrap";
+import styles from "./CreateChapterHeader.module.css";
+import bookCoverPlaceHolder from "../../../../assests/images/book-cover-placeholder.png";
+
+function CreateChapterHeader({
+  storyTitle,
+  onCancel,
+  onSave,
+  onNextChapter,
+  storyCover,
+}) {
   return (
-    <div className="create-chapter-header">
-      <div className="header-content">
-        <button 
-          className="btn btn-outline-secondary"
-          onClick={onCancel}
-          disabled={isSaving}
-        >
-          <i className="bi bi-x-lg me-2"></i>
-          Cancel
-        </button>
-        <div className="header-info">
-          <h1 className="header-title">Create New Chapter</h1>
-          {storyTitle && <p className="story-title">{storyTitle}</p>}
-        </div>
-        <button 
-          className="btn btn-primary"
-          onClick={onSave}
-          disabled={disabled || isSaving}
-        >
-          {isSaving ? (
-            <>
-              <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-              Saving...
-            </>
-          ) : (
-            <>
-              <i className="bi bi-check-lg me-2"></i>
-              Save
-            </>
-          )}
-        </button>
+    <header className={styles.createChapterHeader}>
+      <div className={styles.headerLeft}>
+        <img
+          src={storyCover || bookCoverPlaceHolder}
+          alt="story cover"
+          className={styles.storyCover}
+        />
+        <h2 className={styles.storyTitle}>{storyTitle}</h2>
       </div>
-    </div>
+      <div className={styles.headerRight}>
+        <Button variant="light" onClick={onCancel} className={styles.cancelBtn}>
+          Cancel
+        </Button>
+        <Button variant="secondary" onClick={onSave} className={styles.saveBtn}>
+          Save
+        </Button>
+        <Button
+          variant="primary"
+          onClick={onNextChapter}
+          className={styles.saveBtn}
+        >
+          Next chapter
+        </Button>
+      </div>
+    </header>
   );
-};
+}
 
 export default CreateChapterHeader;

@@ -1,38 +1,33 @@
-import React from 'react';
+import { useNavigate } from 'react-router'
+import { Button } from "react-bootstrap"
+import styles from './CreateStoryHeader.module.css'
 
-const CreateStoryHeader = ({ onCancel, onSave, isSaving, disabled }) => {
-  return (
-    <div className="create-story-header">
-      <div className="header-content">
-        <button 
-          className="btn btn-outline-secondary"
-          onClick={onCancel}
-          disabled={isSaving}
-        >
-          <i className="bi bi-x-lg me-2"></i>
-          Cancel
-        </button>
-        <h1 className="header-title">Create New Story</h1>
-        <button 
-          className="btn btn-primary"
-          onClick={onSave}
-          disabled={disabled || isSaving}
-        >
-          {isSaving ? (
-            <>
-              <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-              Saving...
-            </>
-          ) : (
-            <>
-              <i className="bi bi-check-lg me-2"></i>
-              Save
-            </>
-          )}
-        </button>
-      </div>
-    </div>
-  );
-};
+export default function CreateStoryHeader({ storyTitle, onCancel, onNext }) {
+    const navigate = useNavigate()
 
-export default CreateStoryHeader;
+    function handleGoBack() {
+        navigate(-1)
+    }
+
+    return (
+        <header className={styles.createStoryHeader}>
+            {/* Header left */}
+            <div className={styles.headerLeft}>
+                <button className={styles.backBtn} onClick={handleGoBack} title='Go back'>
+                    <i className='bi bi-arrow-left'></i>
+                </button>
+                <h1 className={styles.storyTitle}>{storyTitle || "Untitled Story"}</h1>
+            </div>
+
+            {/* Header right */}
+            <div className={styles.headerRight}>
+                <Button variant="light" onClick={onCancel} className={styles.cancelBtn}>
+                    Cancel
+                </Button>
+                <Button variant="primary" onClick={onNext} className={styles.nextBtn}>
+                    Next
+                </Button>
+            </div>
+        </header>
+    )
+}
