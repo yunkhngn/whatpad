@@ -11,7 +11,11 @@ async function checkStoryOwnership(storyId, userId) {
 
 async function getStoryWithTags(storyId) {
   const [stories] = await pool.query(`
-    SELECT s.*, u.username as author_name, u.avatar_url as author_avatar, u.bio as author_bio
+    SELECT s.*, u.username as author_name, u.avatar_url as author_avatar, u.bio as author_bio,
+      (SELECT COUNT(*) FROM chapters WHERE story_id = s.id) as chapter_count,
+      (SELECT COUNT(*) FROM votes v 
+       JOIN chapters c ON v.chapter_id = c.id 
+       WHERE c.story_id = s.id) as vote_count
     FROM stories s
     JOIN users u ON s.user_id = u.id
     WHERE s.id = ?
