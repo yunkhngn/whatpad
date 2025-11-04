@@ -172,19 +172,19 @@
     gap: 0.75rem;
 }
 
-/* Fixed width for genre cards - smaller size to fit more cards */
+/* Fixed width for genre cards - same as story cards */
 .genreCardsContainer :global(.col-lg-custom) {
     flex: 0 0 auto;
-    width: 116px;
-    min-width: 116px;
+    width: 218px;
+    min-width: 218px;
     scroll-snap-align: start; /* Snap to start of each item */
 }
 
 /* Ensure columns don't wrap on smaller screens */
 .genreCardsContainer :global([class*="col-"]) {
     flex-shrink: 0;
-    width: 116px;
-    min-width: 116px;
+    width: 218px;
+    min-width: 218px;
 }
 
 .genreCard {
@@ -201,13 +201,29 @@
     box-shadow: var(--shadow-lg);
 }
 
+.activeGenre {
+    box-shadow: 0 0 0 3px var(--color-primary);
+    transform: scale(1.05);
+}
+
+.activeGenre:hover {
+    transform: scale(1.05) translateY(-2px);
+}
+
 .genreThumbnail {
     width: 100%;
-    height: 48px;
+    height: 218px;
     position: relative;
     border-radius: var(--radius-md);
     overflow: hidden;
     background-color: #f0f0f0;
+}
+
+.genreThumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
 }
 
 .genreOverlay {
@@ -319,6 +335,14 @@
     padding: 1rem 0;
 }
 
+/* Filtered Genre Section - shows when genre is selected */
+.filteredGenreSection {
+    background: white;
+    padding: 2rem 0;
+    margin-bottom: 0.5rem;
+    border-left: 4px solid var(--color-primary);
+}
+
 /* Latest Stories Section */
 .latestStoriesSection {
     background: white;
@@ -349,7 +373,7 @@
     }
 
     .genreThumbnail {
-        height: 48px;
+        height: 110px; /* Match the width for square cards */
     }
 
     .genreName {
@@ -393,7 +417,7 @@
 
 @media (max-width: 576px) {
     .genreThumbnail {
-        height: 48px;
+        height: 100px; /* Match the width for square cards */
     }
 
     /* Smaller cards on mobile - still show multiple items */
@@ -432,7 +456,7 @@
 
 @media (min-width: 992px) {
     .genreCardsContainer :global(.col-lg-custom) {
-        width: 116px;
-        min-width: 116px;
+        width: 218px;
+        min-width: 218px;
     }
 }

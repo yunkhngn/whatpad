@@ -54,3 +54,12 @@ export const getStoryDetailCoverUrl = (coverUrl) => {
 export const getThumbnailUrl = (coverUrl) => {
   return getCloudinaryImageUrl(coverUrl, 100, 150, 'fill');
 };
+
+/**
+ * Get genre card image URL
+ * @param {string} coverUrl - Original cover URL
+ * @returns {string} Transformed URL for genre card (218x218)
+ */
+export const getGenreCoverUrl = (coverUrl) => {
+  return getCloudinaryImageUrl(coverUrl, 218, 218, 'fill');
+};
