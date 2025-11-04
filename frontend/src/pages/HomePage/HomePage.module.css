@@ -23,6 +23,12 @@
     margin-bottom: 0.75rem;
 }
 
+.headerRightSection {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
 .titleWrapper {
     display: flex;
     align-items: center;
@@ -194,6 +200,8 @@
     transition: all var(--transition-fast);
     height: 100%;
     position: relative;
+    background: white;
+    border: 1px solid #e0e0e0;
 }
 
 .genreCard:hover {
@@ -201,68 +209,63 @@
     box-shadow: var(--shadow-lg);
 }
 
-.activeGenre {
-    box-shadow: 0 0 0 3px var(--color-primary);
-    transform: scale(1.05);
+.genreCard:hover .genreTag {
+    color: #ff4f00;
 }
 
-.activeGenre:hover {
-    transform: scale(1.05) translateY(-2px);
-}
-
-.genreThumbnail {
-    width: 100%;
+/* Genre thumbnail grid layout */
+.genreThumbnailGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    padding: 4px;
     height: 218px;
-    position: relative;
-    border-radius: var(--radius-md);
-    overflow: hidden;
-    background-color: #f0f0f0;
 }
 
-.genreThumbnail img {
+.largeThumbnail {
+    grid-row: 1 / 3;
+    overflow: hidden;
+    border-radius: 4px;
+}
+
+.largeThumbnail img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: center;
 }
 
-.genreOverlay {
+.smallThumbnailsGrid {
+    display: grid;
+    grid-template-rows: repeat(2, 1fr);
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px;
+}
+
+.smallThumbnail {
+    overflow: hidden;
+    border-radius: 4px;
+    background-color: #f0f0f0;
+}
+
+.smallThumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Genre tag at bottom right */
+.genreTag {
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(
-        to bottom,
-        rgba(0, 0, 0, 0.1) 0%,
-        rgba(0, 0, 0, 0.6) 100%
-    );
-}
-
-.genreInfo {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 0.35rem 0.5rem;
-    color: white;
-    z-index: 2;
-}
-
-.genreName {
-    font-size: 0.75rem;
-    font-weight: bold;
-    margin-bottom: 0;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
-    line-height: 1.2;
-}
-
-.genreCount {
-    font-size: 0.65rem;
-    margin-bottom: 0;
-    opacity: 0.95;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
-    display: none; /* Hide story count due to limited space */
+    bottom: 8px;
+    right: 8px;
+    background: rgba(255, 255, 255, 0.95);
+    color: #666;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: color 0.3s ease;
+    z-index: 10;
 }
 
 .genreButton {
