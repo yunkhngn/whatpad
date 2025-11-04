@@ -25,6 +25,9 @@ const SearchPage = () => {
 
     const query = searchParams.get('q') || ''
     const tagFilter = searchParams.get('tag') || ''
+    
+    // Check if query is #allStories
+    const isAllStoriesQuery = query.toLowerCase() === '#allstories'
 
     useEffect(() => {
         fetchTags()
@@ -47,7 +50,13 @@ const SearchPage = () => {
                 size: 50
             }
             
-            if (query) params.q = query
+            // Check if query is #allStories - if so, remove it from params to fetch all stories
+            if (isAllStoriesQuery) {
+                // Don't add query param, just fetch all stories
+            } else if (query) {
+                params.q = query
+            }
+            
             if (tagFilter) params.tag = tagFilter
             
             const response = await getStories(params)
@@ -118,7 +127,7 @@ const SearchPage = () => {
         } finally {
             setLoading(false)
         }
-    }, [query, tagFilter, selectedLengths, selectedUpdates, selectedTags])
+    }, [query, tagFilter, selectedLengths, selectedUpdates, selectedTags, isAllStoriesQuery])
 
     const fetchUsers = useCallback(async () => {
         if (!query) {
@@ -248,7 +257,9 @@ const SearchPage = () => {
                     {/* Sidebar Filters */}
                     <Col md={3} lg={2} className={styles.sidebar}>
                         <div className={styles.filterSection}>
-                            <h5 className={styles.filterTitle}>"{query || 'All Stories'}"</h5>
+                            <h5 className={styles.filterTitle}>
+                                {isAllStoriesQuery ? '"All Stories"' : query ? `"${query}"` : tagFilter ? `"${tagFilter}"` : '"All Stories"'}
+                            </h5>
                             <p className={styles.resultCount}>{resultCount} results</p>
 
                             {hasActiveFilters && (

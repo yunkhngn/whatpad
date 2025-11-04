@@ -181,7 +181,7 @@ function Header() {
                 <NavDropdown.Item
                   key={tag.id}
                   as={Link}
-                  to={`/search?tag=${tag.id}`}
+                  to={`/search?tag=${encodeURIComponent(tag.name)}`}
                 >
                   {tag.name}
                 </NavDropdown.Item>

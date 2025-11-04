@@ -9,6 +9,7 @@ import {
   Carousel,
   Badge,
 } from "react-bootstrap";
+import { useNavigate } from "react-router";
 import { getStories, getTags, getReadingHistory } from "../../services/api";
 import styles from "./HomePage.module.css";
 import GenreSection from "../../components/GenreSection";
@@ -22,6 +23,7 @@ const HomePage = () => {
   const [continueReading, setContinueReading] = useState([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const genreScrollRef = useRef(null);
+  const navigate = useNavigate();
 
   // Check if user is logged in and listen for auth events
   useEffect(() => {
@@ -313,7 +315,11 @@ const HomePage = () => {
                       lg
                       className="col-lg-custom"
                     >
-                      <div className={styles.genreCard}>
+                      <div 
+                        className={styles.genreCard}
+                        onClick={() => navigate(`/search?tag=${encodeURIComponent(genre.name)}`)}
+                        style={{ cursor: 'pointer' }}
+                      >
                         <div className={styles.genreThumbnailGrid}>
                           {/* Large thumbnail (1st story) */}
                           {genre.stories[0] && (
@@ -369,7 +375,11 @@ const HomePage = () => {
               <div className={styles.genresHeader}>
                 <h2 className={styles.sectionTitle}>Latest Stories</h2>
                 <div className={styles.headerRightSection}>
-                  <Button variant="link" className={styles.viewAllLink}>
+                  <Button 
+                    variant="link" 
+                    className={styles.viewAllLink}
+                    onClick={() => navigate('/search?q=%23allStories')}
+                  >
                     View all &gt;
                   </Button>
                   {stories.length > 5 && (
