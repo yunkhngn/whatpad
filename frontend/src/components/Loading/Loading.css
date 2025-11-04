@@ -1,0 +1,14 @@
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  padding: 2rem;
+}
+
+.loading-message {
+  margin-top: 1rem;
+  color: #6c757d;
+  font-size: 1rem;
+}

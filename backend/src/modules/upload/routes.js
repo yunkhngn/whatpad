@@ -12,6 +12,12 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
+// Verify Cloudinary configuration
+console.log('=== CLOUDINARY CONFIG ===');
+console.log('Cloud Name:', process.env.CLOUDINARY_CLOUD_NAME ? '✓ Set' : '✗ Missing');
+console.log('API Key:', process.env.CLOUDINARY_API_KEY ? '✓ Set' : '✗ Missing');
+console.log('API Secret:', process.env.CLOUDINARY_API_SECRET ? '✓ Set' : '✗ Missing');
+
 // Configure multer for memory storage
 const storage = multer.memoryStorage();
 const upload = multer({ 
@@ -27,8 +33,18 @@ const upload = multer({
 });
 
 // POST /upload/image - Upload image to Cloudinary
-router.post('/image', auth, upload.single('image'), async (req, res, next) => {
+router.post('/image', auth, (req, res, next) => {
+  console.log('=== UPLOAD IMAGE REQUEST ===');
+  console.log('Content-Type:', req.headers['content-type']);
+  console.log('Request body keys:', Object.keys(req.body));
+  console.log('Request file:', req.file);
+  next();
+}, upload.single('image'), async (req, res, next) => {
   try {
+    console.log('=== AFTER MULTER ===');
+    console.log('File received:', req.file ? 'YES' : 'NO');
+    console.log('File details:', req.file);
+    
     if (!req.file) {
       return res.status(400).json({ ok: false, message: 'No file uploaded', errorCode: 'NO_FILE' });
     }

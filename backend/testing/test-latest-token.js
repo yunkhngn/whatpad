@@ -1,8 +1,23 @@
-// Test the brand new token from the latest screenshot
-const newestToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NiwidXNlcm5hbWUiOiJIb2FuZyIsImlhdCI6MTczMDA0NTc1N30.DfqC0sYYvlPGcMEFGNQXVGxFvGwNd8WDsLJrvfZEYZY";
+// Test JWT token validation
+// SECURITY: Never hardcode real tokens! Use environment variables or generate test tokens
 const jwt = require('jsonwebtoken');
 
-console.log('Testing newest token from screenshot...\n');
+console.log('JWT Token Tester');
+console.log('================\n');
+
+// Get token from environment variable or command line argument
+const testToken = process.env.TEST_JWT_TOKEN || process.argv[2];
+
+if (!testToken) {
+    console.log('❌ No token provided!');
+    console.log('\nUsage:');
+    console.log('  node test-latest-token.js <your-token>');
+    console.log('  or');
+    console.log('  TEST_JWT_TOKEN=<your-token> node test-latest-token.js');
+    process.exit(1);
+}
+
+console.log('Testing provided token...\n');
 
 // Try both possible secrets
 const secrets = ['supersecret', process.env.JWT_SECRET];
@@ -11,7 +26,7 @@ for (const secret of secrets) {
     if (!secret) continue;
     
     try {
-        const decoded = jwt.verify(newestToken, secret);
+        const decoded = jwt.verify(testToken, secret);
         console.log(`✅ Token verified with secret: "${secret}"`);
         console.log('Decoded:', decoded);
         
@@ -34,7 +49,7 @@ for (const secret of secrets) {
 
 // Decode without verification to see payload
 console.log('\nPayload (unverified):');
-const parts = newestToken.split('.');
+const parts = testToken.split('.');
 const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
 console.log(payload);
 console.log('Issued at:', new Date(payload.iat * 1000).toLocaleString());

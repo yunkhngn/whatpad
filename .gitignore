@@ -24,6 +24,9 @@ frontend/yarn-error.log*
 
 backend/node_modules
 backend/.env
+backend/testing/*.js
+backend/uploads/*
+!backend/uploads/.gitkeep
 
 .vscode
 .DS_Store

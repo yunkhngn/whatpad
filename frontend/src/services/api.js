@@ -75,6 +75,32 @@ export const getStoriesByUserId = async (userId, params = {}) => {
   };
 };
 
+export const getPublishedStoriesByUserId = async (userId, params = {}) => {
+  const queryString = new URLSearchParams({ ...params, status: 'published' }).toString();
+  const response = await apiRequest(
+    `/users/${userId}/stories${queryString ? `?${queryString}` : ""}`
+  );
+  return {
+    stories: response.stories || [],
+    total: response.total || response.stories?.length || 0,
+    page: response.page,
+    size: response.size,
+  };
+};
+
+export const getDraftStoriesByUserId = async (userId, params = {}) => {
+  const queryString = new URLSearchParams({ ...params, status: 'draft' }).toString();
+  const response = await apiRequest(
+    `/users/${userId}/stories${queryString ? `?${queryString}` : ""}`
+  );
+  return {
+    stories: response.stories || [],
+    total: response.total || response.stories?.length || 0,
+    page: response.page,
+    size: response.size,
+  };
+};
+
 export const getStoryById = async (id) => {
   const response = await apiRequest(`/stories/${id}`);
   return { story: response.data };
@@ -196,17 +222,17 @@ export const deleteComment = async (id) => {
 
 // Votes API
 export const checkVote = async (chapterId) => {
-  return apiRequest(`/votes/chapters/${chapterId}/vote/check`);
+  return apiRequest(`/votes/chapter/${chapterId}`);
 };
 
 export const voteChapter = async (chapterId) => {
-  return apiRequest(`/votes/chapters/${chapterId}/vote`, {
+  return apiRequest(`/votes/chapter/${chapterId}`, {
     method: "POST",
   });
 };
 
 export const unvoteChapter = async (chapterId) => {
-  return apiRequest(`/votes/chapters/${chapterId}/vote`, {
+  return apiRequest(`/votes/chapter/${chapterId}`, {
     method: "DELETE",
   });
 };
@@ -270,19 +296,14 @@ export const updateReadingProgress = async (storyId, chapterId) => {
 };
 
 export const getReadingHistory = async () => {
-  // Add cache busting parameter to prevent browser caching
-  const timestamp = new Date().getTime();
-  const response = await apiRequest(
-    `/reading/me/reading-history?_t=${timestamp}`,
-    {
-      headers: {
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-        Pragma: "no-cache",
-        Expires: "0",
-      },
-    }
-  );
-  return response;
+  // Check if user is logged in first - prevent unnecessary API calls
+  const token = getAuthToken();
+  if (!token || token.trim().length === 0) {
+    // Return empty data structure instead of making API call
+    return { ok: true, data: [] };
+  }
+  
+  return apiRequest('/reading/me/reading-history');
 };
 
 export const getReadingProgress = async (storyId) => {

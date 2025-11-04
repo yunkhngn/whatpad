@@ -1,0 +1,151 @@
+.user-stories-widget {
+    width: 100%;
+}
+
+/* Header */
+.widget-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.widget-title {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary, #212529);
+}
+
+/* Status Filters */
+.status-filters {
+    display: flex;
+    gap: 0.5rem;
+    background: var(--background-secondary, #f8f9fa);
+    padding: 0.25rem;
+    border-radius: 8px;
+}
+
+.filter-btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-secondary, #6c757d);
+    transition: all 0.2s ease;
+}
+
+.filter-btn:hover {
+    background: var(--background-hover, #e9ecef);
+    color: var(--text-primary, #212529);
+}
+
+.filter-btn.active {
+    background: var(--primary-color, #007bff);
+    color: white;
+}
+
+/* Stories List */
+.stories-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+/* Loading and Error States */
+.loading,
+.error {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-secondary, #6c757d);
+}
+
+.error {
+    background: #f8d7da;
+    color: #721c24;
+    border-radius: 8px;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-secondary, #6c757d);
+}
+
+.empty-state p {
+    margin: 0;
+    font-size: 1rem;
+}
+
+/* Pagination Controls */
+.pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.5rem 0;
+}
+
+.page-btn {
+    padding: 0.6rem 1.2rem;
+    border: 1px solid var(--border-color, #dee2e6);
+    background: white;
+    color: var(--text-primary, #212529);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.page-btn:hover:not(:disabled) {
+    background: var(--primary-color, #007bff);
+    color: white;
+    border-color: var(--primary-color, #007bff);
+}
+
+.page-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.page-info {
+    font-size: 0.95rem;
+    color: var(--text-secondary, #6c757d);
+    font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .widget-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .status-filters {
+        justify-content: stretch;
+    }
+
+    .filter-btn {
+        flex: 1;
+    }
+
+    .stories-list {
+        grid-template-columns: 1fr;
+    }
+
+    .pagination-controls {
+        gap: 1rem;
+    }
+
+    .page-btn {
+        padding: 0.5rem 0.8rem;
+        font-size: 0.85rem;
+    }
+}

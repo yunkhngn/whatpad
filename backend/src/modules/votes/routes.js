@@ -4,11 +4,11 @@ const auth = require('../../mw/auth');
 
 const router = express.Router();
 
-// GET /chapters/:id/vote/check - Check if user has voted
-router.get('/chapters/:id/vote/check', auth, async (req, res, next) => {
+// GET /votes/chapter/:id - Check if user has voted
+router.get('/chapter/:id', auth, async (req, res, next) => {
   try {
     const [rows] = await pool.query(
-      'SELECT * FROM votes WHERE chapter_id = ? AND user_id = ?',
+      'SELECT chapter_id, user_id FROM votes WHERE chapter_id = ? AND user_id = ?',
       [req.params.id, req.user.id]
     );
 
@@ -18,8 +18,8 @@ router.get('/chapters/:id/vote/check', auth, async (req, res, next) => {
   }
 });
 
-// POST /chapters/:id/vote - Vote (like) a chapter
-router.post('/chapters/:id/vote', auth, async (req, res, next) => {
+// POST /votes/chapter/:id - Vote (like) a chapter
+router.post('/chapter/:id', auth, async (req, res, next) => {
   try {
     await pool.query(
       'INSERT IGNORE INTO votes (chapter_id, user_id, created_at) VALUES (?, ?, NOW())',
@@ -32,8 +32,8 @@ router.post('/chapters/:id/vote', auth, async (req, res, next) => {
   }
 });
 
-// DELETE /chapters/:id/vote - Remove vote
-router.delete('/chapters/:id/vote', auth, async (req, res, next) => {
+// DELETE /votes/chapter/:id - Remove vote
+router.delete('/chapter/:id', auth, async (req, res, next) => {
   try {
     await pool.query(
       'DELETE FROM votes WHERE chapter_id = ? AND user_id = ?',
