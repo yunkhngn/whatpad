@@ -186,6 +186,11 @@ export const getTags = async () => {
 };
 
 // ================== Users API ==================
+export const searchUsers = async (query) => {
+  const response = await apiRequest(`/users/search?q=${encodeURIComponent(query)}`);
+  return { users: response.data || [] };
+};
+
 export const getUserProfile = async (id) => {
   return apiRequest(`/users/${id}`);
 };

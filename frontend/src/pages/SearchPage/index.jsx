@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback } from "react"
 import { Container, Row, Col, Form, Spinner, Badge, Pagination } from "react-bootstrap"
 import { useSearchParams, Link } from "react-router"
-import { getStories, getTags } from "../../services/api"
+import { getStories, getTags, searchUsers } from "../../services/api"
 import styles from "./SearchPage.module.css"
 
 const SearchPage = () => {
     const [searchParams] = useSearchParams()
     const [stories, setStories] = useState([])
+    const [users, setUsers] = useState([])
     const [tags, setTags] = useState([])
     const [loading, setLoading] = useState(true)
     const [resultCount, setResultCount] = useState(0)
@@ -119,9 +120,35 @@ const SearchPage = () => {
         }
     }, [query, tagFilter, selectedLengths, selectedUpdates, selectedTags])
 
+    const fetchUsers = useCallback(async () => {
+        if (!query) {
+            console.log('fetchUsers: No query, clearing users')
+            setUsers([])
+            return
+        }
+        
+        console.log('fetchUsers: Searching for users with query:', query)
+        setLoading(true)
+        try {
+            const response = await searchUsers(query)
+            console.log('fetchUsers: Response:', response)
+            console.log('fetchUsers: Users found:', response.users?.length || 0)
+            setUsers(response.users || [])
+        } catch (err) {
+            console.error('Error fetching users:', err)
+            setUsers([])
+        } finally {
+            setLoading(false)
+        }
+    }, [query])
+
     useEffect(() => {
         fetchStories()
     }, [fetchStories])
+
+    useEffect(() => {
+        fetchUsers()
+    }, [fetchUsers])
 
     const handleLengthChange = (value) => {
         setSelectedLengths(prev => 
@@ -269,6 +296,9 @@ const SearchPage = () => {
                                 </button>
                             </div>
 
+                            {/* Show filters only for Stories tab */}
+                            {activeTab === 'stories' && (
+                                <>
                             {/* Length Filter */}
                             <div className={styles.filterGroup}>
                                 <h6 className={styles.filterGroupTitle}>Length</h6>
@@ -417,6 +447,8 @@ const SearchPage = () => {
                                     </div>
                                 </Form>
                             </div>
+                                </>
+                            )}
                         </div>
                     </Col>
 
@@ -425,9 +457,51 @@ const SearchPage = () => {
                         {loading ? (
                             <div className={styles.loadingContainer}>
                                 <Spinner animation="border" variant="primary" />
-                                <p className="mt-3">Loading stories...</p>
+                                <p className="mt-3">Loading {activeTab === 'profiles' ? 'users' : 'stories'}...</p>
                             </div>
-                        ) : stories.length > 0 ? (
+                        ) : activeTab === 'profiles' ? (
+                            // Profiles Tab Content
+                            users.length > 0 ? (
+                                <div className={styles.resultsContainer}>
+                                    {users.map((user) => (
+                                        <div key={user.id} className={styles.userItem}>
+                                            <Link to={`/user/${user.id}`} className={styles.userLink}>
+                                                {user.avatar_url ? (
+                                                    <img 
+                                                        src={user.avatar_url} 
+                                                        alt={user.username}
+                                                        className={styles.userAvatar}
+                                                    />
+                                                ) : (
+                                                    <div className={styles.userAvatarPlaceholder}>
+                                                        <i className="bi bi-person-circle"></i>
+                                                    </div>
+                                                )}
+                                            </Link>
+                                            <div className={styles.userDetails}>
+                                                <Link to={`/user/${user.id}`} className={styles.userNameLink}>
+                                                    <h5 className={styles.userName}>{user.username}</h5>
+                                                </Link>
+                                                {user.bio && (
+                                                    <p className={styles.userBio}>{user.bio}</p>
+                                                )}
+                                                <p className={styles.userJoined}>
+                                                    Joined {new Date(user.created_at).toLocaleDateString()}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className={styles.emptyState}>
+                                    <i className="bi bi-person-x"></i>
+                                    <h4>No users found</h4>
+                                    <p>Try a different search query</p>
+                                </div>
+                            )
+                        ) : (
+                            // Stories Tab Content
+                            stories.length > 0 ? (
                             <>
                                 <div className={styles.resultsContainer}>
                                     {stories
@@ -546,6 +620,7 @@ const SearchPage = () => {
                                 <h4>No stories found</h4>
                                 <p>Try adjusting your filters or search query</p>
                             </div>
+                        )
                         )}
                     </Col>
                 </Row>

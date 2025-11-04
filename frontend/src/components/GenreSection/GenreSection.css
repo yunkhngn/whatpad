@@ -23,11 +23,7 @@
 }
 
 .genre-nav-buttons-only {
-    display: flex;
-    gap: 0.5rem;
-    justify-content: flex-end;
-    margin-bottom: 0.8rem;
-    padding: 0 1rem;
+    display: none; /* Hidden - navigation should be in parent header */
 }
 
 .nav-button {

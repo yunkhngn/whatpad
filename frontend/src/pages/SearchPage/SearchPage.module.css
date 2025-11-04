@@ -550,3 +550,80 @@
         font-size: 1.25rem;
     }
 }
+
+/* User Profile Items */
+.userItem {
+    display: flex;
+    gap: 1rem;
+    padding: 1.5rem;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    margin-bottom: 1rem;
+    transition: box-shadow 0.2s ease;
+}
+
+.userItem:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+}
+
+.userLink {
+    text-decoration: none;
+    flex-shrink: 0;
+}
+
+.userAvatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.userAvatarPlaceholder {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+}
+
+.userAvatarPlaceholder i {
+    font-size: 3rem;
+}
+
+.userDetails {
+    flex: 1;
+    min-width: 0;
+}
+
+.userNameLink {
+    text-decoration: none;
+    color: inherit;
+}
+
+.userNameLink:hover .userName {
+    color: #f26500;
+}
+
+.userName {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #333;
+    margin: 0 0 0.5rem 0;
+}
+
+.userBio {
+    font-size: 0.875rem;
+    color: #666;
+    margin: 0 0 0.5rem 0;
+    line-height: 1.5;
+}
+
+.userJoined {
+    font-size: 0.75rem;
+    color: #999;
+    margin: 0;
+}
