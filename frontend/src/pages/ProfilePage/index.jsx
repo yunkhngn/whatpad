@@ -12,7 +12,6 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
-import ContinueReading from '../../components/ContinueReading';
 
 const API_BASE_URL = 'http://localhost:4000';
 
