@@ -72,6 +72,15 @@ const AppRouter = () => {
         />
 
         <Route
+          path="/profile/:userId"
+          element={
+            <MainLayout>
+              <ProfilePage />
+            </MainLayout>
+          }
+        />
+
+        <Route
           path="/my-stories"
           element={
             <MainLayout>

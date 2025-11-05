@@ -23,6 +23,12 @@
     margin-bottom: 0.75rem;
 }
 
+.headerRightSection {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
 .titleWrapper {
     display: flex;
     align-items: center;
@@ -172,19 +178,19 @@
     gap: 0.75rem;
 }
 
-/* Fixed width for genre cards - smaller size to fit more cards */
+/* Fixed width for genre cards - same as story cards */
 .genreCardsContainer :global(.col-lg-custom) {
     flex: 0 0 auto;
-    width: 116px;
-    min-width: 116px;
+    width: 218px;
+    min-width: 218px;
     scroll-snap-align: start; /* Snap to start of each item */
 }
 
 /* Ensure columns don't wrap on smaller screens */
 .genreCardsContainer :global([class*="col-"]) {
     flex-shrink: 0;
-    width: 116px;
-    min-width: 116px;
+    width: 218px;
+    min-width: 218px;
 }
 
 .genreCard {
@@ -194,6 +200,8 @@
     transition: all var(--transition-fast);
     height: 100%;
     position: relative;
+    background: white;
+    border: 1px solid #e0e0e0;
 }
 
 .genreCard:hover {
@@ -201,52 +209,63 @@
     box-shadow: var(--shadow-lg);
 }
 
-.genreThumbnail {
-    width: 100%;
-    height: 48px;
-    position: relative;
-    border-radius: var(--radius-md);
+.genreCard:hover .genreTag {
+    color: #ff4f00;
+}
+
+/* Genre thumbnail grid layout */
+.genreThumbnailGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    padding: 4px;
+    height: 218px;
+}
+
+.largeThumbnail {
+    grid-row: 1 / 3;
     overflow: hidden;
+    border-radius: 4px;
+}
+
+.largeThumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.smallThumbnailsGrid {
+    display: grid;
+    grid-template-rows: repeat(2, 1fr);
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px;
+}
+
+.smallThumbnail {
+    overflow: hidden;
+    border-radius: 4px;
     background-color: #f0f0f0;
 }
 
-.genreOverlay {
+.smallThumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Genre tag at bottom right */
+.genreTag {
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(
-        to bottom,
-        rgba(0, 0, 0, 0.1) 0%,
-        rgba(0, 0, 0, 0.6) 100%
-    );
-}
-
-.genreInfo {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 0.35rem 0.5rem;
-    color: white;
-    z-index: 2;
-}
-
-.genreName {
-    font-size: 0.75rem;
-    font-weight: bold;
-    margin-bottom: 0;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
-    line-height: 1.2;
-}
-
-.genreCount {
-    font-size: 0.65rem;
-    margin-bottom: 0;
-    opacity: 0.95;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
-    display: none; /* Hide story count due to limited space */
+    bottom: 8px;
+    right: 8px;
+    background: rgba(255, 255, 255, 0.95);
+    color: #666;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: color 0.3s ease;
+    z-index: 10;
 }
 
 .genreButton {
@@ -319,6 +338,14 @@
     padding: 1rem 0;
 }
 
+/* Filtered Genre Section - shows when genre is selected */
+.filteredGenreSection {
+    background: white;
+    padding: 2rem 0;
+    margin-bottom: 0.5rem;
+    border-left: 4px solid var(--color-primary);
+}
+
 /* Latest Stories Section */
 .latestStoriesSection {
     background: white;
@@ -349,7 +376,7 @@
     }
 
     .genreThumbnail {
-        height: 48px;
+        height: 110px; /* Match the width for square cards */
     }
 
     .genreName {
@@ -393,7 +420,7 @@
 
 @media (max-width: 576px) {
     .genreThumbnail {
-        height: 48px;
+        height: 100px; /* Match the width for square cards */
     }
 
     /* Smaller cards on mobile - still show multiple items */
@@ -432,7 +459,7 @@
 
 @media (min-width: 992px) {
     .genreCardsContainer :global(.col-lg-custom) {
-        width: 116px;
-        min-width: 116px;
+        width: 218px;
+        min-width: 218px;
     }
 }

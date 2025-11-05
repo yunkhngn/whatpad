@@ -37,6 +37,16 @@ router.post("/", auth, async (req, res, next) => {
         });
     }
 
+    // Validate tag name - must not be purely numeric
+    if (/^\d+$/.test(name.trim())) {
+      return res.status(400).json({ ok: false, message: 'Tag name cannot be only numbers', errorCode: 'INVALID_TAG_NAME' });
+    }
+
+    // Validate tag name - must be at least 2 characters
+    if (name.trim().length < 2) {
+      return res.status(400).json({ ok: false, message: 'Tag name must be at least 2 characters', errorCode: 'TAG_TOO_SHORT' });
+    }
+
     const slug = slugify(name);
 
     await pool.query(

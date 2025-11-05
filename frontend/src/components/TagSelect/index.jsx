@@ -5,6 +5,8 @@ import styles from "./TagSelect.module.css";
 
 export default function TagSelect({ story, setStory }) {
   const [tags, setTags] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showDropdown, setShowDropdown] = useState(false);
 
   useEffect(() => {
     getAllTags();
@@ -23,6 +25,9 @@ export default function TagSelect({ story, setStory }) {
         tags: [...story.tags, tag],
       });
     }
+    // Clear search and hide dropdown
+    setSearchTerm("");
+    setShowDropdown(false);
   };
 
   const handleRemoveTag = (tagId) => {
@@ -32,40 +37,43 @@ export default function TagSelect({ story, setStory }) {
     });
   };
 
+  // Filter tags based on search term
+  const filteredTags = tags.filter((tag) =>
+    tag.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className={styles.tagSelectContainer}>
       <div className={styles.tagsSection}>
         <div className={styles.tagDropdownWrapper}>
-          <button
-            type="button"
-            className={styles.tagDropdownBtn}
-            onClick={(e) => {
-              e.preventDefault();
-              const menu = e.currentTarget.nextElementSibling;
-              menu.style.display =
-                menu.style.display === "none" ? "block" : "none";
-            }}
-          >
-            <i className="bi bi-plus me-2"></i>
-            Add a tag
-          </button>
-          <div className={styles.tagDropdownMenu}>
-            {tags.map((tag) => (
-              <div
-                key={tag.id}
-                className={styles.tagDropdownItem}
-                onClick={() => {
-                  handleTagSelect(tag);
-                  const menu = document.querySelector(
-                    `.${styles.tagDropdownMenu}`
-                  );
-                  if (menu) menu.style.display = "none";
-                }}
-              >
-                {tag.name}
-              </div>
-            ))}
+          <div className={styles.searchInputWrapper}>
+            <i className="bi bi-search me-2"></i>
+            <input
+              type="text"
+              className={styles.tagSearchInput}
+              placeholder="Search for tags..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setShowDropdown(e.target.value.length > 0);
+              }}
+              onFocus={() => setShowDropdown(searchTerm.length > 0)}
+              onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+            />
           </div>
+          {showDropdown && filteredTags.length > 0 && (
+            <div className={styles.tagDropdownMenu}>
+              {filteredTags.map((tag) => (
+                <div
+                  key={tag.id}
+                  className={styles.tagDropdownItem}
+                  onClick={() => handleTagSelect(tag)}
+                >
+                  {tag.name}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Selected Tags Display */}

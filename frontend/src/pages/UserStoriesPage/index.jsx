@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Container, Button, Alert, Spinner } from "react-bootstrap";
+import { Container, Button, Alert } from "react-bootstrap";
 import { useNavigate } from "react-router";
 import { getCurrentUser, getStoriesByUserId } from "../../services/api";
 import UserStoryList from "./components/UserStoryList";

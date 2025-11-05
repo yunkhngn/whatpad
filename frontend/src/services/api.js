@@ -21,10 +21,16 @@ const apiRequest = async (endpoint, options = {}) => {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
 
   if (!response.ok) {
-    const errorMessage = `API Error: ${response.status} ${response.statusText}`;
-    if (response.status === 401) {
-      throw new Error("401 Unauthorized");
+    // Try to get the error message from the response body
+    let errorMessage = `${response.status} ${response.statusText}`;
+    
+    try {
+      const errorData = await response.json();
+      errorMessage = errorData.message || errorData.error || errorMessage;
+    } catch (jsonError) {
+      // If parsing JSON fails, keep the status text
     }
+    
     throw new Error(errorMessage);
   }
 
@@ -69,7 +75,33 @@ export const getStoriesByUserId = async (userId, params = {}) => {
     `/users/${userId}/stories${queryString ? `?${queryString}` : ""}`
   );
   return {
+    stories: response.data || [],
+    page: response.page,
+    size: response.size,
+  };
+};
+
+export const getPublishedStoriesByUserId = async (userId, params = {}) => {
+  const queryString = new URLSearchParams({ ...params, status: 'published' }).toString();
+  const response = await apiRequest(
+    `/users/${userId}/stories${queryString ? `?${queryString}` : ""}`
+  );
+  return {
     stories: response.stories || [],
+    total: response.total || response.stories?.length || 0,
+    page: response.page,
+    size: response.size,
+  };
+};
+
+export const getDraftStoriesByUserId = async (userId, params = {}) => {
+  const queryString = new URLSearchParams({ ...params, status: 'draft' }).toString();
+  const response = await apiRequest(
+    `/users/${userId}/stories${queryString ? `?${queryString}` : ""}`
+  );
+  return {
+    stories: response.stories || [],
+    total: response.total || response.stories?.length || 0,
     page: response.page,
     size: response.size,
   };
@@ -160,6 +192,11 @@ export const getTags = async () => {
 };
 
 // ================== Users API ==================
+export const searchUsers = async (query) => {
+  const response = await apiRequest(`/users/search?q=${encodeURIComponent(query)}`);
+  return { users: response.data || [] };
+};
+
 export const getUserProfile = async (id) => {
   return apiRequest(`/users/${id}`);
 };
@@ -196,17 +233,17 @@ export const deleteComment = async (id) => {
 
 // Votes API
 export const checkVote = async (chapterId) => {
-  return apiRequest(`/votes/chapters/${chapterId}/vote/check`);
+  return apiRequest(`/votes/chapter/${chapterId}`);
 };
 
 export const voteChapter = async (chapterId) => {
-  return apiRequest(`/votes/chapters/${chapterId}/vote`, {
+  return apiRequest(`/votes/chapter/${chapterId}`, {
     method: "POST",
   });
 };
 
 export const unvoteChapter = async (chapterId) => {
-  return apiRequest(`/votes/chapters/${chapterId}/vote`, {
+  return apiRequest(`/votes/chapter/${chapterId}`, {
     method: "DELETE",
   });
 };
@@ -258,6 +295,27 @@ export const getUserFollowing = async (userId) => {
   return apiRequest(`/follows/${userId}/following`);
 };
 
+// ================== Story Follow API ==================
+export const followStory = async (storyId) => {
+  return apiRequest(`/followed-stories/${storyId}`, {
+    method: "POST",
+  });
+};
+
+export const unfollowStory = async (storyId) => {
+  return apiRequest(`/followed-stories/${storyId}`, {
+    method: "DELETE",
+  });
+};
+
+export const checkIfFollowingStory = async (storyId) => {
+  return apiRequest(`/followed-stories/${storyId}/check`);
+};
+
+export const getFollowedStories = async () => {
+  return apiRequest("/followed-stories");
+};
+
 // ================== Reading API ==================
 export const updateReadingProgress = async (storyId, chapterId) => {
   return apiRequest("/reading", {
@@ -270,19 +328,14 @@ export const updateReadingProgress = async (storyId, chapterId) => {
 };
 
 export const getReadingHistory = async () => {
-  // Add cache busting parameter to prevent browser caching
-  const timestamp = new Date().getTime();
-  const response = await apiRequest(
-    `/reading/me/reading-history?_t=${timestamp}`,
-    {
-      headers: {
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-        Pragma: "no-cache",
-        Expires: "0",
-      },
-    }
-  );
-  return response;
+  // Check if user is logged in first - prevent unnecessary API calls
+  const token = getAuthToken();
+  if (!token || token.trim().length === 0) {
+    // Return empty data structure instead of making API call
+    return { ok: true, data: [] };
+  }
+  
+  return apiRequest('/reading/me/reading-history');
 };
 
 export const getReadingProgress = async (storyId) => {

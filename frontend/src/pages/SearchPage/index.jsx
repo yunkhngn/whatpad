@@ -1,15 +1,18 @@
 import React, { useState, useEffect, useCallback } from "react"
-import { Container, Row, Col, Form, Spinner, Badge } from "react-bootstrap"
+import { Container, Row, Col, Form, Spinner, Badge, Pagination } from "react-bootstrap"
 import { useSearchParams, Link } from "react-router"
-import { getStories, getTags } from "../../services/api"
+import { getStories, getTags, searchUsers } from "../../services/api"
 import styles from "./SearchPage.module.css"
 
 const SearchPage = () => {
     const [searchParams] = useSearchParams()
     const [stories, setStories] = useState([])
+    const [users, setUsers] = useState([])
     const [tags, setTags] = useState([])
     const [loading, setLoading] = useState(true)
     const [resultCount, setResultCount] = useState(0)
+    const [currentPage, setCurrentPage] = useState(1)
+    const ITEMS_PER_PAGE = 10
     
     // Filter states
     const [selectedLengths, setSelectedLengths] = useState([])
@@ -17,9 +20,14 @@ const SearchPage = () => {
     const [selectedTags, setSelectedTags] = useState([])
     const [tagSearchInput, setTagSearchInput] = useState('')
     const [activeTab, setActiveTab] = useState('stories')
+    const [filteredSuggestions, setFilteredSuggestions] = useState([])
+    const [showSuggestions, setShowSuggestions] = useState(false)
 
     const query = searchParams.get('q') || ''
     const tagFilter = searchParams.get('tag') || ''
+    
+    // Check if query is #allStories
+    const isAllStoriesQuery = query.toLowerCase() === '#allstories'
 
     useEffect(() => {
         fetchTags()
@@ -42,7 +50,13 @@ const SearchPage = () => {
                 size: 50
             }
             
-            if (query) params.q = query
+            // Check if query is #allStories - if so, remove it from params to fetch all stories
+            if (isAllStoriesQuery) {
+                // Don't add query param, just fetch all stories
+            } else if (query) {
+                params.q = query
+            }
+            
             if (tagFilter) params.tag = tagFilter
             
             const response = await getStories(params)
@@ -106,17 +120,61 @@ const SearchPage = () => {
             
             setStories(filteredStories)
             setResultCount(filteredStories.length)
+            setCurrentPage(1) // Reset to first page when filters change
         } catch (err) {
             console.error('Error fetching stories:', err)
             setStories([])
         } finally {
             setLoading(false)
         }
-    }, [query, tagFilter, selectedLengths, selectedUpdates, selectedTags])
+    }, [query, tagFilter, selectedLengths, selectedUpdates, selectedTags, isAllStoriesQuery])
+
+    const fetchUsers = useCallback(async () => {
+        if (!query) {
+            console.log('fetchUsers: No query, clearing users')
+            setUsers([])
+            return
+        }
+        
+        console.log('fetchUsers: Searching for users with query:', query)
+        setLoading(true)
+        try {
+            const response = await searchUsers(query)
+            console.log('fetchUsers: Response:', response)
+            console.log('fetchUsers: Users found:', response.users?.length || 0)
+            setUsers(response.users || [])
+        } catch (err) {
+            console.error('Error fetching users:', err)
+            setUsers([])
+        } finally {
+            setLoading(false)
+        }
+    }, [query])
 
     useEffect(() => {
         fetchStories()
     }, [fetchStories])
+
+    useEffect(() => {
+        fetchUsers()
+    }, [fetchUsers])
+
+    // Refetch when page becomes visible (user returns from reading)
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (!document.hidden) {
+                console.log('SearchPage visible again, refetching...');
+                fetchStories();
+                fetchUsers();
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
+    }, [fetchStories, fetchUsers]);
 
     const handleLengthChange = (value) => {
         setSelectedLengths(prev => 
@@ -147,12 +205,56 @@ const SearchPage = () => {
         )
     }
 
+    const handleTagInputChange = (e) => {
+        const value = e.target.value
+        setTagSearchInput(value)
+        
+        if (value.trim().length >= 1) {
+            // Filter tags that match the input
+            const filtered = tags.filter(tag => 
+                tag.name.toLowerCase().includes(value.toLowerCase())
+            ).slice(0, 5) // Show max 5 suggestions
+            
+            setFilteredSuggestions(filtered)
+            setShowSuggestions(filtered.length > 0)
+        } else {
+            setFilteredSuggestions([])
+            setShowSuggestions(false)
+        }
+    }
+
+    const handleSuggestionClick = (tagName) => {
+        handleTagSelect(tagName)
+        setTagSearchInput('')
+        setShowSuggestions(false)
+        setFilteredSuggestions([])
+    }
+
     const handleTagSearch = (e) => {
         e.preventDefault()
-        if (tagSearchInput.trim()) {
-            handleTagSelect(tagSearchInput.trim())
-            setTagSearchInput('')
+        const trimmedInput = tagSearchInput.trim()
+        
+        // Validate tag input
+        if (!trimmedInput) {
+            return
         }
+        
+        // Check if input is only numbers
+        if (/^\d+$/.test(trimmedInput)) {
+            console.warn('Tag name cannot be only numbers')
+            return
+        }
+        
+        // Check minimum length
+        if (trimmedInput.length < 2) {
+            console.warn('Tag name must be at least 2 characters')
+            return
+        }
+        
+        handleTagSelect(trimmedInput)
+        setTagSearchInput('')
+        setShowSuggestions(false)
+        setFilteredSuggestions([])
     }
 
     const clearAllFilters = () => {
@@ -172,7 +274,9 @@ const SearchPage = () => {
                     {/* Sidebar Filters */}
                     <Col md={3} lg={2} className={styles.sidebar}>
                         <div className={styles.filterSection}>
-                            <h5 className={styles.filterTitle}>"{query || 'All Stories'}"</h5>
+                            <h5 className={styles.filterTitle}>
+                                {isAllStoriesQuery ? '"All Stories"' : query ? `"${query}"` : tagFilter ? `"${tagFilter}"` : '"All Stories"'}
+                            </h5>
                             <p className={styles.resultCount}>{resultCount} results</p>
 
                             {hasActiveFilters && (
@@ -220,6 +324,9 @@ const SearchPage = () => {
                                 </button>
                             </div>
 
+                            {/* Show filters only for Stories tab */}
+                            {activeTab === 'stories' && (
+                                <>
                             {/* Length Filter */}
                             <div className={styles.filterGroup}>
                                 <h6 className={styles.filterGroupTitle}>Length</h6>
@@ -332,13 +439,32 @@ const SearchPage = () => {
 
                                 <Form onSubmit={handleTagSearch} className={styles.tagSearchForm}>
                                     <div className={styles.tagSearchWrapper}>
-                                        <Form.Control
-                                            type="text"
-                                            placeholder="Add a tag to refine by"
-                                            value={tagSearchInput}
-                                            onChange={(e) => setTagSearchInput(e.target.value)}
-                                            className={styles.tagSearchInput}
-                                        />
+                                        <div className={styles.tagInputContainer}>
+                                            <Form.Control
+                                                type="text"
+                                                placeholder="Add a tag to refine by"
+                                                value={tagSearchInput}
+                                                onChange={handleTagInputChange}
+                                                onFocus={() => tagSearchInput && setShowSuggestions(filteredSuggestions.length > 0)}
+                                                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                                                className={styles.tagSearchInput}
+                                            />
+                                            {showSuggestions && filteredSuggestions.length > 0 && (
+                                                <div className={styles.suggestionsList}>
+                                                    {filteredSuggestions.map(tag => (
+                                                        <button
+                                                            key={tag.id}
+                                                            type="button"
+                                                            className={styles.suggestionItem}
+                                                            onClick={() => handleSuggestionClick(tag.name)}
+                                                        >
+                                                            <i className="bi bi-tag"></i>
+                                                            <span>{tag.name}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
                                         <button 
                                             type="submit" 
                                             className={styles.tagSearchButton}
@@ -349,6 +475,8 @@ const SearchPage = () => {
                                     </div>
                                 </Form>
                             </div>
+                                </>
+                            )}
                         </div>
                     </Col>
 
@@ -357,11 +485,56 @@ const SearchPage = () => {
                         {loading ? (
                             <div className={styles.loadingContainer}>
                                 <Spinner animation="border" variant="primary" />
-                                <p className="mt-3">Loading stories...</p>
+                                <p className="mt-3">Loading {activeTab === 'profiles' ? 'users' : 'stories'}...</p>
                             </div>
-                        ) : stories.length > 0 ? (
-                            <div className={styles.resultsContainer}>
-                                {stories.map((story) => (
+                        ) : activeTab === 'profiles' ? (
+                            // Profiles Tab Content
+                            users.length > 0 ? (
+                                <div className={styles.resultsContainer}>
+                                    {users.map((user) => (
+                                        <div key={user.id} className={styles.userItem}>
+                                            <Link to={`/profile/${user.id}`} className={styles.userLink}>
+                                                {user.avatar_url ? (
+                                                    <img 
+                                                        src={user.avatar_url} 
+                                                        alt={user.username}
+                                                        className={styles.userAvatar}
+                                                    />
+                                                ) : (
+                                                    <div className={styles.userAvatarPlaceholder}>
+                                                        <i className="bi bi-person-circle"></i>
+                                                    </div>
+                                                )}
+                                            </Link>
+                                            <div className={styles.userDetails}>
+                                                <Link to={`/profile/${user.id}`} className={styles.userNameLink}>
+                                                    <h5 className={styles.userName}>{user.username}</h5>
+                                                </Link>
+                                                {user.bio && (
+                                                    <p className={styles.userBio}>{user.bio}</p>
+                                                )}
+                                                <p className={styles.userJoined}>
+                                                    Joined {new Date(user.created_at).toLocaleDateString()}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className={styles.emptyState}>
+                                    <i className="bi bi-person-x"></i>
+                                    <h4>No users found</h4>
+                                    <p>Try a different search query</p>
+                                </div>
+                            )
+                        ) : (
+                            // Stories Tab Content
+                            stories.length > 0 ? (
+                            <>
+                                <div className={styles.resultsContainer}>
+                                    {stories
+                                        .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+                                        .map((story) => (
                                     <div key={story.id} className={styles.storyItem}>
                                         <Link to={`/story/${story.id}`} className={styles.storyLink}>
                                             {story.cover_url && (
@@ -392,10 +565,10 @@ const SearchPage = () => {
 
                                             <div className={styles.storyStats}>
                                                 <span className={styles.stat}>
-                                                    <i className="bi bi-eye"></i> Reads: 0
+                                                    <i className="bi bi-eye"></i> Reads: {story.read_count || 0}
                                                 </span>
                                                 <span className={styles.stat}>
-                                                    <i className="bi bi-star"></i> Votes: 0
+                                                    <i className="bi bi-star"></i> Votes: {story.vote_count || 0}
                                                 </span>
                                                 <span className={styles.stat}>
                                                     <i className="bi bi-book"></i> Chapters: {story.chapter_count || 0}
@@ -410,18 +583,72 @@ const SearchPage = () => {
                                             </p>
 
                                             <div className={styles.storyAuthor}>
-                                                by <Link to={`/profile/${story.user_id}`}>{story.author_name}</Link>
+                                                by <Link to={`/profile/${story.user_id}`} className={styles.authorLink}>{story.author_name}</Link>
                                             </div>
                                         </div>
                                     </div>
                                 ))}
                             </div>
+                            
+                            {/* Pagination */}
+                            {stories.length > ITEMS_PER_PAGE && (
+                                <div className="d-flex justify-content-center mt-4 mb-4">
+                                    <Pagination>
+                                        <Pagination.First 
+                                            onClick={() => setCurrentPage(1)} 
+                                            disabled={currentPage === 1}
+                                        />
+                                        <Pagination.Prev 
+                                            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} 
+                                            disabled={currentPage === 1}
+                                        />
+                                        
+                                        {[...Array(Math.ceil(stories.length / ITEMS_PER_PAGE))].map((_, index) => {
+                                            const pageNum = index + 1
+                                            // Show first, last, current, and adjacent pages
+                                            const totalPages = Math.ceil(stories.length / ITEMS_PER_PAGE)
+                                            if (
+                                                pageNum === 1 || 
+                                                pageNum === totalPages ||
+                                                (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                                            ) {
+                                                return (
+                                                    <Pagination.Item
+                                                        key={pageNum}
+                                                        active={pageNum === currentPage}
+                                                        onClick={() => setCurrentPage(pageNum)}
+                                                    >
+                                                        {pageNum}
+                                                    </Pagination.Item>
+                                                )
+                                            } else if (
+                                                pageNum === currentPage - 2 || 
+                                                pageNum === currentPage + 2
+                                            ) {
+                                                return <Pagination.Ellipsis key={pageNum} disabled />
+                                            }
+                                            return null
+                                        })}
+                                        
+                                        <Pagination.Next 
+                                            onClick={() => setCurrentPage(prev => Math.min(Math.ceil(stories.length / ITEMS_PER_PAGE), prev + 1))} 
+                                            disabled={currentPage === Math.ceil(stories.length / ITEMS_PER_PAGE)}
+                                        />
+                                        <Pagination.Last 
+                                            onClick={() => setCurrentPage(Math.ceil(stories.length / ITEMS_PER_PAGE))} 
+                                            disabled={currentPage === Math.ceil(stories.length / ITEMS_PER_PAGE)}
+                                        />
+                                    </Pagination>
+                                </div>
+                            )}
+                        </>
                         ) : (
                             <div className={styles.emptyState}>
                                 <i className="bi bi-search"></i>
                                 <h4>No stories found</h4>
                                 <p>Try adjusting your filters or search query</p>
                             </div>
+                        )
                         )}
                     </Col>
                 </Row>

@@ -233,11 +233,16 @@
 .tagSearchWrapper {
   display: flex;
   gap: 0.5rem;
-  align-items: center;
+  align-items: flex-start;
+}
+
+.tagInputContainer {
+  flex: 1;
+  position: relative;
 }
 
 .tagSearchInput {
-  flex: 1;
+  width: 100%;
   padding: 0.5rem 0.75rem;
   border: 1px solid #e0e0e0;
   border-radius: 4px;
@@ -248,6 +253,72 @@
   border-color: #f26500;
   outline: none;
   box-shadow: 0 0 0 2px rgba(242, 101, 0, 0.1);
+}
+
+/* Autocomplete Suggestions Dropdown */
+.suggestionsList {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.suggestionItem {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: white;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+  color: #333;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.suggestionItem:last-child {
+  border-bottom: none;
+}
+
+.suggestionItem i {
+  color: #f26500;
+  font-size: 0.875rem;
+}
+
+.suggestionItem:hover {
+  background-color: #fff5f0;
+  color: #f26500;
+}
+
+.suggestionItem:hover i {
+  transform: scale(1.1);
+}
+
+.suggestionItem span {
+  font-weight: 500;
 }
 
 .tagSearchButton {
@@ -478,4 +549,81 @@
     .filterTitle {
         font-size: 1.25rem;
     }
+}
+
+/* User Profile Items */
+.userItem {
+    display: flex;
+    gap: 1rem;
+    padding: 1.5rem;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    margin-bottom: 1rem;
+    transition: box-shadow 0.2s ease;
+}
+
+.userItem:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+}
+
+.userLink {
+    text-decoration: none;
+    flex-shrink: 0;
+}
+
+.userAvatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.userAvatarPlaceholder {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+}
+
+.userAvatarPlaceholder i {
+    font-size: 3rem;
+}
+
+.userDetails {
+    flex: 1;
+    min-width: 0;
+}
+
+.userNameLink {
+    text-decoration: none;
+    color: inherit;
+}
+
+.userNameLink:hover .userName {
+    color: #f26500;
+}
+
+.userName {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #333;
+    margin: 0 0 0.5rem 0;
+}
+
+.userBio {
+    font-size: 0.875rem;
+    color: #666;
+    margin: 0 0 0.5rem 0;
+    line-height: 1.5;
+}
+
+.userJoined {
+    font-size: 0.75rem;
+    color: #999;
+    margin: 0;
 }

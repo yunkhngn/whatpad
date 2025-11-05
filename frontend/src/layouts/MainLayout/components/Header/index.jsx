@@ -67,7 +67,8 @@ function Header() {
         `http://localhost:4000/stories?q=${encodeURIComponent(query)}&size=5`
       );
       const data = await response.json();
-      setSuggestions(data.data || []);
+      // Fix: The API returns data.stories, not data.data
+      setSuggestions(data.stories || []);
       setShowSuggestions(true);
     } catch (err) {
       console.error("Error fetching suggestions:", err);
@@ -181,7 +182,7 @@ function Header() {
                 <NavDropdown.Item
                   key={tag.id}
                   as={Link}
-                  to={`/search?tag=${tag.id}`}
+                  to={`/search?tag=${encodeURIComponent(tag.name)}`}
                 >
                   {tag.name}
                 </NavDropdown.Item>

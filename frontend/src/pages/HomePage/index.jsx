@@ -9,6 +9,7 @@ import {
   Carousel,
   Badge,
 } from "react-bootstrap";
+import { useNavigate } from "react-router";
 import { getStories, getTags, getReadingHistory } from "../../services/api";
 import styles from "./HomePage.module.css";
 import GenreSection from "../../components/GenreSection";
@@ -22,6 +23,7 @@ const HomePage = () => {
   const [continueReading, setContinueReading] = useState([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const genreScrollRef = useRef(null);
+  const navigate = useNavigate();
 
   // Check if user is logged in and listen for auth events
   useEffect(() => {
@@ -109,6 +111,36 @@ const HomePage = () => {
     }
   }, [isLoggedIn, fetchReadingHistory]);
 
+  // Refetch data when page becomes visible (user returns from reading)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log('Page visible again, refetching stories...');
+        fetchData();
+        if (isLoggedIn) {
+          fetchReadingHistory();
+        }
+      }
+    };
+
+    // Also listen for navigation back from reading page
+    const handleStoryDataUpdated = () => {
+      console.log('Story data updated, refetching homepage stories...');
+      fetchData();
+      if (isLoggedIn) {
+        fetchReadingHistory();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('storyDataUpdated', handleStoryDataUpdated);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('storyDataUpdated', handleStoryDataUpdated);
+    };
+  }, [fetchData, fetchReadingHistory, isLoggedIn]);
+
   const groupStoriesByTag = () => {
     const grouped = [];
 
@@ -133,18 +165,18 @@ const HomePage = () => {
   };
 
   const getGenreCardsForDisplay = () => {
-    // Count stories for each tag and sort by story count (descending)
+    // Get 5 stories for each tag
     const genreCards = tags.map((tag) => {
-      const storyCount = stories.filter(
+      const tagStories = stories.filter(
         (story) =>
           story.tags && story.tags.some((storyTag) => storyTag.id === tag.id)
-      ).length;
+      );
 
       return {
         id: tag.id,
         name: tag.name,
-        thumbnail: "/assests/icons/default-cover.png",
-        storyCount: storyCount,
+        stories: tagStories.slice(0, 5), // Get up to 5 stories
+        storyCount: tagStories.length,
       };
     });
 
@@ -188,6 +220,7 @@ const HomePage = () => {
 
   const storiesByGenre = groupStoriesByTag();
   const genreCards = getGenreCardsForDisplay();
+  const visibleGenreCards = genreCards.filter((genre) => genre.storyCount > 0);
 
   return (
     <Container fluid className={styles.homePage}>
@@ -275,26 +308,30 @@ const HomePage = () => {
                     View all
                   </a>
                 </div>
-                <div className={styles.genreNavButtons}>
-                  <button
-                    className={styles.navButton}
-                    onClick={() => scrollGenres("left")}
-                    aria-label="Previous"
-                  >
-                    <i className="bi bi-chevron-left"></i>
-                  </button>
-                  <button
-                    className={styles.navButton}
-                    onClick={() => scrollGenres("right")}
-                    aria-label="Next"
-                  >
-                    <i className="bi bi-chevron-right"></i>
-                  </button>
-                </div>
+                {visibleGenreCards.length >= 5 && (
+                  <div className={styles.genreNavButtons}>
+                    <button
+                      className={styles.navButton}
+                      onClick={() => scrollGenres("left")}
+                      aria-label="Previous"
+                    >
+                      <i className="bi bi-chevron-left"></i>
+                    </button>
+                    <button
+                      className={styles.navButton}
+                      onClick={() => scrollGenres("right")}
+                      aria-label="Next"
+                    >
+                      <i className="bi bi-chevron-right"></i>
+                    </button>
+                  </div>
+                )}
               </div>
               <div className={styles.genreCardsContainer} ref={genreScrollRef}>
                 <Row className="g-3">
-                  {genreCards.map((genre) => (
+                  {genreCards
+                    .filter((genre) => genre.storyCount > 0) // Only show genres with stories
+                    .map((genre) => (
                     <Col
                       key={genre.id}
                       xs={6}
@@ -303,22 +340,51 @@ const HomePage = () => {
                       lg
                       className="col-lg-custom"
                     >
-                      <div className={styles.genreCard}>
-                        <div
-                          className={styles.genreThumbnail}
-                          style={{
-                            backgroundImage: `url(${genre.thumbnail})`,
-                            backgroundSize: "cover",
-                            backgroundPosition: "center",
-                          }}
-                        >
-                          <div className={styles.genreOverlay}></div>
-                          <div className={styles.genreInfo}>
-                            <h3 className={styles.genreName}>{genre.name}</h3>
-                            <p className={styles.genreCount}>
-                              {genre.storyCount} stories
-                            </p>
+                      <div 
+                        className={styles.genreCard}
+                        onClick={() => navigate(`/search?tag=${encodeURIComponent(genre.name)}`)}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <div className={styles.genreThumbnailGrid}>
+                          {/* Large thumbnail (1st story) */}
+                          {genre.stories[0] && (
+                            <div className={styles.largeThumbnail}>
+                              <img
+                                src={genre.stories[0].cover_url || "/assests/icons/default-cover.png"}
+                                alt={genre.stories[0].title}
+                                onError={(e) => {
+                                  e.target.src = "/assests/icons/default-cover.png";
+                                }}
+                              />
+                            </div>
+                          )}
+                          {/* Small thumbnails (stories 2-5) */}
+                          <div className={styles.smallThumbnailsGrid}>
+                            {genre.stories.slice(1, 5).map((story, idx) => (
+                              <div key={idx} className={styles.smallThumbnail}>
+                                <img
+                                  src={story.cover_url || "/assests/icons/default-cover.png"}
+                                  alt={story.title}
+                                  onError={(e) => {
+                                    e.target.src = "/assests/icons/default-cover.png";
+                                  }}
+                                />
+                              </div>
+                            ))}
+                            {/* Fill empty slots if less than 5 stories */}
+                            {Array.from({ length: Math.max(0, 4 - genre.stories.slice(1, 5).length) }).map((_, idx) => (
+                              <div key={`empty-${idx}`} className={styles.smallThumbnail}>
+                                <img
+                                  src="/assests/icons/default-cover.png"
+                                  alt="placeholder"
+                                />
+                              </div>
+                            ))}
                           </div>
+                        </div>
+                        {/* Genre tag at bottom right */}
+                        <div className={styles.genreTag}>
+                          {genre.name}
                         </div>
                       </div>
                     </Col>
@@ -333,15 +399,51 @@ const HomePage = () => {
             <Container>
               <div className={styles.genresHeader}>
                 <h2 className={styles.sectionTitle}>Latest Stories</h2>
-                <Button variant="link" className={styles.viewAllLink}>
-                  View all &gt;
-                </Button>
+                <div className={styles.headerRightSection}>
+                  <Button 
+                    variant="link" 
+                    className={styles.viewAllLink}
+                    onClick={() => navigate('/search?q=%23allStories')}
+                  >
+                    View all &gt;
+                  </Button>
+                  {stories.length > 5 && (
+                    <div className={styles.genreNavButtons}>
+                      <button
+                        className={styles.navButton}
+                        onClick={() => {
+                          const container = document.querySelector('.latestStoriesContainer .genre-scroll-container');
+                          if (container) {
+                            container.scrollBy({ left: -600, behavior: 'smooth' });
+                          }
+                        }}
+                        aria-label="Previous"
+                      >
+                        <i className="bi bi-chevron-left"></i>
+                      </button>
+                      <button
+                        className={styles.navButton}
+                        onClick={() => {
+                          const container = document.querySelector('.latestStoriesContainer .genre-scroll-container');
+                          if (container) {
+                            container.scrollBy({ left: 600, behavior: 'smooth' });
+                          }
+                        }}
+                        aria-label="Next"
+                      >
+                        <i className="bi bi-chevron-right"></i>
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
-              <GenreSection
-                title=""
-                stories={stories.slice(0, 10)}
-                showTitle={false}
-              />
+              <div className="latestStoriesContainer">
+                <GenreSection
+                  title=""
+                  stories={stories.slice(0, 10)}
+                  showTitle={false}
+                />
+              </div>
             </Container>
           </div>
 

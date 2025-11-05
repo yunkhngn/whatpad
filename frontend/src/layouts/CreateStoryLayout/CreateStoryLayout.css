@@ -1,0 +1,11 @@
+.create-story-layout {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+  padding: 2rem 0;
+}
+
+.create-story-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}

@@ -6,36 +6,25 @@ const { checkStoryOwnership, getStoryWithTags } = require('./service');
 
 const router = express.Router();
 
-// GET /stories - List stories with search and pagination
+// GET /stories - List published stories with search and pagination
 router.get('/', async (req, res, next) => {
   try {
     const { page, size, offset } = getPagination(req);
-    const { q, tag, user_id, status } = req.query;
+    const { q, tag } = req.query;
     
     let query = `
       SELECT DISTINCT s.*, u.username as author_name,
-        (SELECT COUNT(*) FROM chapters WHERE story_id = s.id) as chapter_count
+        (SELECT COUNT(*) FROM chapters WHERE story_id = s.id) as chapter_count,
+        (SELECT COUNT(*) FROM votes v 
+         JOIN chapters c ON v.chapter_id = c.id 
+         WHERE c.story_id = s.id) as vote_count,
+        (SELECT COUNT(*) FROM story_reads WHERE story_id = s.id) as read_count
       FROM stories s
       JOIN users u ON s.user_id = u.id
-      WHERE 1=1
+      WHERE s.status = 'published'
     `;
     
     const params = [];
-    
-    // Filter by user_id if provided
-    if (user_id) {
-      query += ` AND s.user_id = ?`;
-      params.push(user_id);
-    } else {
-      // Only show published stories if not filtering by user
-      query += ` AND s.status = 'published'`;
-    }
-    
-    // Filter by status if provided (useful for user's own stories)
-    if (status) {
-      query += ` AND s.status = ?`;
-      params.push(status);
-    }
     
     if (q) {
       query += ` AND (s.title LIKE ? OR s.description LIKE ? OR u.username LIKE ?)`;
@@ -75,46 +64,45 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-// GET /users/:userId/stories - Get stories by user (nested route)
-router.get('/users/:userId/stories', async (req, res, next) => {
+// GET /stories/:id/chapters - List chapters for a story
+router.get('/:id/chapters', async (req, res, next) => {
   try {
-    const { page, size, offset } = getPagination(req);
-    const { status } = req.query;
-    const userId = req.params.userId;
+    const storyId = req.params.id;
+    
+    // Check if user is the author
+    let isAuthor = false;
+    if (req.headers.authorization) {
+      try {
+        const jwt = require('jsonwebtoken');
+        const token = req.headers.authorization.substring(7);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'supersecret');
+        
+        const [authorCheck] = await pool.query(
+          'SELECT id FROM stories WHERE id = ? AND user_id = ?',
+          [storyId, decoded.id]
+        );
+        
+        isAuthor = authorCheck.length > 0;
+      } catch (err) {
+        // Token invalid, continue as guest
+      }
+    }
     
     let query = `
-      SELECT s.*, u.username as author_name,
-        (SELECT COUNT(*) FROM chapters WHERE story_id = s.id) as chapter_count
-      FROM stories s
-      JOIN users u ON s.user_id = u.id
-      WHERE s.user_id = ?
+      SELECT id, story_id, title, content, chapter_order, is_published, created_at, updated_at
+      FROM chapters
+      WHERE story_id = ?
     `;
     
-    const params = [userId];
-    
-    // Filter by status if provided
-    if (status) {
-      query += ` AND s.status = ?`;
-      params.push(status);
+    if (!isAuthor) {
+      query += ' AND is_published = 1';
     }
     
-    query += ` ORDER BY s.created_at DESC LIMIT ? OFFSET ?`;
-    params.push(size, offset);
+    query += ' ORDER BY chapter_order ASC';
     
-    const [rows] = await pool.query(query, params);
+    const [rows] = await pool.query(query, [storyId]);
 
-    // Fetch tags for each story
-    for (const story of rows) {
-      const [tags] = await pool.query(`
-        SELECT t.id, t.name 
-        FROM tags t
-        JOIN story_tags st ON t.id = st.tag_id
-        WHERE st.story_id = ?
-      `, [story.id]);
-      story.tags = tags;
-    }
-
-    res.json({ ok: true, stories: rows, page, size, user_id: userId });
+    res.json({ ok: true, data: rows });
   } catch (err) {
     next(err);
   }
@@ -156,21 +144,17 @@ router.post('/', auth, async (req, res, next) => {
     
     // Handle tags if provided
     if (tags && Array.isArray(tags) && tags.length > 0) {
-      for (const tagName of tags) {
-        // Upsert tag
-        await pool.query(
-          'INSERT INTO tags (name) VALUES (?) ON DUPLICATE KEY UPDATE name = name',
-          [tagName]
-        );
+      for (const tagId of tags) {
+        // Verify tag exists
+        const [tagRows] = await pool.query('SELECT id FROM tags WHERE id = ?', [tagId]);
         
-        const [tagRows] = await pool.query('SELECT id FROM tags WHERE name = ?', [tagName]);
-        const tagId = tagRows[0].id;
-        
-        // Insert story_tag
-        await pool.query(
-          'INSERT IGNORE INTO story_tags (story_id, tag_id) VALUES (?, ?)',
-          [story.id, tagId]
-        );
+        if (tagRows.length > 0) {
+          // Insert story_tag
+          await pool.query(
+            'INSERT IGNORE INTO story_tags (story_id, tag_id) VALUES (?, ?)',
+            [story.id, tagId]
+          );
+        }
       }
     }
 

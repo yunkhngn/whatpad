@@ -24,4 +24,30 @@ const auth = (req, res, next) => {
   }
 };
 
+// Optional auth - doesn't return error if no token, just sets req.user if available
+const optionalAuth = (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      req.user = null;
+      return next();
+    }
+
+    const token = authHeader.substring(7);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'supersecret');
+    
+    req.user = {
+      id: decoded.id,
+      username: decoded.username
+    };
+    
+    next();
+  } catch (err) {
+    // If token is invalid, just continue without user
+    req.user = null;
+    next();
+  }
+};
+
 module.exports = auth;
+module.exports.optionalAuth = optionalAuth;
