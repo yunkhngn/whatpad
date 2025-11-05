@@ -24,6 +24,7 @@ function Header() {
 
   useEffect(() => {
     checkAuthStatus();
+    console.log(user);
     fetchTags();
   }, []);
 

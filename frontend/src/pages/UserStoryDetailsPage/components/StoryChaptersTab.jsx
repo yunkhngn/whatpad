@@ -11,7 +11,6 @@ const StoryChaptersTab = ({
   storyId,
   chapters,
   onDeleteChapter,
-  onChapterUpdate,
 }) => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
@@ -74,7 +73,6 @@ const StoryChaptersTab = ({
             chapter={chapter}
             chapterOrder={index + 1}
             onDelete={onDeleteChapter}
-            onUpdate={onChapterUpdate}
           />
         ))}
       </ListGroup>

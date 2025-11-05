@@ -104,7 +104,7 @@ const UserStoryDetailPage = () => {
         onClick={handleGoBack}
       >
         <i className="bi bi-chevron-left me-2" />
-        Back
+        Back to My Stories
       </Button>
 
       <Tab.Container activeKey={activeTab} onSelect={(k) => setActiveTab(k)}>
@@ -134,7 +134,6 @@ const UserStoryDetailPage = () => {
               storyId={storyId}
               chapters={chapters}
               onDeleteChapter={handleDeleteChapter}
-              onChapterUpdate={handleStoryUpdate}
             />
           </Tab.Pane>
         </Tab.Content>
