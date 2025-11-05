@@ -3,19 +3,35 @@
  *  GET /users/:id/stories - Lấy stories của user (chưa có)
  *  GET /auth/me - Lấy current user từ token (đang dùng localStorage)
  *  POST /upload/image - Upload avatar image (chưa tích hợp)
- *  Conversations/Messages API - Hiển thị hội thoại (chưa có)
- *  POST /favorites/me/favorite-lists - Tạo reading list mới
+ *  GET /reading/me/continue-reading - Lấy truyện đang đọc của user
+ *  POST /stories/add-to-reading - Thêm truyện vào danh sách đọc
  *  DELETE /follows/:authorId - Bỏ theo dõi user
  */
 
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router';
+import { useParams, useNavigate } from 'react-router';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
+import ContinueReading from '../../components/ContinueReading';
 
 const API_BASE_URL = 'http://localhost:4000';
 
 const getAuthToken = () => localStorage.getItem('authToken');
+
+// Decode JWT token to get current user ID
+const getCurrentUserId = () => {
+  const token = getAuthToken();
+  if (!token) return null;
+  
+  try {
+    // Simple JWT decode (base64)
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.id || payload.userId || payload.sub;
+  } catch (err) {
+    console.error('Error decoding token:', err);
+    return null;
+  }
+};
 
 const apiRequest = async (endpoint, options = {}) => {
   const token = getAuthToken();
@@ -36,10 +52,12 @@ const apiRequest = async (endpoint, options = {}) => {
 };
 
 export default function WattpadProfile() {
-  const { userId } = useParams();
+  const { userId } = useParams(); // URL param for viewing other profiles
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('intro');
   const [currentPage, setCurrentPage] = useState('profile');
   const [loading, setLoading] = useState(true);
+  const [isOwnProfile, setIsOwnProfile] = useState(false);
   
   const [profile, setProfile] = useState({
     id: null,
@@ -47,20 +65,20 @@ export default function WattpadProfile() {
     username: '',
     email: '',
     avatar: '',
-    coverImage: '',
     bio: '',
     created_at: null
   });
 
   const [stats, setStats] = useState({
     works: 0,
-    readingLists: 0,
     followers: 0,
     following: 0
   });
 
-  const [readingLists, setReadingLists] = useState([]);
-  const [following, setFollowing] = useState([]);
+  const [followingStories, setFollowingStories] = useState([]);
+  const [userWorks, setUserWorks] = useState([]);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
   const [fetchError, setFetchError] = useState(null); // Alert message for fetch errors
 
   const [editData, setEditData] = useState({
@@ -69,17 +87,55 @@ export default function WattpadProfile() {
     avatar_url: ''
   });
 
+  // Avatar component with loading state to prevent flickering
+  const AvatarImage = ({ src, alt, className, style, onError }) => {
+    const [imageLoading, setImageLoading] = useState(true);
+    const [imageError, setImageError] = useState(false);
+    const defaultAvatar = 'https://via.placeholder.com/150/6c757d/ffffff?text=User';
+
+    return (
+      <div className="position-relative" style={{ width: 'fit-content' }}>
+        {imageLoading && (
+          <div 
+            className={`${className} d-flex align-items-center justify-content-center bg-light border`}
+            style={style}
+          >
+            <div className="spinner-border spinner-border-sm text-secondary" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+          </div>
+        )}
+        <img
+          src={imageError ? defaultAvatar : (src || defaultAvatar)}
+          alt={alt}
+          className={`${className} ${imageLoading ? 'd-none' : ''}`}
+          style={style}
+          onLoad={() => setImageLoading(false)}
+          onError={() => {
+            setImageError(true);
+            setImageLoading(false);
+            if (onError) onError();
+          }}
+        />
+      </div>
+    );
+  };
+
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         setLoading(true);
         setFetchError(null);
 
-        // NOTE: Cần API để lấy current user ID từ token
-        const currentUserId = userId || localStorage.getItem('userId') || '1';
+        // Get current user ID from token or use URL param
+        const currentUserId = getCurrentUserId();
+        const profileUserId = userId || currentUserId || localStorage.getItem('userId') || '1';
+        
+        // Check if viewing own profile
+        setIsOwnProfile(!userId || userId === String(currentUserId));
 
         try {
-          const profileRes = await apiRequest(`/users/${currentUserId}`);
+          const profileRes = await apiRequest(`/users/${profileUserId}`);
           if (profileRes.ok) {
             const userData = profileRes.data;
             setProfile({
@@ -87,8 +143,7 @@ export default function WattpadProfile() {
               name: userData.username,
               username: `@${userData.username}`,
               email: userData.email,
-              avatar: userData.avatar_url || 'https://via.placeholder.com/200',
-              coverImage: 'https://images.unsplash.com/photo-1579546929662-711aa81148cf?w=1200&h=300&fit=crop',
+              avatar: userData.avatar_url || `${API_BASE_URL}/uploads/avatars/default-avatar.png`,
               bio: userData.bio || '',
               created_at: userData.created_at
             });
@@ -104,35 +159,48 @@ export default function WattpadProfile() {
           setFetchError('Không thể tải thông tin hồ sơ. Vui lòng thử lại sau.');
         }
 
-        // NOTE: Cần API GET /users/:id/stories để lấy stories của user
-
+        // Fetch user works/stories
         try {
-          const listsRes = await apiRequest('/favorites/me/favorite-lists');
-          if (listsRes.ok) {
-            setReadingLists(listsRes.data);
-            setStats(prev => ({ ...prev, readingLists: listsRes.data.length }));
+          const worksRes = await apiRequest(`/users/${profileUserId}/stories`);
+          if (worksRes.ok) {
+            setUserWorks(worksRes.data || []);
+            setStats(prev => ({ ...prev, works: worksRes.data?.length || 0 }));
           }
         } catch (err) {
-          console.log('Error fetching reading lists:', err);
+          console.log('Error fetching user works:', err);
+          setUserWorks([]);
+          setStats(prev => ({ ...prev, works: 0 }));
         }
 
         try {
-          const followersRes = await apiRequest(`/users/${currentUserId}/followers`);
+          const followersRes = await apiRequest(`/users/${profileUserId}/followers`);
           if (followersRes.ok) {
             setStats(prev => ({ ...prev, followers: followersRes.data.length }));
+            
+            // Check if current user is following this profile
+            const currentUserId = getCurrentUserId();
+            if (currentUserId && !isOwnProfile) {
+              const isFollowingUser = followersRes.data.some(
+                follower => follower.id === currentUserId
+              );
+              setIsFollowing(isFollowingUser);
+            }
           }
         } catch (err) {
           console.log('Error fetching followers:', err);
         }
 
         try {
-          const followingRes = await apiRequest(`/users/${currentUserId}/following`);
-          if (followingRes.ok) {
-            setFollowing(followingRes.data);
-            setStats(prev => ({ ...prev, following: followingRes.data.length }));
+          // Fetch followed stories (assuming API endpoint for stories user is following)
+          const followingStoriesRes = await apiRequest(`/stories/following`);
+          if (followingStoriesRes.ok) {
+            setFollowingStories(followingStoriesRes.data);
+            setStats(prev => ({ ...prev, following: followingStoriesRes.data.length }));
           }
         } catch (err) {
-          console.log('Error fetching following:', err);
+          console.log('Error fetching following stories:', err);
+          setFollowingStories([]);
+          setStats(prev => ({ ...prev, following: 0 }));
         }
 
       } catch (err) {
@@ -144,7 +212,44 @@ export default function WattpadProfile() {
     };
 
     fetchUserData();
-  }, [userId]);
+  }, [userId, isOwnProfile]);
+
+  // Follow/Unfollow functions
+  const handleFollowUser = async () => {
+    if (followLoading) return;
+    
+    setFollowLoading(true);
+    try {
+      const method = isFollowing ? 'DELETE' : 'POST';
+      const response = await apiRequest(`/follows/${profile.id}`, { method });
+      
+      if (response.ok) {
+        setIsFollowing(!isFollowing);
+        setStats(prev => ({ 
+          ...prev, 
+          followers: prev.followers + (isFollowing ? -1 : 1) 
+        }));
+      }
+    } catch (err) {
+      console.error('Error following/unfollowing user:', err);
+      setFetchError('Không thể thực hiện hành động này');
+    }
+    setFollowLoading(false);
+  };
+
+  const handleUnfollowStory = async (storyId) => {
+    try {
+      const response = await apiRequest(`/stories/${storyId}/unfollow`, { method: 'DELETE' });
+      if (response.ok) {
+        // Remove story from following list
+        setFollowingStories(prev => prev.filter(story => story.id !== storyId));
+        setStats(prev => ({ ...prev, following: prev.following - 1 }));
+      }
+    } catch (err) {
+      console.error('Error unfollowing story:', err);
+      setFetchError('Không thể bỏ theo dõi truyện này');
+    }
+  };
 
   const handleOpenEdit = () => {
     setEditData({
@@ -172,13 +277,44 @@ export default function WattpadProfile() {
           name: editData.username,
           username: `@${editData.username}`,
           bio: editData.bio,
-          avatar: editData.avatar_url
+          avatar: editData.avatar_url || `${API_BASE_URL}/uploads/avatars/default-avatar.png`
         });
         setCurrentPage('profile');
       }
     } catch (err) {
       console.error('Error updating profile:', err);
       alert('Không thể cập nhật hồ sơ');
+    }
+  };
+
+  const handleAvatarUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await fetch(`${API_BASE_URL}/upload/image`, {
+        method: 'POST',
+        headers: {
+          ...(getAuthToken() && { Authorization: `Bearer ${getAuthToken()}` }),
+        },
+        body: formData
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setEditData({
+          ...editData,
+          avatar_url: result.url || result.data?.url
+        });
+      } else {
+        throw new Error('Upload failed');
+      }
+    } catch (err) {
+      console.error('Error uploading avatar:', err);
+      alert('Không thể upload ảnh đại diện');
     }
   };
 
@@ -231,23 +367,33 @@ export default function WattpadProfile() {
                 <div className="card-body p-4">
                   <div className="text-center mb-4">
                     <div className="position-relative d-inline-block mb-3">
-                      <img 
-                        src={profile.avatar} 
+                      <AvatarImage 
+                        src={editData.avatar_url || profile.avatar} 
                         alt={profile.name}
-                        className="rounded-circle object-fit-cover"
+                        className="rounded-circle object-fit-cover border border-3 border-warning"
                         style={{width: '128px', height: '128px'}}
                       />
-                      <button className="btn btn-primary btn-sm rounded-pill position-absolute bottom-0 end-0">
-                        Thay Đổi Avatar
-                      </button>
+                      <label 
+                        htmlFor="avatar-upload"
+                        className="btn btn-primary btn-sm rounded-pill position-absolute bottom-0 end-0"
+                        style={{cursor: 'pointer'}}
+                      >
+                        <i className="bi bi-camera-fill"></i>
+                      </label>
+                      <input
+                        id="avatar-upload"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleAvatarUpload}
+                        style={{display: 'none'}}
+                      />
                     </div>
 
                     <h5>{profile.name}</h5>
                     <p className="text-muted small">{profile.username}</p>
                     <div className="d-flex justify-content-center gap-4 small text-muted">
                       <span>{stats.works} Tác phẩm</span>
-                      <span>{stats.readingLists} Danh Sách Đọc</span>
-                      <span>{stats.followers} Người Theo Dõi</span>
+                      <span>{stats.following} Truyện Theo Dõi</span>
                     </div>
                   </div>
 
@@ -328,36 +474,41 @@ export default function WattpadProfile() {
         </div>
       )}
 
-      {/* Cover Image */}
-      <div className="position-relative overflow-hidden" style={{height: '250px'}}>
-        <img src={profile.coverImage} alt="Cover" className="w-100 h-100 object-fit-cover" style={{opacity: 0.8}} />
-        <div className="position-absolute top-0 start-0 w-100 h-100 bg-gradient" style={{background: 'linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)', mixBlendMode: 'multiply'}}></div>
-      </div>
-
       {/* Profile Section */}
-      <div className="container" style={{marginTop: '-80px'}}>
-        <div className="card shadow-lg mb-4">
+      <div className="container py-4">
+                <div className="card shadow mb-4">
           <div className="card-body p-4">
             <div className="text-center">
               <div className="position-relative d-inline-block mb-3">
-                <img 
+                <AvatarImage 
                   src={profile.avatar} 
                   alt={profile.name}
-                  className="rounded-circle border border-white border-4 shadow-lg object-fit-cover"
-                  style={{width: '128px', height: '128px'}}
+                  className="rounded-circle border border-3 border-warning shadow object-fit-cover"
+                  style={{width: '120px', height: '120px'}}
                 />
-              </div>
-              
-              <h1 className="h3 fw-bold mb-2">{profile.name}</h1>
+              </div>              <h1 className="h3 fw-bold mb-2">{profile.name}</h1>
               <p className="text-muted mb-3">{profile.username}</p>
               
-              <button 
-                className="btn btn-outline-warning rounded-pill px-4 py-2 mb-3"
-                onClick={handleOpenEdit}
-              >
-                <i className="bi bi-pencil-fill me-2"></i>
-                Sửa Hồ Sơ
-              </button>
+              {isOwnProfile ? (
+                <button 
+                  className="btn btn-outline-warning rounded-pill px-4 py-2 mb-3"
+                  onClick={handleOpenEdit}
+                >
+                  <i className="bi bi-pencil-fill me-2"></i>
+                  Sửa Hồ Sơ
+                </button>
+              ) : (
+                <div className="d-flex gap-2 mb-3">
+                  <button className="btn btn-primary rounded-pill px-4 py-2">
+                    <i className="bi bi-person-plus-fill me-2"></i>
+                    Theo dõi
+                  </button>
+                  <button className="btn btn-outline-secondary rounded-pill px-4 py-2">
+                    <i className="bi bi-chat-fill me-2"></i>
+                    Nhắn tin
+                  </button>
+                </div>
+              )}
               
               <div className="d-flex justify-content-center gap-5 mb-3">
                 <div className="text-center">
@@ -365,14 +516,30 @@ export default function WattpadProfile() {
                   <small className="text-muted">Tác phẩm</small>
                 </div>
                 <div className="text-center">
-                  <div className="h4 fw-bold mb-0">{stats.readingLists}</div>
-                  <small className="text-muted">Danh Sách Đọc</small>
-                </div>
-                <div className="text-center">
-                  <div className="h4 fw-bold mb-0">{stats.followers}</div>
-                  <small className="text-muted">Người Theo Dõi</small>
+                  <div className="h4 fw-bold mb-0">{stats.following}</div>
+                  <small className="text-muted">Truyện Theo Dõi</small>
                 </div>
               </div>
+
+              {/* Follow Button for other users only */}
+              {!isOwnProfile && (
+                <div className="text-center mt-3">
+                  <button 
+                    className="btn btn-outline-warning rounded-pill px-4"
+                    onClick={handleFollowUser}
+                    disabled={followLoading}
+                  >
+                    {followLoading ? (
+                      <div className="spinner-border spinner-border-sm me-2" role="status">
+                        <span className="visually-hidden">Loading...</span>
+                      </div>
+                    ) : (
+                      <i className={`bi ${isFollowing ? 'bi-person-check' : 'bi-person-plus'} me-2`}></i>
+                    )}
+                    {isFollowing ? 'Đang Theo Dõi' : 'Theo Dõi'}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -388,14 +555,16 @@ export default function WattpadProfile() {
                 Giới thiệu
               </button>
             </li>
+
             <li className="nav-item flex-fill">
               <button 
-                className={`nav-link w-100 ${activeTab === 'conversations' ? 'active text-warning border-warning border-bottom-3' : 'text-secondary'}`}
-                onClick={() => setActiveTab('conversations')}
+                className={`nav-link w-100 ${activeTab === 'works' ? 'active text-warning border-warning border-bottom-3' : 'text-secondary'}`}
+                onClick={() => setActiveTab('works')}
               >
-                Hội Thoại
+                Tác phẩm
               </button>
             </li>
+
             <li className="nav-item flex-fill">
               <button 
                 className={`nav-link w-100 ${activeTab === 'following' ? 'active text-warning border-warning border-bottom-3' : 'text-secondary'}`}
@@ -427,118 +596,63 @@ export default function WattpadProfile() {
                       ) : (
                         <div className="border-bottom pb-3 mb-3">
                           <p className="small text-muted fst-italic">Chưa có giới thiệu</p>
-                          <button 
-                            className="btn btn-warning btn-sm text-white"
-                            onClick={handleOpenEdit}
-                          >
-                            Thêm Mô Tả
-                          </button>
+                          {isOwnProfile && (
+                            <button 
+                              className="btn btn-warning btn-sm text-white"
+                              onClick={handleOpenEdit}
+                            >
+                              Thêm Mô Tả
+                            </button>
+                          )}
                         </div>
                       )}
-
-                      <div className="border-bottom pb-3 mb-3">
-                        <h6 className="small fw-semibold mb-3">CHIA SẺ HỒ SƠ</h6>
-                        <div className="d-flex gap-2">
-                          <button className="btn btn-primary btn-sm rounded-circle p-2" style={{width: '32px', height: '32px'}}>
-                            <i className="bi bi-facebook"></i>
-                          </button>
-                          <button className="btn btn-info btn-sm rounded-circle p-2 text-white" style={{width: '32px', height: '32px'}}>
-                            <i className="bi bi-twitter"></i>
-                          </button>
-                          <button className="btn btn-danger btn-sm rounded-circle p-2" style={{width: '32px', height: '32px'}}>
-                            <i className="bi bi-pinterest"></i>
-                          </button>
-                          <button className="btn btn-secondary btn-sm rounded-circle p-2" style={{width: '32px', height: '32px'}}>
-                            <i className="bi bi-link-45deg"></i>
-                          </button>
-                          <button className="btn btn-warning btn-sm rounded-circle p-2 text-white" style={{width: '32px', height: '32px'}}>
-                            <i className="bi bi-envelope"></i>
-                          </button>
-                        </div>
-                      </div>
                     </div>
                   </div>
                 </div>
 
                 <div className="col-md-9">
-                  <h5 className="mb-3">Danh Sách Đọc ({stats.readingLists})</h5>
-                  {readingLists.length > 0 ? (
-                    <>
-                      <div className="row g-3">
-                        {readingLists.slice(0, 4).map((list) => (
-                          <div key={list.id} className="col-6 col-md-3">
-                            <div className="card h-100">
-                              <div className="card-body text-center p-3">
-                                <i className="bi bi-bookmark-fill text-warning" style={{fontSize: '2rem'}}></i>
-                                <h6 className="small mt-2 mb-1">{list.name}</h6>
-                                <small className="text-muted">
-                                  {list.is_private ? <i className="bi bi-lock-fill"></i> : <i className="bi bi-globe"></i>}
-                                </small>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                      {readingLists.length > 4 && (
-                        <div className="text-center mt-3">
-                          <button className="btn btn-link text-warning">
-                            Xem tất cả ({readingLists.length})
-                          </button>
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <div className="row g-3">
-                      {[1, 2, 3, 4].map((item) => (
-                        <div key={item} className="col-6 col-md-3">
-                          <div className="bg-secondary bg-opacity-25 rounded" style={{paddingBottom: '133.33%'}}></div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <div className="text-center mt-4">
-                    <button className="btn btn-warning text-white rounded-pill px-4 py-2">
-                      Tạo Danh sách Đọc
-                    </button>
-                  </div>
+                  <ContinueReading />
                 </div>
               </div>
             )}
 
-            {activeTab === 'conversations' && (
-              <div className="text-center py-5">
-                <i className="bi bi-chat-dots text-secondary" style={{fontSize: '64px'}}></i>
-                <h5 className="mt-4 mb-2">Chưa có hội thoại</h5>
-                <p className="text-muted">
-                  {/* NOTE: Cần API để lấy conversations/messages của user */}
-                  Các cuộc hội thoại của bạn sẽ xuất hiện ở đây
-                </p>
-              </div>
-            )}
-
-            {activeTab === 'following' && (
+            {activeTab === 'works' && (
               <div className="py-4">
-                {following.length > 0 ? (
+                <h5 className="mb-3">Tác Phẩm ({userWorks.length})</h5>
+                {userWorks.length > 0 ? (
                   <div className="row g-3">
-                    {following.map((user) => (
-                      <div key={user.id} className="col-md-6">
-                        <div className="card">
-                          <div className="card-body d-flex align-items-center gap-3">
-                            <img 
-                              src={user.avatar_url || 'https://via.placeholder.com/50'} 
-                              alt={user.username}
-                              className="rounded-circle"
-                              style={{width: '50px', height: '50px', objectFit: 'cover'}}
-                            />
-                            <div className="flex-grow-1">
-                              <h6 className="mb-0">{user.username}</h6>
+                    {userWorks.map((story) => (
+                      <div key={story.id} className="col-md-6 col-lg-4">
+                        <div className="card h-100">
+                          <img 
+                            src={story.cover_image || 'https://via.placeholder.com/150x200/6c757d/ffffff?text=No+Cover'} 
+                            alt={story.title}
+                            className="card-img-top object-fit-cover"
+                            style={{height: '240px'}}
+                          />
+                          <div className="card-body p-3">
+                            <h6 className="card-title mb-2">{story.title}</h6>
+                            <p className="card-text text-muted small mb-2">
+                              {story.description ? 
+                                (story.description.length > 80 ? 
+                                  story.description.substring(0, 80) + '...' : 
+                                  story.description) 
+                                : 'Chưa có mô tả'
+                              }
+                            </p>
+                            <div className="d-flex justify-content-between align-items-center">
                               <small className="text-muted">
-                                Đã theo dõi từ {new Date(user.followed_at).toLocaleDateString('vi-VN')}
+                                {story.chapters_count || 0} chương
+                              </small>
+                              <small className="text-muted">
+                                {story.views_count || 0} lượt đọc
                               </small>
                             </div>
-                            <button className="btn btn-outline-warning btn-sm">
-                              Bỏ theo dõi
-                            </button>
+                            <div className="mt-2">
+                              <small className="text-success">
+                                Cập nhật: {story.updated_at ? new Date(story.updated_at).toLocaleDateString('vi-VN') : 'Không rõ'}
+                              </small>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -546,11 +660,73 @@ export default function WattpadProfile() {
                   </div>
                 ) : (
                   <div className="text-center py-5">
-                    <div className="bg-secondary bg-opacity-25 rounded-circle mx-auto d-flex align-items-center justify-content-center mb-4" style={{width: '64px', height: '64px'}}>
-                      <i className="bi bi-people-fill text-secondary" style={{fontSize: '32px'}}></i>
-                    </div>
-                    <h5 className="mb-2">Chưa theo dõi ai</h5>
-                    <p className="text-muted mb-3">Tìm kiếm và theo dõi những tác giả bạn yêu thích</p>
+                    <i className="bi bi-book text-secondary" style={{fontSize: '64px'}}></i>
+                    <h5 className="mt-4 mb-2">Chưa có tác phẩm nào</h5>
+                    <p className="text-muted">
+                      {isOwnProfile ? 
+                        'Hãy viết và chia sẻ câu chuyện đầu tiên của bạn' : 
+                        'Tác giả chưa đăng tác phẩm nào'
+                      }
+                    </p>
+                    {isOwnProfile && (
+                      <button 
+                        className="btn btn-warning text-white rounded-pill px-4 py-2 mt-3"
+                        onClick={() => navigate('/work/story')}
+                      >
+                        <i className="bi bi-plus-circle me-2"></i>
+                        Viết Truyện Mới
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'following' && (
+              <div className="py-4">
+                <h5 className="mb-3">Đang Theo Dõi ({followingStories.length})</h5>
+                {followingStories.length > 0 ? (
+                  <div className="row g-3">
+                    {followingStories.map((story) => (
+                      <div key={story.id} className="col-md-6">
+                        <div className="card">
+                          <div className="card-body d-flex align-items-center gap-3">
+                            <img 
+                              src={story.cover_image || 'https://via.placeholder.com/60x80/6c757d/ffffff?text=No+Cover'} 
+                              alt={story.title}
+                              className="rounded object-fit-cover"
+                              style={{width: '60px', height: '80px'}}
+                            />
+                            <div className="flex-grow-1">
+                              <h6 className="mb-1">{story.title}</h6>
+                              <small className="text-muted d-block">Tác giả: {story.author}</small>
+                              <small className="text-muted d-block">
+                                Cập nhật: {story.updated_at ? new Date(story.updated_at).toLocaleDateString('vi-VN') : 'Không rõ'}
+                              </small>
+                              <small className="text-success">
+                                Đã theo dõi từ {story.followed_at ? new Date(story.followed_at).toLocaleDateString('vi-VN') : 'Không rõ'}
+                              </small>
+                            </div>
+                            {isOwnProfile && (
+                              <button 
+                                className="btn btn-outline-warning btn-sm"
+                                onClick={() => handleUnfollowStory(story.id)}
+                              >
+                                Bỏ theo dõi
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-5">
+                    <i className="bi bi-book-heart text-secondary" style={{fontSize: '64px'}}></i>
+                    <h5 className="mt-4 mb-2">Chưa theo dõi truyện nào</h5>
+                    <p className="text-muted">
+                      Khi bạn theo dõi truyện, chúng sẽ xuất hiện ở đây
+                    </p>
                   </div>
                 )}
               </div>
