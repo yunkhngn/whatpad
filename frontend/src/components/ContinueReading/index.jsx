@@ -26,13 +26,7 @@ const ContinueReading = () => {
                 setLoading(true);
                 const response = await getReadingHistory();
                 // Limit to 6 most recent items
-                const historyData = response.data?.slice(0, 6) || [];
-                console.log('=== CONTINUE READING DEBUG ===');
-                console.log('Reading history data:', historyData);
-                if (historyData.length > 0) {
-                    console.log('First item cover_url:', historyData[0].cover_url);
-                }
-                setReadingHistory(historyData);
+                setReadingHistory(response.data?.slice(0, 6) || []);
                 setError('');
             } catch (err) {
                 console.error('Error fetching reading history:', err);

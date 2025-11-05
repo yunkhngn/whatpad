@@ -295,6 +295,27 @@ export const getUserFollowing = async (userId) => {
   return apiRequest(`/follows/${userId}/following`);
 };
 
+// ================== Story Follow API ==================
+export const followStory = async (storyId) => {
+  return apiRequest(`/followed-stories/${storyId}`, {
+    method: "POST",
+  });
+};
+
+export const unfollowStory = async (storyId) => {
+  return apiRequest(`/followed-stories/${storyId}`, {
+    method: "DELETE",
+  });
+};
+
+export const checkIfFollowingStory = async (storyId) => {
+  return apiRequest(`/followed-stories/${storyId}/check`);
+};
+
+export const getFollowedStories = async () => {
+  return apiRequest("/followed-stories");
+};
+
 // ================== Reading API ==================
 export const updateReadingProgress = async (storyId, chapterId) => {
   return apiRequest("/reading", {

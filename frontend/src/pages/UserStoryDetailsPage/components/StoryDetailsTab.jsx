@@ -16,15 +16,13 @@ const StoryDetailsTab = ({ story, setStory, onUpdate }) => {
   });
   const [previewUrl, setPreviewUrl] = useState(story?.cover_url || null);
   const [saving, setSaving] = useState(false);
-  const [tags, setTags] = useState([]);
 
   useEffect(() => {
     getAllTags();
   }, []);
 
   async function getAllTags() {
-    const response = await getTags();
-    setTags(response.tags);
+    await getTags();
   }
 
   const handleEditClick = () => {

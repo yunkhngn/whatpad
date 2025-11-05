@@ -108,4 +108,56 @@ router.delete('/followed-stories/:storyId', auth, async (req, res, next) => {
   }
 });
 
+// GET /followed-stories/:storyId/check - Check if current user follows a story
+router.get('/followed-stories/:storyId/check', auth, async (req, res, next) => {
+  try {
+    const [rows] = await pool.query(
+      'SELECT 1 FROM followed_stories WHERE user_id = ? AND story_id = ?',
+      [req.user.id, req.params.storyId]
+    );
+
+    res.json({ ok: true, isFollowing: rows.length > 0 });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /followed-stories - Get all stories followed by current user
+// GET /followed-stories - Get all stories followed by current user
+router.get('/followed-stories', auth, async (req, res, next) => {
+  try {
+    const [rows] = await pool.query(
+      `SELECT 
+        s.id,
+        s.title,
+        s.description,
+        s.cover_url,
+        s.status,
+        s.created_at,
+        s.updated_at,
+        u.id as user_id,
+        u.username as author_name,
+        u.avatar_url as author_avatar,
+        fs.created_at as followed_at,
+        COUNT(DISTINCT c.id) as chapter_count,
+        COUNT(DISTINCT v.user_id) as vote_count,
+        COUNT(DISTINCT sr.id) as read_count
+      FROM followed_stories fs
+      INNER JOIN stories s ON fs.story_id = s.id
+      INNER JOIN users u ON s.user_id = u.id
+      LEFT JOIN chapters c ON s.id = c.story_id AND c.is_published = 1
+      LEFT JOIN votes v ON c.id = v.chapter_id
+      LEFT JOIN story_reads sr ON s.id = sr.story_id
+      WHERE fs.user_id = ?
+      GROUP BY s.id, fs.created_at
+      ORDER BY fs.created_at DESC`,
+      [req.user.id]
+    );
+
+    res.json({ ok: true, data: rows });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;

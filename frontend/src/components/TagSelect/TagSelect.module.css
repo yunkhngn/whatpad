@@ -25,6 +25,40 @@
     width: 100%;
 }
 
+.searchInputWrapper {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 0.375rem;
+    background-color: #fff;
+    display: flex;
+    align-items: center;
+    transition: border-color 0.2s;
+}
+
+.searchInputWrapper:focus-within {
+    border-color: #f26500;
+    outline: 2px solid rgba(242, 101, 0, 0.1);
+}
+
+.searchInputWrapper i {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.tagSearchInput {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 1rem;
+    color: #333;
+    background: transparent;
+}
+
+.tagSearchInput::placeholder {
+    color: #999;
+}
+
 .tagDropdownBtn {
     width: 100%;
     padding: 0.4rem;
@@ -57,7 +91,7 @@
     max-height: 200px;
     overflow-y: auto;
     z-index: 10;
-    display: none;
+    margin-top: 2px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 

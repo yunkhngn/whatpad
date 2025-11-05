@@ -493,7 +493,7 @@ const SearchPage = () => {
                                 <div className={styles.resultsContainer}>
                                     {users.map((user) => (
                                         <div key={user.id} className={styles.userItem}>
-                                            <Link to={`/user/${user.id}`} className={styles.userLink}>
+                                            <Link to={`/profile/${user.id}`} className={styles.userLink}>
                                                 {user.avatar_url ? (
                                                     <img 
                                                         src={user.avatar_url} 
@@ -507,7 +507,7 @@ const SearchPage = () => {
                                                 )}
                                             </Link>
                                             <div className={styles.userDetails}>
-                                                <Link to={`/user/${user.id}`} className={styles.userNameLink}>
+                                                <Link to={`/profile/${user.id}`} className={styles.userNameLink}>
                                                     <h5 className={styles.userName}>{user.username}</h5>
                                                 </Link>
                                                 {user.bio && (
@@ -583,7 +583,7 @@ const SearchPage = () => {
                                             </p>
 
                                             <div className={styles.storyAuthor}>
-                                                by <Link to={`/user/${story.user_id}`}>{story.author_name}</Link>
+                                                by <Link to={`/profile/${story.user_id}`} className={styles.authorLink}>{story.author_name}</Link>
                                             </div>
                                         </div>
                                     </div>

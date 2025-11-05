@@ -144,21 +144,17 @@ router.post('/', auth, async (req, res, next) => {
     
     // Handle tags if provided
     if (tags && Array.isArray(tags) && tags.length > 0) {
-      for (const tagName of tags) {
-        // Upsert tag
-        await pool.query(
-          'INSERT INTO tags (name) VALUES (?) ON DUPLICATE KEY UPDATE name = name',
-          [tagName]
-        );
+      for (const tagId of tags) {
+        // Verify tag exists
+        const [tagRows] = await pool.query('SELECT id FROM tags WHERE id = ?', [tagId]);
         
-        const [tagRows] = await pool.query('SELECT id FROM tags WHERE name = ?', [tagName]);
-        const tagId = tagRows[0].id;
-        
-        // Insert story_tag
-        await pool.query(
-          'INSERT IGNORE INTO story_tags (story_id, tag_id) VALUES (?, ?)',
-          [story.id, tagId]
-        );
+        if (tagRows.length > 0) {
+          // Insert story_tag
+          await pool.query(
+            'INSERT IGNORE INTO story_tags (story_id, tag_id) VALUES (?, ?)',
+            [story.id, tagId]
+          );
+        }
       }
     }
 
