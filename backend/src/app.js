@@ -19,6 +19,7 @@ const favoritesRoutes = require('./modules/favorites/routes');
 const readingRoutes = require('./modules/reading/routes');
 const reviewsRoutes = require('./modules/reviews/routes');
 const uploadRoutes = require('./modules/upload/routes');
+const readingListsRoutes = require('./modules/reading-lists/routes');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -48,8 +49,6 @@ app.use('/users', usersRoutes);
 app.use('/tags', tagsRoutes); // Mount tags BEFORE stories to avoid route conflict
 app.use('/stories', storiesRoutes);
 app.use('/chapters', chaptersRoutes);
-// Mount chapters routes again at root for nested routes (/stories/:storyId/chapters/...)
-app.use('/', chaptersRoutes);
 app.use('/comments', commentsRoutes);
 app.use('/votes', votesRoutes);
 app.use('/follows', followsRoutes);
@@ -57,6 +56,11 @@ app.use('/favorites', favoritesRoutes);
 app.use('/reading', readingRoutes);
 app.use('/reviews', reviewsRoutes);
 app.use('/upload', uploadRoutes);
+
+// Mount routes at root - ORDER MATTERS! More specific routes must come first
+app.use('/', readingRoutes); // Mount first for /followed-stories endpoints
+app.use('/', readingListsRoutes); // Mount second for /reading-lists endpoints
+app.use('/', chaptersRoutes); // Mount last (has catch-all /:id route)
 
 // Error handler (must be last)
 app.use(errorHandler);

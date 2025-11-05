@@ -159,6 +159,23 @@ const SearchPage = () => {
         fetchUsers()
     }, [fetchUsers])
 
+    // Refetch when page becomes visible (user returns from reading)
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (!document.hidden) {
+                console.log('SearchPage visible again, refetching...');
+                fetchStories();
+                fetchUsers();
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
+    }, [fetchStories, fetchUsers]);
+
     const handleLengthChange = (value) => {
         setSelectedLengths(prev => 
             prev.includes(value) 
@@ -476,7 +493,7 @@ const SearchPage = () => {
                                 <div className={styles.resultsContainer}>
                                     {users.map((user) => (
                                         <div key={user.id} className={styles.userItem}>
-                                            <Link to={`/user/${user.id}`} className={styles.userLink}>
+                                            <Link to={`/profile/${user.id}`} className={styles.userLink}>
                                                 {user.avatar_url ? (
                                                     <img 
                                                         src={user.avatar_url} 
@@ -490,7 +507,7 @@ const SearchPage = () => {
                                                 )}
                                             </Link>
                                             <div className={styles.userDetails}>
-                                                <Link to={`/user/${user.id}`} className={styles.userNameLink}>
+                                                <Link to={`/profile/${user.id}`} className={styles.userNameLink}>
                                                     <h5 className={styles.userName}>{user.username}</h5>
                                                 </Link>
                                                 {user.bio && (
@@ -548,10 +565,10 @@ const SearchPage = () => {
 
                                             <div className={styles.storyStats}>
                                                 <span className={styles.stat}>
-                                                    <i className="bi bi-eye"></i> Reads: 0
+                                                    <i className="bi bi-eye"></i> Reads: {story.read_count || 0}
                                                 </span>
                                                 <span className={styles.stat}>
-                                                    <i className="bi bi-star"></i> Votes: 0
+                                                    <i className="bi bi-star"></i> Votes: {story.vote_count || 0}
                                                 </span>
                                                 <span className={styles.stat}>
                                                     <i className="bi bi-book"></i> Chapters: {story.chapter_count || 0}
@@ -566,7 +583,7 @@ const SearchPage = () => {
                                             </p>
 
                                             <div className={styles.storyAuthor}>
-                                                by <Link to={`/user/${story.user_id}`}>{story.author_name}</Link>
+                                                by <Link to={`/profile/${story.user_id}`} className={styles.authorLink}>{story.author_name}</Link>
                                             </div>
                                         </div>
                                     </div>

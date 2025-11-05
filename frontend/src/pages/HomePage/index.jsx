@@ -116,6 +116,36 @@ const HomePage = () => {
     }
   }, [isLoggedIn, fetchReadingHistory]);
 
+  // Refetch data when page becomes visible (user returns from reading)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log('Page visible again, refetching stories...');
+        fetchData();
+        if (isLoggedIn) {
+          fetchReadingHistory();
+        }
+      }
+    };
+
+    // Also listen for navigation back from reading page
+    const handleStoryDataUpdated = () => {
+      console.log('Story data updated, refetching homepage stories...');
+      fetchData();
+      if (isLoggedIn) {
+        fetchReadingHistory();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('storyDataUpdated', handleStoryDataUpdated);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('storyDataUpdated', handleStoryDataUpdated);
+    };
+  }, [fetchData, fetchReadingHistory, isLoggedIn]);
+
   const groupStoriesByTag = () => {
     const grouped = [];
 

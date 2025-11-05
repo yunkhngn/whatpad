@@ -32,6 +32,35 @@ router.post('/chapters/:id/vote', auth, async (req, res, next) => {
   }
 });
 
+// POST /votes/chapter/:id - Toggle vote (add or remove)
+router.post('/chapter/:id', auth, async (req, res, next) => {
+  try {
+    // Check if vote exists
+    const [existing] = await pool.query(
+      'SELECT chapter_id FROM votes WHERE chapter_id = ? AND user_id = ?',
+      [req.params.id, req.user.id]
+    );
+
+    if (existing.length > 0) {
+      // Remove vote
+      await pool.query(
+        'DELETE FROM votes WHERE chapter_id = ? AND user_id = ?',
+        [req.params.id, req.user.id]
+      );
+      res.json({ ok: true, message: 'Vote removed', hasVoted: false });
+    } else {
+      // Add vote
+      await pool.query(
+        'INSERT INTO votes (chapter_id, user_id, created_at) VALUES (?, ?, NOW())',
+        [req.params.id, req.user.id]
+      );
+      res.json({ ok: true, message: 'Vote recorded', hasVoted: true });
+    }
+  } catch (err) {
+    next(err);
+  }
+});
+
 // DELETE /votes/chapter/:id - Remove vote
 router.delete('/chapter/:id', auth, async (req, res, next) => {
   try {

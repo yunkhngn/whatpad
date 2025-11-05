@@ -14,7 +14,11 @@ router.get('/', async (req, res, next) => {
     
     let query = `
       SELECT DISTINCT s.*, u.username as author_name,
-        (SELECT COUNT(*) FROM chapters WHERE story_id = s.id) as chapter_count
+        (SELECT COUNT(*) FROM chapters WHERE story_id = s.id) as chapter_count,
+        (SELECT COUNT(*) FROM votes v 
+         JOIN chapters c ON v.chapter_id = c.id 
+         WHERE c.story_id = s.id) as vote_count,
+        (SELECT COUNT(*) FROM story_reads WHERE story_id = s.id) as read_count
       FROM stories s
       JOIN users u ON s.user_id = u.id
       WHERE s.status = 'published'
@@ -140,21 +144,17 @@ router.post('/', auth, async (req, res, next) => {
     
     // Handle tags if provided
     if (tags && Array.isArray(tags) && tags.length > 0) {
-      for (const tagName of tags) {
-        // Upsert tag
-        await pool.query(
-          'INSERT INTO tags (name) VALUES (?) ON DUPLICATE KEY UPDATE name = name',
-          [tagName]
-        );
+      for (const tagId of tags) {
+        // Verify tag exists
+        const [tagRows] = await pool.query('SELECT id FROM tags WHERE id = ?', [tagId]);
         
-        const [tagRows] = await pool.query('SELECT id FROM tags WHERE name = ?', [tagName]);
-        const tagId = tagRows[0].id;
-        
-        // Insert story_tag
-        await pool.query(
-          'INSERT IGNORE INTO story_tags (story_id, tag_id) VALUES (?, ?)',
-          [story.id, tagId]
-        );
+        if (tagRows.length > 0) {
+          // Insert story_tag
+          await pool.query(
+            'INSERT IGNORE INTO story_tags (story_id, tag_id) VALUES (?, ?)',
+            [story.id, tagId]
+          );
+        }
       }
     }
 

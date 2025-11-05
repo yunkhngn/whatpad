@@ -21,10 +21,16 @@ const apiRequest = async (endpoint, options = {}) => {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
 
   if (!response.ok) {
-    const errorMessage = `API Error: ${response.status} ${response.statusText}`;
-    if (response.status === 401) {
-      throw new Error("401 Unauthorized");
+    // Try to get the error message from the response body
+    let errorMessage = `${response.status} ${response.statusText}`;
+    
+    try {
+      const errorData = await response.json();
+      errorMessage = errorData.message || errorData.error || errorMessage;
+    } catch (jsonError) {
+      // If parsing JSON fails, keep the status text
     }
+    
     throw new Error(errorMessage);
   }
 
@@ -287,6 +293,27 @@ export const getUserFollowers = async (userId) => {
 
 export const getUserFollowing = async (userId) => {
   return apiRequest(`/follows/${userId}/following`);
+};
+
+// ================== Story Follow API ==================
+export const followStory = async (storyId) => {
+  return apiRequest(`/followed-stories/${storyId}`, {
+    method: "POST",
+  });
+};
+
+export const unfollowStory = async (storyId) => {
+  return apiRequest(`/followed-stories/${storyId}`, {
+    method: "DELETE",
+  });
+};
+
+export const checkIfFollowingStory = async (storyId) => {
+  return apiRequest(`/followed-stories/${storyId}/check`);
+};
+
+export const getFollowedStories = async () => {
+  return apiRequest("/followed-stories");
 };
 
 // ================== Reading API ==================

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router";
 import {
   createChapter,
@@ -25,18 +25,13 @@ export default function CreateChapterPage() {
   });
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    fetchData();
-  }, [chapterId]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setIsLoading(true);
       const storyResponse = await getStoryById(storyId);
       const chapterResponse = await getChapterOfStory(storyId, chapterId);
       setFetchedStory(storyResponse.story);
       setFetchedChapter(chapterResponse.chapter);
-      "rfea".toLowerCase();
       setChapterEdit({
         title:
           chapterResponse?.chapter?.title?.toLowerCase() === "untitled"
@@ -52,7 +47,11 @@ export default function CreateChapterPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [storyId, chapterId]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleCancel = () => {
     navigate(`/my-stories/story/${storyId}`);
@@ -61,7 +60,7 @@ export default function CreateChapterPage() {
   const handleSave = async () => {
     try {
       setIsLoading(true);
-      const response = await updateChapter(storyId, chapterId, chapterEdit);
+      await updateChapter(storyId, chapterId, chapterEdit);
     } catch (error) {
       toast.error(error);
     } finally {

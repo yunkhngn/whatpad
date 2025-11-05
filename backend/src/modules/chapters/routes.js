@@ -30,16 +30,17 @@ router.get('/stories/:storyId/chapters', async (req, res, next) => {
     }
     
     let query = `
-      SELECT id, story_id, title, content, chapter_order, is_published, created_at, updated_at
-      FROM chapters
-      WHERE story_id = ?
+      SELECT c.id, c.story_id, c.title, c.content, c.chapter_order, c.is_published, c.created_at, c.updated_at,
+        (SELECT COUNT(*) FROM votes WHERE chapter_id = c.id) as vote_count
+      FROM chapters c
+      WHERE c.story_id = ?
     `;
     
     if (!isAuthor) {
-      query += ' AND is_published = 1';
+      query += ' AND c.is_published = 1';
     }
     
-    query += ' ORDER BY chapter_order ASC';
+    query += ' ORDER BY c.chapter_order ASC';
     
     const [rows] = await pool.query(query, [storyId]);
 
@@ -75,16 +76,17 @@ router.get('/story/:storyId', async (req, res, next) => {
     
     // Build query based on authorization
     let query = `
-      SELECT id, story_id, title, chapter_order, created_at, updated_at
-      FROM chapters 
-      WHERE story_id = ?
+      SELECT c.id, c.story_id, c.title, c.chapter_order, c.created_at, c.updated_at,
+        (SELECT COUNT(*) FROM votes WHERE chapter_id = c.id) as vote_count
+      FROM chapters c
+      WHERE c.story_id = ?
     `;
     
     if (!isAuthor) {
-      query += ` AND is_published = 1`;
+      query += ` AND c.is_published = 1`;
     }
     
-    query += ' ORDER BY chapter_order ASC';
+    query += ' ORDER BY c.chapter_order ASC';
     
     const [rows] = await pool.query(query, [storyId]);
 
@@ -113,6 +115,34 @@ router.get('/stories/:storyId/chapters/:chapterId', async (req, res, next) => {
     
     if (!chapter) {
       return res.status(404).json({ ok: false, message: 'Chapter not found or does not belong to this story', errorCode: 'CHAPTER_NOT_FOUND' });
+    }
+
+    // Track read for this story (if user is authenticated)
+    if (req.headers.authorization) {
+      try {
+        const jwt = require('jsonwebtoken');
+        const token = req.headers.authorization.substring(7);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'supersecret');
+        
+        console.log(`📖 Tracking read: User ${decoded.id} (${decoded.username}) reading story ${storyId}`);
+        
+        // Insert read record (will be ignored if user already read this story)
+        const [result] = await pool.query(
+          'INSERT IGNORE INTO story_reads (story_id, user_id, created_at) VALUES (?, ?, NOW())',
+          [storyId, decoded.id]
+        );
+        
+        if (result.affectedRows > 0) {
+          console.log(`✅ New read recorded for story ${storyId} by user ${decoded.id}`);
+        } else {
+          console.log(`ℹ️  User ${decoded.id} already read story ${storyId}`);
+        }
+      } catch (err) {
+        // Token invalid or story_reads table doesn't exist yet, continue
+        console.warn('❌ Read tracking failed:', err.message);
+      }
+    } else {
+      console.log('⚠️  No authorization header - read not tracked');
     }
 
     // Get votes count
@@ -283,6 +313,33 @@ router.get('/:id', async (req, res, next) => {
     
     if (!chapter) {
       return res.status(404).json({ ok: false, message: 'Chapter not found', errorCode: 'CHAPTER_NOT_FOUND' });
+    }
+
+    // Track read for this story (if user is authenticated)
+    if (req.headers.authorization && chapter.story_id) {
+      try {
+        const jwt = require('jsonwebtoken');
+        const token = req.headers.authorization.substring(7);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'supersecret');
+        
+        console.log(`📖 [Legacy endpoint] Tracking read: User ${decoded.id} (${decoded.username}) reading story ${chapter.story_id}`);
+        
+        // Insert read record (will be ignored if user already read this story)
+        const [result] = await pool.query(
+          'INSERT IGNORE INTO story_reads (story_id, user_id, created_at) VALUES (?, ?, NOW())',
+          [chapter.story_id, decoded.id]
+        );
+        
+        if (result.affectedRows > 0) {
+          console.log(`✅ New read recorded for story ${chapter.story_id} by user ${decoded.id}`);
+        } else {
+          console.log(`ℹ️  User ${decoded.id} already read story ${chapter.story_id}`);
+        }
+      } catch (err) {
+        console.warn('❌ Read tracking failed:', err.message);
+      }
+    } else {
+      console.log('⚠️  No authorization header - read not tracked (legacy endpoint)');
     }
 
     // Get votes count
