@@ -32,6 +32,19 @@ const StoryDetailPage = () => {
     const fetchStoryDetails = async () => {
       try {
         setLoading(true);
+        
+        // Check if we have updated story data in sessionStorage
+        const cachedStoryData = sessionStorage.getItem('storyData');
+        if (cachedStoryData) {
+          const parsedStory = JSON.parse(cachedStoryData);
+          if (parsedStory.id === parseInt(id)) {
+            // Use cached data first for instant update
+            setStory(parsedStory);
+            // Clear the cache
+            sessionStorage.removeItem('storyData');
+          }
+        }
+        
         const [storyResponse, chaptersResponse, commentsResponse] =
           await Promise.all([
             getStoryById(id),
@@ -51,6 +64,32 @@ const StoryDetailPage = () => {
     };
 
     fetchStoryDetails();
+    
+    // Listen for story data updates (when returning from reading page)
+    const handleStoryDataUpdated = (event) => {
+      if (event.detail?.storyId === parseInt(id)) {
+        console.log('Story data updated event received, refetching...');
+        fetchStoryDetails();
+      }
+    };
+    
+    window.addEventListener('storyDataUpdated', handleStoryDataUpdated);
+    
+    // Refetch story when user returns to this page (from reading chapter)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        // Page is visible again, refetch story data
+        fetchStoryDetails();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Cleanup
+    return () => {
+      window.removeEventListener('storyDataUpdated', handleStoryDataUpdated);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [id]);
 
   const handleFollowToggle = async () => {
@@ -134,11 +173,11 @@ const StoryDetailPage = () => {
                     </span>
                     <span>
                       <i className="bi bi-eye me-1"></i>
-                      {story.reads || 0} reads
+                      {story.read_count || 0} reads
                     </span>
                     <span>
                       <i className="bi bi-heart me-1"></i>
-                      {story.votes || 0} votes
+                      {story.vote_count || 0} votes
                     </span>
                   </div>
 

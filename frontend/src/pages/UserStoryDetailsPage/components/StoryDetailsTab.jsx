@@ -117,11 +117,11 @@ const StoryDetailsTab = ({ story, setStory, onUpdate }) => {
                 <div className="d-flex gap-3 mb-3">
                   <span>
                     <i className="bi bi-eye me-1"></i>
-                    {story?.reads || 0} reads
+                    {story?.read_count || 0} reads
                   </span>
                   <span>
                     <i className="bi bi-heart me-1"></i>
-                    {story?.votes || 0} votes
+                    {story?.vote_count || 0} votes
                   </span>
                 </div>
                 <div>

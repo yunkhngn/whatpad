@@ -114,12 +114,20 @@ router.post('/login', async (req, res, next) => {
     const cleanUsername = sanitizeInput(username);
 
     // Validate inputs
-    if (!validateUsername(cleanUsername)) {
-      return res.status(401).json({ ok: false, message: 'Invalid credentials', errorCode: 'INVALID_CREDENTIALS' });
+    if (!validateUsername(cleanUsername) && !validateEmail(cleanUsername)) {
+      return res.status(400).json({ 
+        ok: false, 
+        message: 'Invalid username format. Username must be 3-30 characters and contain only letters, numbers, and underscores', 
+        errorCode: 'INVALID_USERNAME_FORMAT' 
+      });
     }
 
     if (!validatePassword(password)) {
-      return res.status(401).json({ ok: false, message: 'Invalid credentials', errorCode: 'INVALID_CREDENTIALS' });
+      return res.status(400).json({ 
+        ok: false, 
+        message: 'Password must be at least 6 characters', 
+        errorCode: 'INVALID_PASSWORD_FORMAT' 
+      });
     }
 
     // Get user by username or email
@@ -130,14 +138,22 @@ router.post('/login', async (req, res, next) => {
     const user = users[0];
 
     if (!user) {
-      return res.status(401).json({ ok: false, message: 'Invalid credentials', errorCode: 'INVALID_CREDENTIALS' });
+      return res.status(404).json({ 
+        ok: false, 
+        message: 'Username or email not found. Please check your username or sign up for a new account', 
+        errorCode: 'USER_NOT_FOUND' 
+      });
     }
 
     // Compare password
     const isMatch = await bcrypt.compare(password, user.password_hash);
 
     if (!isMatch) {
-      return res.status(401).json({ ok: false, message: 'Invalid credentials', errorCode: 'INVALID_CREDENTIALS' });
+      return res.status(401).json({ 
+        ok: false, 
+        message: 'Incorrect password. Please try again', 
+        errorCode: 'INCORRECT_PASSWORD' 
+      });
     }
 
     // Generate JWT (2 hours expiry)

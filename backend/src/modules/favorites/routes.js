@@ -123,7 +123,13 @@ router.get('/me/favorite-lists/:listId/items', auth, async (req, res, next) => {
     }
 
     const [rows] = await pool.query(`
-      SELECT fli.*, s.title, s.cover_url, s.description
+      SELECT fli.*, 
+        s.title, s.cover_url, s.description,
+        (SELECT COUNT(*) FROM chapters WHERE story_id = s.id) as chapter_count,
+        (SELECT COUNT(*) FROM votes v 
+         JOIN chapters c ON v.chapter_id = c.id 
+         WHERE c.story_id = s.id) as vote_count,
+        (SELECT COUNT(*) FROM story_reads WHERE story_id = s.id) as read_count
       FROM favorite_list_items fli
       JOIN stories s ON fli.story_id = s.id
       WHERE fli.list_id = ?

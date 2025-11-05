@@ -15,7 +15,8 @@ async function getStoryWithTags(storyId) {
       (SELECT COUNT(*) FROM chapters WHERE story_id = s.id) as chapter_count,
       (SELECT COUNT(*) FROM votes v 
        JOIN chapters c ON v.chapter_id = c.id 
-       WHERE c.story_id = s.id) as vote_count
+       WHERE c.story_id = s.id) as vote_count,
+      (SELECT COUNT(*) FROM story_reads WHERE story_id = s.id) as read_count
     FROM stories s
     JOIN users u ON s.user_id = u.id
     WHERE s.id = ?

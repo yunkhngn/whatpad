@@ -9,15 +9,39 @@ router.get('/me/reading-history', auth, async (req, res, next) => {
   try {
     const { story_id } = req.query;
     
+    // Get the most recent reading record for each unique story
     let query = `
-      SELECT rh.*, s.title as story_title, s.cover_url, c.title as chapter_title
+      SELECT 
+        rh.*,
+        s.id as story_id,
+        s.title as story_title,
+        s.description as story_description,
+        s.cover_url as story_cover_url,
+        s.status as story_status,
+        (SELECT COUNT(*) FROM chapters WHERE story_id = s.id) as chapter_count,
+        (SELECT COUNT(*) FROM votes v 
+         JOIN chapters ch ON v.chapter_id = ch.id 
+         WHERE ch.story_id = s.id) as vote_count,
+        (SELECT COUNT(*) FROM story_reads WHERE story_id = s.id) as read_count,
+        c.id as chapter_id,
+        c.title as chapter_title,
+        c.chapter_order,
+        u.username as author_username,
+        u.id as author_id
       FROM reading_history rh
+      INNER JOIN (
+        SELECT story_id, MAX(updated_at) as max_updated
+        FROM reading_history
+        WHERE user_id = ?
+        GROUP BY story_id
+      ) latest ON rh.story_id = latest.story_id AND rh.updated_at = latest.max_updated
       JOIN stories s ON rh.story_id = s.id
       LEFT JOIN chapters c ON rh.last_chapter_id = c.id
+      LEFT JOIN users u ON s.user_id = u.id
       WHERE rh.user_id = ?
     `;
     
-    const params = [req.user.id];
+    const params = [req.user.id, req.user.id];
     
     if (story_id) {
       query += ' AND rh.story_id = ?';
