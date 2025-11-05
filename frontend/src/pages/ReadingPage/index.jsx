@@ -274,13 +274,6 @@ const ReadingPage = () => {
     );
   }
 
-  console.log(
-    "Rendering page with hasVoted state:",
-    hasVoted,
-    "for chapter:",
-    chapterId
-  );
-
   return (
     <div className={styles.readingPage}>
       {/* Sticky Reading Header */}
