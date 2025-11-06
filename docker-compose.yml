@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: whatpad-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-PassMonFER202}
+      MYSQL_DATABASE: ${DB_NAME:-wattpad}
+      MYSQL_USER: ${DB_USER:-sa}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-PassMonFER202}
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./backend/database/createdb.sql:/docker-entrypoint-initdb.d/01-createdb.sql
+      - ./backend/migrations:/docker-entrypoint-initdb.d/migrations
+    networks:
+      - whatpad-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-PassMonFER202}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: whatpad-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: ${BACKEND_PORT:-4000}
+      DB_HOST: mysql
+      DB_USER: ${DB_USER:-sa}
+      DB_PASSWORD: ${DB_PASSWORD:-PassMonFER202}
+      DB_NAME: ${DB_NAME:-wattpad}
+      DB_PORT: 3306
+      JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-in-production}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
+    ports:
+      - "${BACKEND_PORT:-4000}:4000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    networks:
+      - whatpad-network
+    command: npm run dev
+
+  # Frontend React App
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost:4000}
+    container_name: whatpad-frontend
+    restart: unless-stopped
+    environment:
+      REACT_APP_API_URL: ${REACT_APP_API_URL:-http://localhost:4000}
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - whatpad-network
+    command: npm start
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  whatpad-network:
+    driver: bridge
