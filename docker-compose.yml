@@ -44,8 +44,8 @@ services:
       CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
       CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
       CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
-    ports:
-      - "${BACKEND_PORT:-1204}:${BACKEND_PORT:-1204}"
+    expose:
+      - "1204"
     depends_on:
       mysql:
         condition: service_healthy
@@ -67,8 +67,8 @@ services:
     restart: unless-stopped
     environment:
       REACT_APP_API_URL: ${REACT_APP_API_URL:-http://localhost:1204}
-    ports:
-      - "${FRONTEND_PORT:-1411}:3000"
+    expose:
+      - "3000"
     depends_on:
       - backend
     volumes:
