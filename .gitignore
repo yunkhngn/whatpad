@@ -31,3 +31,4 @@ backend/uploads/*
 .vscode
 .DS_Store
 
+.env

@@ -12,7 +12,7 @@ services:
       MYSQL_USER: ${DB_USER:-sa}
       MYSQL_PASSWORD: ${DB_PASSWORD:-PassMonFER202}
     ports:
-      - "${DB_PORT:-3306}:3306"
+      - "${DB_PORT:-1710}:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./backend/database/createdb.sql:/docker-entrypoint-initdb.d/01-createdb.sql
@@ -34,7 +34,7 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: ${NODE_ENV:-development}
-      PORT: ${BACKEND_PORT:-4000}
+      PORT: ${BACKEND_PORT:-1204}
       DB_HOST: mysql
       DB_USER: ${DB_USER:-sa}
       DB_PASSWORD: ${DB_PASSWORD:-PassMonFER202}
@@ -45,7 +45,7 @@ services:
       CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
       CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
     ports:
-      - "${BACKEND_PORT:-4000}:4000"
+      - "${BACKEND_PORT:-1204}:${BACKEND_PORT:-1204}"
     depends_on:
       mysql:
         condition: service_healthy
@@ -62,13 +62,13 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost:4000}
+        - REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost:1204}
     container_name: whatpad-frontend
     restart: unless-stopped
     environment:
-      REACT_APP_API_URL: ${REACT_APP_API_URL:-http://localhost:4000}
+      REACT_APP_API_URL: ${REACT_APP_API_URL:-http://localhost:1204}
     ports:
-      - "${FRONTEND_PORT:-3000}:3000"
+      - "${FRONTEND_PORT:-1411}:3000"
     depends_on:
       - backend
     volumes:
