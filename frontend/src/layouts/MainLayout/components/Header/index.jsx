@@ -24,6 +24,7 @@ function Header() {
 
   useEffect(() => {
     checkAuthStatus();
+    console.log(user);
     fetchTags();
   }, []);
 
@@ -309,12 +310,6 @@ function Header() {
               </>
             ) : (
               <>
-                <Nav.Link as={Link} to="/create-story" className="me-2">
-                  <Button variant="link" className="write-btn">
-                    <i className="bi bi-pencil me-1"></i>
-                    Write
-                  </Button>
-                </Nav.Link>
                 <Nav.Link as={Link} to="/auth">
                   <Button variant="link" className="login-btn">
                     Login

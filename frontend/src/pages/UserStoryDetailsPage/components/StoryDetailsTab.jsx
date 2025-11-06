@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Card, Button, Modal, Form } from "react-bootstrap";
-import { updateStory, uploadImage, getTags } from "../../../services/api";
+import { useState } from "react";
+import { Card, Button, Modal, Form, Badge } from "react-bootstrap";
+import { updateStory, uploadImage } from "../../../services/api";
 import { toast } from "sonner";
 import BookCoverPlaceholder from "../../../assests/images/book-cover-placeholder.png";
 import TagSelect from "../../../components/TagSelect";
@@ -13,23 +13,17 @@ const StoryDetailsTab = ({ story, setStory, onUpdate }) => {
     title: story?.title || "",
     description: story?.description || "",
     cover_url: story?.cover_url || "",
+    status: story?.status || "draft",
   });
   const [previewUrl, setPreviewUrl] = useState(story?.cover_url || null);
   const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    getAllTags();
-  }, []);
-
-  async function getAllTags() {
-    await getTags();
-  }
 
   const handleEditClick = () => {
     setEditData({
       title: story?.title || "",
       description: story?.description || "",
       cover_url: story?.cover_url || "",
+      status: story?.status || "draft",
     });
     setPreviewUrl(story?.cover_url || null);
     setShowEditModal(true);
@@ -65,6 +59,8 @@ const StoryDetailsTab = ({ story, setStory, onUpdate }) => {
         title: editData.title,
         description: editData.description,
         cover_url: imageUrl,
+        status: editData.status,
+        tags: story.tags.map((tag) => tag.name), // Convert tags to array of names
       });
 
       toast.success("Story updated successfully");
@@ -95,7 +91,7 @@ const StoryDetailsTab = ({ story, setStory, onUpdate }) => {
         </Button>
 
         <Card.Body>
-          <div className="d-flex gap-5">
+          <div className="d-flex gap-5 align-items-center">
             {/* Cover Image */}
             <img
               src={story.cover_url || BookCoverPlaceholder}
@@ -112,7 +108,7 @@ const StoryDetailsTab = ({ story, setStory, onUpdate }) => {
             <div className="flex-grow-1">
               <h3 className="mb-3 fs-4">{story?.title}</h3>
               <div className="mb-3">
-                <div className="d-flex gap-3 mb-3">
+                <div className="d-flex gap-3 mb-3 align-items-center">
                   <span>
                     <i className="bi bi-eye me-1"></i>
                     {story?.read_count || 0} reads
@@ -121,6 +117,11 @@ const StoryDetailsTab = ({ story, setStory, onUpdate }) => {
                     <i className="bi bi-heart me-1"></i>
                     {story?.vote_count || 0} votes
                   </span>
+                  {story?.status === "draft" ? (
+                    <Badge bg="warning">Draft</Badge>
+                  ) : (
+                    <Badge bg="primary">Publish</Badge>
+                  )}
                 </div>
                 <div>
                   <h5 className="fw-semibold">Description</h5>
@@ -131,11 +132,17 @@ const StoryDetailsTab = ({ story, setStory, onUpdate }) => {
                   )}
                 </div>
                 <div>
-                  <h5 className="fw-semibold">Tags</h5>
-                  {story.tags || story.tags.length === 0 ? (
-                    <p className="text-secondary">Empty</p>
+                  <h5 className="fw-semibold pb-2">Tags</h5>
+                  {!story.tags || story.tags.length === 0 ? (
+                    <p className="text-secondary">No tag</p>
                   ) : (
-                    story.tags.map((tag) => <div>{tag.name}</div>)
+                    <div className="d-flex gap-2 flex-wrap">
+                      {story.tags.map((tag) => (
+                        <Badge key={tag?.id} bg="secondary">
+                          {tag.name}
+                        </Badge>
+                      ))}
+                    </div>
                   )}
                 </div>
               </div>
@@ -223,6 +230,19 @@ const StoryDetailsTab = ({ story, setStory, onUpdate }) => {
                   }
                   placeholder="Enter story description"
                 />
+              </Form.Group>
+
+              <Form.Group className="mb-3">
+                <Form.Label>Status</Form.Label>
+                <Form.Select
+                  value={editData.status}
+                  onChange={(e) =>
+                    setEditData({ ...editData, status: e.target.value })
+                  }
+                >
+                  <option value="draft">Draft</option>
+                  <option value="published">Published</option>
+                </Form.Select>
               </Form.Group>
 
               <Form.Group>

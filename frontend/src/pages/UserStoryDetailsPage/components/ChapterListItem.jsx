@@ -6,18 +6,10 @@ import { deleteChapter } from "../../../services/api";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 
-const ChapterListItem = ({
-  chapter,
-  chapterOrder,
-  onDelete,
-  onUpdate,
-  storyId,
-}) => {
+const ChapterListItem = ({ chapter, chapterOrder, onDelete, storyId }) => {
   const navigate = useNavigate();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
-
-  console.log(storyId);
 
   const handleDelete = async () => {
     try {

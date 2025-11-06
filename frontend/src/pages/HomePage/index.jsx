@@ -64,11 +64,6 @@ const HomePage = () => {
         getStories({ page: 1, size: 50, sort: "created_at", order: "desc" }),
       ]);
 
-      console.log("=== HOMEPAGE DATA DEBUG ===");
-      console.log("Tags:", tagsResponse.tags);
-      console.log("Stories:", storiesResponse.stories);
-      console.log("First story tags:", storiesResponse.stories?.[0]?.tags);
-
       setTags(tagsResponse.tags || []);
       setStories(storiesResponse.stories || []);
       setError("");
