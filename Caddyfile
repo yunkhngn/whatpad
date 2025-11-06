@@ -1,0 +1,37 @@
+# Caddyfile for WhatPad deployment
+# Replace YOUR_SERVER_IP with your actual server IP address
+
+# Frontend - React App
+143.198.220.198:1411 {
+    # Reverse proxy to frontend container
+    reverse_proxy frontend:3000
+    
+    # Enable compression
+    encode gzip
+    
+    # Logging
+    log {
+        output file /var/log/caddy/access.log
+    }
+}
+
+# Backend API
+143.198.220.198:1204 {
+    # Reverse proxy to backend container
+    reverse_proxy backend:1204
+    
+    # Enable CORS
+    header {
+        Access-Control-Allow-Origin *
+        Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+        Access-Control-Allow-Headers "Authorization, Content-Type"
+    }
+    
+    # Enable compression
+    encode gzip
+    
+    # Logging
+    log {
+        output file /var/log/caddy/api-access.log
+    }
+}

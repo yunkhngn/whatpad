@@ -78,8 +78,35 @@ services:
       - whatpad-network
     command: npm start
 
+  # Caddy Reverse Proxy
+  caddy:
+    image: caddy:2-alpine
+    container_name: whatpad-caddy
+    restart: unless-stopped
+    ports:
+      - "1411:1411"
+      - "1204:1204"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+      - caddy_logs:/var/log/caddy
+    networks:
+      - whatpad-network
+    depends_on:
+      - frontend
+      - backend
+
 volumes:
   mysql_data:
+    driver: local
+  caddy_data:
+    driver: local
+  caddy_config:
+    driver: local
+  caddy_logs:
     driver: local
 
 networks:
