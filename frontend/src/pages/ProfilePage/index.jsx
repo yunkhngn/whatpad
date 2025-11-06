@@ -9,10 +9,9 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router';
+import { useParams, Link, useNavigate } from 'react-router';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
-import ContinueReading from '../../components/ContinueReading';
 
 const API_BASE_URL = 'http://localhost:4000';
 
@@ -53,6 +52,7 @@ const apiRequest = async (endpoint, options = {}) => {
 
 export default function ProfilePage() {
   const { userId } = useParams(); // URL param for viewing other profiles
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('intro');
   const [currentPage, setCurrentPage] = useState('profile');
   const [loading, setLoading] = useState(true);
@@ -430,37 +430,6 @@ export default function ProfilePage() {
     }
   };
 
-  const handleAvatarUpload = async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    try {
-      const formData = new FormData();
-      formData.append('image', file);
-
-      const response = await fetch(`${API_BASE_URL}/upload/image`, {
-        method: 'POST',
-        headers: {
-          ...(getAuthToken() && { Authorization: `Bearer ${getAuthToken()}` }),
-        },
-        body: formData
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        setEditData({
-          ...editData,
-          avatar_url: result.url || result.data?.url
-        });
-      } else {
-        throw new Error('Upload failed');
-      }
-    } catch (err) {
-      console.error('Error uploading avatar:', err);
-      alert('Không thể upload ảnh đại diện');
-    }
-  };
-
   const handleCancelEdit = () => {
     setCurrentPage('profile');
   };
@@ -791,7 +760,11 @@ export default function ProfilePage() {
                     <div className="row g-3">
                       {userWorks.map((story) => (
                         <div key={story.id} className="col-12">
-                          <div className="card border-0 shadow-sm">
+                          <div 
+                            className="card border-0 shadow-sm" 
+                            style={{cursor: 'pointer'}}
+                            onClick={() => navigate(`/story/${story.id}`)}
+                          >
                             <div className="card-body d-flex gap-3">
                               <img 
                                 src={story.cover_image || story.cover_url || '/assests/icons/default-cover.png'} 

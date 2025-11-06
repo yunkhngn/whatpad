@@ -21,10 +21,6 @@ const UserStoryDetailPage = () => {
   const [error, setError] = useState("");
   const [currentUser, setCurrentUser] = useState(null);
 
-  useEffect(() => {
-    fetchData();
-  }, [storyId]);
-
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -48,6 +44,11 @@ const UserStoryDetailPage = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storyId]);
 
   const handleGoBack = () => {
     navigate("/my-stories");
@@ -104,7 +105,7 @@ const UserStoryDetailPage = () => {
         onClick={handleGoBack}
       >
         <i className="bi bi-chevron-left me-2" />
-        Back
+        Back to My Stories
       </Button>
 
       <Tab.Container activeKey={activeTab} onSelect={(k) => setActiveTab(k)}>
@@ -134,7 +135,7 @@ const UserStoryDetailPage = () => {
               storyId={storyId}
               chapters={chapters}
               onDeleteChapter={handleDeleteChapter}
-              onChapterUpdate={handleStoryUpdate}
+              onRefresh={fetchData}
             />
           </Tab.Pane>
         </Tab.Content>

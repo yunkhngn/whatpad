@@ -2,22 +2,16 @@
 
 import { useState } from "react";
 import { ListGroup, Badge, Modal, Button } from "react-bootstrap";
-import { deleteChapter } from "../../../services/api";
+import { deleteChapter, toggleChapterPublish } from "../../../services/api";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 
-const ChapterListItem = ({
-  chapter,
-  chapterOrder,
-  onDelete,
-  onUpdate,
-  storyId,
-}) => {
+const ChapterListItem = ({ chapter, chapterOrder, onDelete, onUpdate, storyId }) => {
   const navigate = useNavigate();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showPublishModal, setShowPublishModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
-
-  console.log(storyId);
+  const [publishing, setPublishing] = useState(false);
 
   const handleDelete = async () => {
     try {
@@ -31,6 +25,25 @@ const ChapterListItem = ({
       toast.error("Failed to delete chapter");
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const handlePublish = async () => {
+    const newPublishStatus = !chapter.is_published;
+    const action = newPublishStatus ? "publish" : "unpublish";
+    
+    try {
+      setPublishing(true);
+      await toggleChapterPublish(storyId, chapter.id, newPublishStatus);
+      toast.success(`Chapter ${action}ed successfully${newPublishStatus ? ". Story will be published too." : ""}`);
+      setShowPublishModal(false);
+      if (onUpdate) onUpdate();
+    } catch (err) {
+      console.error(`Error ${action}ing chapter:`, err);
+      toast.error(`Failed to ${action} chapter`);
+    } finally {
+      setPublishing(false);
+      setShowPublishModal(false);
     }
   };
 
@@ -67,6 +80,13 @@ const ChapterListItem = ({
 
         <div className="d-flex gap-2">
           <Button
+            variant={chapter.is_published ? "outline-warning" : "outline-success"}
+            size="sm"
+            onClick={() => setShowPublishModal(true)}
+          >
+            <i className={`bi ${chapter.is_published ? "bi-arrow-counterclockwise" : "bi-check-circle"}`}></i>
+          </Button>
+          <Button
             variant="outline-danger"
             size="sm"
             onClick={() => setShowDeleteModal(true)}
@@ -75,6 +95,48 @@ const ChapterListItem = ({
           </Button>
         </div>
       </ListGroup.Item>
+
+      {/* Publish Confirmation Modal */}
+      <Modal
+        show={showPublishModal}
+        onHide={() => setShowPublishModal(false)}
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>{chapter.is_published ? "Unpublish" : "Publish"} Chapter</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {chapter.is_published ? (
+            <>
+              Are you sure you want to unpublish "Chapter {chapterOrder}: {chapter.title}"?
+              <br /><br />
+              <strong>This chapter will be hidden from other users.</strong>
+            </>
+          ) : (
+            <>
+              Are you sure you want to publish "Chapter {chapterOrder}: {chapter.title}"?
+              <br /><br />
+              <strong>This chapter and the story will be visible to other users.</strong>
+            </>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={() => setShowPublishModal(false)}
+            disabled={publishing}
+          >
+            Cancel
+          </Button>
+          <Button 
+            variant={chapter.is_published ? "warning" : "success"} 
+            onClick={handlePublish} 
+            disabled={publishing}
+          >
+            {publishing ? "Processing..." : (chapter.is_published ? "Unpublish" : "Publish")}
+          </Button>
+        </Modal.Footer>
+      </Modal>
 
       {/* Delete Confirmation Modal */}
       <Modal

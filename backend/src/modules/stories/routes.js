@@ -10,7 +10,14 @@ const router = express.Router();
 router.get('/', async (req, res, next) => {
   try {
     const { page, size, offset } = getPagination(req);
-    const { q, tag } = req.query;
+    const { q, tag, sort = 'created_at', order = 'desc' } = req.query;
+    
+    // Validate sort field
+    const validSortFields = ['created_at', 'updated_at', 'title'];
+    const sortField = validSortFields.includes(sort) ? sort : 'created_at';
+    
+    // Validate order
+    const sortOrder = order.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
     
     let query = `
       SELECT DISTINCT s.*, u.username as author_name,
@@ -42,7 +49,7 @@ router.get('/', async (req, res, next) => {
       params.push(tag);
     }
     
-    query += ` ORDER BY s.created_at DESC LIMIT ? OFFSET ?`;
+    query += ` ORDER BY s.${sortField} ${sortOrder} LIMIT ? OFFSET ?`;
     params.push(size, offset);
     
     const [rows] = await pool.query(query, params);
@@ -173,7 +180,7 @@ router.put('/:id', auth, async (req, res, next) => {
       return res.status(403).json({ ok: false, message: 'Not authorized', errorCode: 'NOT_AUTHORIZED' });
     }
 
-    const { title, description, cover_url } = req.body;
+    const { title, description, cover_url, status, tags } = req.body;
     
     const updates = [];
     const values = [];
@@ -190,22 +197,87 @@ router.put('/:id', auth, async (req, res, next) => {
       updates.push('cover_url = ?');
       values.push(cover_url);
     }
+    if (status) {
+      // Only allow 'draft' or 'published' status
+      if (!['draft', 'published'].includes(status)) {
+        return res.status(400).json({ 
+          ok: false, 
+          message: 'Invalid status value. Must be "draft" or "published"',
+          errorCode: 'INVALID_STATUS' 
+        });
+      }
+      updates.push('status = ?');
+      values.push(status);
+    }
     
-    if (updates.length === 0) {
+    if (updates.length === 0 && !tags) {
       return res.status(400).json({ ok: false, message: 'No fields to update', errorCode: 'NO_UPDATES' });
     }
 
-    updates.push('updated_at = NOW()');
-    values.push(req.params.id);
-    
-    await pool.query(
-      `UPDATE stories SET ${updates.join(', ')} WHERE id = ?`,
-      values
-    );
-    
-    const [stories] = await pool.query('SELECT * FROM stories WHERE id = ?', [req.params.id]);
+    // Start a transaction if we have tag updates
+    const connection = await pool.getConnection();
+    await connection.beginTransaction();
 
-    res.json({ ok: true, data: stories[0] });
+    try {
+      if (updates.length > 0) {
+        updates.push('updated_at = NOW()');
+        values.push(req.params.id);
+        
+        await connection.query(
+          `UPDATE stories SET ${updates.join(', ')} WHERE id = ?`,
+          values
+        );
+        
+        // If story status is being changed, update all chapters accordingly
+        if (status) {
+          const publishStatus = status === 'published' ? 1 : 0;
+          await connection.query(
+            `UPDATE chapters SET is_published = ?, updated_at = NOW() WHERE story_id = ?`,
+            [publishStatus, req.params.id]
+          );
+          console.log(`✅ Auto-${status === 'published' ? 'published' : 'unpublished'} all chapters of story ${req.params.id}`);
+        }
+      }
+
+      // Handle tags update if provided
+      if (tags && Array.isArray(tags)) {
+        // First remove all existing tags
+        await connection.query('DELETE FROM story_tags WHERE story_id = ?', [req.params.id]);
+        
+        // Then add new tags
+        for (const tagName of tags) {
+          // Upsert tag
+          await connection.query(
+            'INSERT INTO tags (name) VALUES (?) ON DUPLICATE KEY UPDATE name = name',
+            [tagName]
+          );
+          
+          const [tagRows] = await connection.query('SELECT id FROM tags WHERE name = ?', [tagName]);
+          const tagId = tagRows[0].id;
+          
+          // Insert story_tag
+          await connection.query(
+            'INSERT IGNORE INTO story_tags (story_id, tag_id) VALUES (?, ?)',
+            [req.params.id, tagId]
+          );
+        }
+      }
+
+      await connection.commit();
+
+      // Get updated story with tags
+      const story = await getStoryWithTags(req.params.id);
+      res.json({ ok: true, data: story });
+    } catch (err) {
+      if (connection) {
+        await connection.rollback();
+      }
+      throw err;
+    } finally {
+      if (connection) {
+        connection.release();
+      }
+    }
   } catch (err) {
     next(err);
   }
@@ -220,10 +292,19 @@ router.post('/:id/publish', auth, async (req, res, next) => {
       return res.status(403).json({ ok: false, message: 'Not authorized', errorCode: 'NOT_AUTHORIZED' });
     }
     
+    // Publish the story
     await pool.query(
       `UPDATE stories SET status = 'published', updated_at = NOW() WHERE id = ?`,
       [req.params.id]
     );
+    
+    // Also publish all chapters
+    await pool.query(
+      `UPDATE chapters SET is_published = 1, updated_at = NOW() WHERE story_id = ?`,
+      [req.params.id]
+    );
+    
+    console.log(`✅ Published story ${req.params.id} and all its chapters`);
     
     const [stories] = await pool.query('SELECT * FROM stories WHERE id = ?', [req.params.id]);
 

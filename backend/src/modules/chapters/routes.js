@@ -263,6 +263,15 @@ router.put('/stories/:storyId/chapters/:chapterId', auth, async (req, res, next)
       values
     );
     
+    // If a chapter is being published, automatically publish the story too
+    if (is_published === 1 || is_published === true) {
+      await pool.query(
+        `UPDATE stories SET status = 'published', updated_at = NOW() WHERE id = ?`,
+        [storyId]
+      );
+      console.log(`✅ Auto-published story ${storyId} because chapter ${chapterId} was published`);
+    }
+    
     const [chapters] = await pool.query('SELECT * FROM chapters WHERE id = ?', [chapterId]);
 
     res.json({ ok: true, data: chapters[0] });

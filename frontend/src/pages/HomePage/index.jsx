@@ -22,6 +22,7 @@ const HomePage = () => {
   const [error, setError] = useState("");
   const [continueReading, setContinueReading] = useState([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [lastRefresh, setLastRefresh] = useState(new Date());
   const genreScrollRef = useRef(null);
   const navigate = useNavigate();
 
@@ -61,16 +62,13 @@ const HomePage = () => {
       setLoading(true);
       const [tagsResponse, storiesResponse] = await Promise.all([
         getTags(),
-        getStories({ page: 1, size: 50, sort: "created_at", order: "desc" }),
+        // Get most recently published/updated stories
+        getStories({ page: 1, size: 50, sort: "updated_at", order: "desc" }),
       ]);
-
-      console.log("=== HOMEPAGE DATA DEBUG ===");
-      console.log("Tags:", tagsResponse.tags);
-      console.log("Stories:", storiesResponse.stories);
-      console.log("First story tags:", storiesResponse.stories?.[0]?.tags);
 
       setTags(tagsResponse.tags || []);
       setStories(storiesResponse.stories || []);
+      setLastRefresh(new Date());
       setError("");
     } catch (err) {
       console.error("Error fetching data:", err);
@@ -105,6 +103,15 @@ const HomePage = () => {
 
   useEffect(() => {
     fetchData();
+    
+    // Auto-refresh every 30 minutes (1800000 milliseconds)
+    const refreshInterval = setInterval(() => {
+      console.log('Auto-refreshing latest stories (30 min interval)...');
+      fetchData();
+    }, 30 * 60 * 1000);
+
+    // Cleanup interval on unmount
+    return () => clearInterval(refreshInterval);
   }, [fetchData]);
 
   // Fetch reading history when login status changes
@@ -403,7 +410,12 @@ const HomePage = () => {
           <div className={styles.latestStoriesSection}>
             <Container>
               <div className={styles.genresHeader}>
-                <h2 className={styles.sectionTitle}>Latest Stories</h2>
+                <div>
+                  <h2 className={styles.sectionTitle}>Latest Stories</h2>
+                  <small className="text-muted" style={{ fontSize: '0.75rem' }}>
+                    Auto-updates every 30 minutes • Last updated: {lastRefresh.toLocaleTimeString()}
+                  </small>
+                </div>
                 <div className={styles.headerRightSection}>
                   <Button 
                     variant="link" 
