@@ -3,13 +3,15 @@
 import { useState } from "react";
 import { ListGroup, Modal, Button, Badge } from "react-bootstrap";
 import { toast } from "sonner";
-import { deleteStory } from "../../../services/api";
+import { deleteStory, toggleStoryPublish } from "../../../services/api";
 import Loading from "../../../components/Loading";
 import BookCoverPlaceHolder from "../../../assests/images/book-cover-placeholder.png";
 
 const UserStoryItem = ({ story, onView, onRefresh }) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showPublishModal, setShowPublishModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [publishing, setPublishing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleDelete = async () => {
@@ -27,6 +29,28 @@ const UserStoryItem = ({ story, onView, onRefresh }) => {
       setIsLoading(false);
       setDeleting(false);
       setShowDeleteModal(false);
+    }
+  };
+
+  const handlePublish = async () => {
+    const isPublished = story.status === 'published';
+    const newPublishStatus = !isPublished;
+    const action = newPublishStatus ? "publish" : "unpublish";
+    
+    try {
+      setIsLoading(true);
+      setPublishing(true);
+      await toggleStoryPublish(story.id, newPublishStatus);
+      toast.success(`Story ${action}ed successfully. All chapters will be ${action}ed.`);
+      setShowPublishModal(false);
+      onRefresh();
+    } catch (err) {
+      console.error(`Error ${action}ing story:`, err);
+      toast.error(`Failed to ${action} story`);
+    } finally {
+      setIsLoading(false);
+      setPublishing(false);
+      setShowPublishModal(false);
     }
   };
 
@@ -60,12 +84,12 @@ const UserStoryItem = ({ story, onView, onRefresh }) => {
           <div className="flex-grow-1">
             <div className="mb-1">
               <strong style={{ fontSize: "1.1rem" }}>{story.title}</strong>
-              {!story.is_published && (
+              {story.status !== 'published' && (
                 <Badge bg="warning" className="ms-2">
                   Draft
                 </Badge>
               )}
-              {story.is_published && (
+              {story.status === 'published' && (
                 <Badge bg="success" className="ms-2">
                   Published
                 </Badge>
@@ -100,16 +124,67 @@ const UserStoryItem = ({ story, onView, onRefresh }) => {
           </div>
         </div>
 
-        {/* Delete Button */}
-        <Button
-          variant="outline-danger"
-          size="sm"
-          onClick={() => setShowDeleteModal(true)}
-          className="ms-3"
-        >
-          <i className="bi bi-trash"></i>
-        </Button>
+        {/* Action Buttons */}
+        <div className="d-flex gap-2">
+          <Button
+            variant={story.status === 'published' ? "outline-warning" : "outline-success"}
+            size="sm"
+            onClick={() => setShowPublishModal(true)}
+            className="ms-3"
+          >
+            <i className={`bi ${story.status === 'published' ? "bi-arrow-counterclockwise" : "bi-check-circle"}`}></i>
+          </Button>
+          <Button
+            variant="outline-danger"
+            size="sm"
+            onClick={() => setShowDeleteModal(true)}
+          >
+            <i className="bi bi-trash"></i>
+          </Button>
+        </div>
       </ListGroup.Item>
+
+      {/* Publish Confirmation Modal */}
+      <Modal
+        show={showPublishModal}
+        onHide={() => setShowPublishModal(false)}
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>{story.status === 'published' ? "Unpublish" : "Publish"} Story</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {story.status === 'published' ? (
+            <>
+              Are you sure you want to unpublish "{story.title}"? 
+              <br /><br />
+              <strong>All chapters will be unpublished and hidden from other users.</strong>
+            </>
+          ) : (
+            <>
+              Are you sure you want to publish "{story.title}"? 
+              <br /><br />
+              <strong>All chapters will be published and visible to other users.</strong>
+            </>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={() => setShowPublishModal(false)}
+            disabled={publishing}
+          >
+            Cancel
+          </Button>
+          <Button 
+            variant={story.status === 'published' ? "warning" : "success"} 
+            onClick={handlePublish} 
+            disabled={publishing}
+          >
+            {publishing ? "Processing..." : (story.status === 'published' ? "Unpublish" : "Publish")}
+          </Button>
+        </Modal.Footer>
+      </Modal>
 
       {/* Delete Confirmation Modal */}
       <Modal

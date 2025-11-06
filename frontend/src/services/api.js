@@ -185,6 +185,22 @@ export const deleteChapter = async (storyId, chapterId) => {
   });
 };
 
+// Toggle chapter publish status (publish/unpublish)
+export const toggleChapterPublish = async (storyId, chapterId, isPublished) => {
+  return apiRequest(`/stories/${storyId}/chapters/${chapterId}`, {
+    method: "PUT",
+    body: JSON.stringify({ is_published: isPublished ? 1 : 0 }),
+  });
+};
+
+// Toggle story publish status (publish/unpublish) and all its chapters
+export const toggleStoryPublish = async (storyId, isPublished) => {
+  return apiRequest(`/stories/${storyId}`, {
+    method: "PUT",
+    body: JSON.stringify({ status: isPublished ? 'published' : 'draft' }),
+  });
+};
+
 // ================== Tags API ==================
 export const getTags = async () => {
   const response = await apiRequest("/tags");

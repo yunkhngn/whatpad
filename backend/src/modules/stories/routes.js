@@ -10,7 +10,14 @@ const router = express.Router();
 router.get('/', async (req, res, next) => {
   try {
     const { page, size, offset } = getPagination(req);
-    const { q, tag } = req.query;
+    const { q, tag, sort = 'created_at', order = 'desc' } = req.query;
+    
+    // Validate sort field
+    const validSortFields = ['created_at', 'updated_at', 'title'];
+    const sortField = validSortFields.includes(sort) ? sort : 'created_at';
+    
+    // Validate order
+    const sortOrder = order.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
     
     let query = `
       SELECT DISTINCT s.*, u.username as author_name,
@@ -42,7 +49,7 @@ router.get('/', async (req, res, next) => {
       params.push(tag);
     }
     
-    query += ` ORDER BY s.created_at DESC LIMIT ? OFFSET ?`;
+    query += ` ORDER BY s.${sortField} ${sortOrder} LIMIT ? OFFSET ?`;
     params.push(size, offset);
     
     const [rows] = await pool.query(query, params);
@@ -220,6 +227,16 @@ router.put('/:id', auth, async (req, res, next) => {
           `UPDATE stories SET ${updates.join(', ')} WHERE id = ?`,
           values
         );
+        
+        // If story status is being changed, update all chapters accordingly
+        if (status) {
+          const publishStatus = status === 'published' ? 1 : 0;
+          await connection.query(
+            `UPDATE chapters SET is_published = ?, updated_at = NOW() WHERE story_id = ?`,
+            [publishStatus, req.params.id]
+          );
+          console.log(`✅ Auto-${status === 'published' ? 'published' : 'unpublished'} all chapters of story ${req.params.id}`);
+        }
       }
 
       // Handle tags update if provided
@@ -275,10 +292,19 @@ router.post('/:id/publish', auth, async (req, res, next) => {
       return res.status(403).json({ ok: false, message: 'Not authorized', errorCode: 'NOT_AUTHORIZED' });
     }
     
+    // Publish the story
     await pool.query(
       `UPDATE stories SET status = 'published', updated_at = NOW() WHERE id = ?`,
       [req.params.id]
     );
+    
+    // Also publish all chapters
+    await pool.query(
+      `UPDATE chapters SET is_published = 1, updated_at = NOW() WHERE story_id = ?`,
+      [req.params.id]
+    );
+    
+    console.log(`✅ Published story ${req.params.id} and all its chapters`);
     
     const [stories] = await pool.query('SELECT * FROM stories WHERE id = ?', [req.params.id]);
 
