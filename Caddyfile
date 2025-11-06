@@ -1,8 +1,7 @@
-# Caddyfile for WhatPad deployment
-# Replace YOUR_SERVER_IP with your actual server IP address
+# Caddyfile for WhatPad deployment with custom domain
 
-# Frontend - React App
-143.198.220.198:1411 {
+# Frontend - Main Domain
+whatpad.me {
     # Reverse proxy to frontend container
     reverse_proxy frontend:3000
     
@@ -15,16 +14,17 @@
     }
 }
 
-# Backend API
-143.198.220.198:1204 {
+# Backend API - Subdomain
+api.whatpad.me {
     # Reverse proxy to backend container
     reverse_proxy backend:1204
     
     # Enable CORS
     header {
-        Access-Control-Allow-Origin *
+        Access-Control-Allow-Origin http://whatpad.me https://whatpad.me
         Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
         Access-Control-Allow-Headers "Authorization, Content-Type"
+        Access-Control-Allow-Credentials true
     }
     
     # Enable compression
