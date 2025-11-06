@@ -84,9 +84,10 @@ services:
     container_name: whatpad-caddy
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
-      - "443:443/udp"
+      - "9080:80"
+      - "9081:81"
+      - "9443:443"
+      - "9443:443/udp"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data

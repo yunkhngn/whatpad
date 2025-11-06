@@ -3,7 +3,7 @@
 # Frontend - Main Domain
 whatpad.me {
     # Reverse proxy to frontend container
-    reverse_proxy frontend:3000
+    reverse_proxy localhost:9080
     
     # Enable compression
     encode gzip
@@ -14,14 +14,14 @@ whatpad.me {
     }
 }
 
-# Backend API - Subdomain
+# Backend API - Subdomain  
 api.whatpad.me {
     # Reverse proxy to backend container
-    reverse_proxy backend:1204
+    reverse_proxy localhost:9081
     
     # Enable CORS
     header {
-        Access-Control-Allow-Origin http://whatpad.me https://whatpad.me
+        Access-Control-Allow-Origin https://whatpad.me http://whatpad.me
         Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
         Access-Control-Allow-Headers "Authorization, Content-Type"
         Access-Control-Allow-Credentials true
