@@ -44,8 +44,8 @@ services:
       CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
       CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
       CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
-    ports:
-      - "${BACKEND_PORT:-1204}:1204"
+    expose:
+      - "1204"
     depends_on:
       mysql:
         condition: service_healthy
@@ -62,13 +62,13 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost:1204}
+        - REACT_APP_API_URL=${REACT_APP_API_URL:-http://api.whatpad.me}
     container_name: whatpad-frontend
     restart: unless-stopped
     environment:
-      REACT_APP_API_URL: ${REACT_APP_API_URL:-http://localhost:1204}
-    ports:
-      - "${FRONTEND_PORT:-1411}:3000"
+      REACT_APP_API_URL: ${REACT_APP_API_URL:-http://api.whatpad.me}
+    expose:
+      - "3000"
     depends_on:
       - backend
     volumes:
@@ -78,8 +78,34 @@ services:
       - whatpad-network
     command: npm start
 
+  # Caddy Reverse Proxy
+  caddy:
+    image: caddy:2-alpine
+    container_name: whatpad-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+      - caddy_logs:/var/log/caddy
+    networks:
+      - whatpad-network
+    depends_on:
+      - frontend
+      - backend
+
 volumes:
   mysql_data:
+    driver: local
+  caddy_data:
+    driver: local
+  caddy_config:
+    driver: local
+  caddy_logs:
     driver: local
 
 networks:
