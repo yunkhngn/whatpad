@@ -24,10 +24,10 @@ echo MySQL found
 echo.
 
 REM Prompt for MySQL credentials
-set /p DB_USER="Enter MySQL username [root]: "
+set /p DB_USER="Enter MySQL username [root]: huyn1"
 if "%DB_USER%"=="" set DB_USER=root
 
-set /p DB_PASS="Enter MySQL password: "
+set /p DB_PASS="Enter MySQL password: 1234"
 echo.
 
 echo Starting database setup...

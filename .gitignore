@@ -24,6 +24,7 @@ frontend/yarn-error.log*
 
 backend/node_modules
 backend/.env
+backend/databse/setup.bat
 backend/testing/*.js
 backend/uploads/*
 !backend/uploads/.gitkeep
