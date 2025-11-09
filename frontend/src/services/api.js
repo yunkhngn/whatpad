@@ -1,5 +1,5 @@
 // API Configuration
-const API_BASE_URL = "http://localhost:4000";
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:4000";
 
 // Helper function to get auth token
 const getAuthToken = () => {
@@ -182,6 +182,22 @@ export const updateChapter = async (storyId, chapterId, chapterData) => {
 export const deleteChapter = async (storyId, chapterId) => {
   return apiRequest(`/stories/${storyId}/chapters/${chapterId}`, {
     method: "DELETE",
+  });
+};
+
+// Toggle chapter publish status (publish/unpublish)
+export const toggleChapterPublish = async (storyId, chapterId, isPublished) => {
+  return apiRequest(`/stories/${storyId}/chapters/${chapterId}`, {
+    method: "PUT",
+    body: JSON.stringify({ is_published: isPublished ? 1 : 0 }),
+  });
+};
+
+// Toggle story publish status (publish/unpublish) and all its chapters
+export const toggleStoryPublish = async (storyId, isPublished) => {
+  return apiRequest(`/stories/${storyId}`, {
+    method: "PUT",
+    body: JSON.stringify({ status: isPublished ? 'published' : 'draft' }),
   });
 };
 
