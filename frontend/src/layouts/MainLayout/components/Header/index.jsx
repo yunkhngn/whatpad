@@ -297,10 +297,6 @@ function Header() {
                     <i className="bi bi-journal-text me-2"></i>
                     My Stories
                   </NavDropdown.Item>
-                  <NavDropdown.Item as={Link} to="/settings">
-                    <i className="bi bi-gear me-2"></i>
-                    Settings
-                  </NavDropdown.Item>
                   <NavDropdown.Divider />
                   <NavDropdown.Item onClick={handleLogout}>
                     <i className="bi bi-box-arrow-right me-2"></i>

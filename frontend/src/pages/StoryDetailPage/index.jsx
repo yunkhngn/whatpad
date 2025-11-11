@@ -490,21 +490,6 @@ const StoryDetailPage = () => {
               {story.author_bio && <p className="mb-0">{story.author_bio}</p>}
             </Card.Body>
           </Card>
-
-          {/* More Stories by Author */}
-          <Card>
-            <Card.Header>
-              <h5 className="mb-0">More by this Author</h5>
-            </Card.Header>
-            <Card.Body>
-              <p className="text-muted">
-                Discover more stories by {story.author_name || story.username}
-              </p>
-              <Button variant="outline-primary" size="sm" className="w-100">
-                View All Stories
-              </Button>
-            </Card.Body>
-          </Card>
         </Col>
       </Row>
 

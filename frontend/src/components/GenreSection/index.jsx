@@ -6,6 +6,7 @@ import "./GenreSection.css"
 function GenreSection({ title, stories, showProgress = false, showTitle = true }) {
     const scrollContainerRef = useRef(null)
     const showNavButtons = stories && stories.length > 5
+    const isSingleStory = stories && stories.length === 1
 
     const scroll = (direction) => {
         if (scrollContainerRef.current) {
@@ -20,7 +21,7 @@ function GenreSection({ title, stories, showProgress = false, showTitle = true }
     }
 
     return (
-        <div className="genre-section">
+        <div className={`genre-section ${isSingleStory ? 'single-story-section' : ''}`}>
             {showTitle ? (
                 <div className="genre-header">
                     <h2 className="genre-title">{title}</h2>
@@ -47,14 +48,15 @@ function GenreSection({ title, stories, showProgress = false, showTitle = true }
                     </div>
                 )
             )}
-            <div className="genre-scroll-container" ref={scrollContainerRef}>
-                <div className="genre-stories">
+            <div className={`genre-scroll-container ${isSingleStory ? 'single-story-container' : ''}`} ref={scrollContainerRef}>
+                <div className={`genre-stories ${isSingleStory ? 'single-story-layout' : ''}`}>
                     {stories.map((story) => (
                         <StoryCard
                             key={story.id}
                             story={story}
                             showProgress={showProgress}
                             progress={showProgress ? Math.random() * 100 : 0}
+                            isSingleInSection={isSingleStory}
                         />
                     ))}
                 </div>
