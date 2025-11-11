@@ -52,8 +52,6 @@ const apiRequest = async (endpoint, options = {}) => {
 
 export default function ProfilePage() {
   const { userId } = useParams(); // URL param for viewing other profiles
-  const [activeTab, setActiveTab] = useState("intro");
-  const [currentPage, setCurrentPage] = useState("profile");
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("intro");
   const [currentPage, setCurrentPage] = useState("profile");
@@ -465,37 +463,6 @@ export default function ProfilePage() {
     } catch (err) {
       console.error("Error removing story from list:", err);
       alert("Failed to remove story from list");
-    }
-  };
-
-  const handleAvatarUpload = async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    try {
-      const formData = new FormData();
-      formData.append("image", file);
-
-      const response = await fetch(`${API_BASE_URL}/upload/image`, {
-        method: "POST",
-        headers: {
-          ...(getAuthToken() && { Authorization: `Bearer ${getAuthToken()}` }),
-        },
-        body: formData,
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        setEditData({
-          ...editData,
-          avatar_url: result.url || result.data?.url,
-        });
-      } else {
-        throw new Error("Upload failed");
-      }
-    } catch (err) {
-      console.error("Error uploading avatar:", err);
-      alert("Không thể upload ảnh đại diện");
     }
   };
 
