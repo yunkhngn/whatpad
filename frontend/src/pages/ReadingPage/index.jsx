@@ -368,11 +368,6 @@ const ReadingPage = () => {
                             {hasVoted ? 'Voted' : 'Vote'}
                         </button>
                     </div>
-                    <div className={styles.shareSection}>
-                        <button className={styles.shareButton}>
-                            <i className="bi bi-share"></i> Share
-                        </button>
-                    </div>
                 </section>
 
                 {/* Comments Section */}

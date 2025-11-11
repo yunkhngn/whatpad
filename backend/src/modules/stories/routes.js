@@ -316,6 +316,8 @@ router.post('/:id/publish', auth, async (req, res, next) => {
 
 // DELETE /stories/:id - Delete story (owner only)
 router.delete('/:id', auth, async (req, res, next) => {
+  const connection = await pool.getConnection();
+  
   try {
     const isOwner = await checkStoryOwnership(req.params.id, req.user.id);
     
@@ -323,11 +325,22 @@ router.delete('/:id', auth, async (req, res, next) => {
       return res.status(403).json({ ok: false, message: 'Not authorized', errorCode: 'NOT_AUTHORIZED' });
     }
     
-    await pool.query('DELETE FROM stories WHERE id = ?', [req.params.id]);
+    await connection.beginTransaction();
+    
+    // Delete all chapters associated with the story first
+    await connection.query('DELETE FROM chapters WHERE story_id = ?', [req.params.id]);
+    
+    // Then delete the story
+    await connection.query('DELETE FROM stories WHERE id = ?', [req.params.id]);
+    
+    await connection.commit();
 
     res.json({ ok: true, message: 'Story deleted' });
   } catch (err) {
+    await connection.rollback();
     next(err);
+  } finally {
+    connection.release();
   }
 });
 

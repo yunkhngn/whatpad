@@ -370,29 +370,22 @@ const HomePage = () => {
                               />
                             </div>
                           )}
-                          {/* Small thumbnails (stories 2-5) */}
-                          <div className={styles.smallThumbnailsGrid}>
-                            {genre.stories.slice(1, 5).map((story, idx) => (
-                              <div key={idx} className={styles.smallThumbnail}>
-                                <img
-                                  src={story.cover_url || "/assests/icons/default-cover.png"}
-                                  alt={story.title}
-                                  onError={(e) => {
-                                    e.target.src = "/assests/icons/default-cover.png";
-                                  }}
-                                />
-                              </div>
-                            ))}
-                            {/* Fill empty slots if less than 5 stories */}
-                            {Array.from({ length: Math.max(0, 4 - genre.stories.slice(1, 5).length) }).map((_, idx) => (
-                              <div key={`empty-${idx}`} className={styles.smallThumbnail}>
-                                <img
-                                  src="/assests/icons/default-cover.png"
-                                  alt="placeholder"
-                                />
-                              </div>
-                            ))}
-                          </div>
+                          {/* Small thumbnails (stories 2-5) - only show if there are more than 1 story */}
+                          {genre.stories.length > 1 && (
+                            <div className={styles.smallThumbnailsGrid}>
+                              {genre.stories.slice(1, 5).map((story, idx) => (
+                                <div key={idx} className={styles.smallThumbnail}>
+                                  <img
+                                    src={story.cover_url || "/assests/icons/default-cover.png"}
+                                    alt={story.title}
+                                    onError={(e) => {
+                                      e.target.src = "/assests/icons/default-cover.png";
+                                    }}
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
                         {/* Genre tag at bottom right */}
                         <div className={styles.genreTag}>
@@ -413,7 +406,7 @@ const HomePage = () => {
                 <div>
                   <h2 className={styles.sectionTitle}>Latest Stories</h2>
                   <small className="text-muted" style={{ fontSize: '0.75rem' }}>
-                    Auto-updates every 30 minutes • Last updated: {lastRefresh.toLocaleTimeString()}
+                    {lastRefresh.toLocaleTimeString()}
                   </small>
                 </div>
                 <div className={styles.headerRightSection}>

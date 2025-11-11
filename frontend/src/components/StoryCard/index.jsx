@@ -5,7 +5,7 @@ import bookCoverPlaceholder from '../../assests/images/book-cover-placeholder.pn
 import { getStoryCoverUrl } from '../../utils/cloudinaryUtils'
 import './StoryCard.css'
 
-const StoryCard = ({ story, showProgress = false, progress = 0 }) => {
+const StoryCard = ({ story, showProgress = false, progress = 0, isSingleInSection = false }) => {
     const navigate = useNavigate()
 
     const handleClick = () => {
@@ -17,7 +17,7 @@ const StoryCard = ({ story, showProgress = false, progress = 0 }) => {
 
     return (
         <Card 
-            className="story-card" 
+            className={`story-card ${isSingleInSection ? 'story-card-single' : ''}`}
             onClick={handleClick}
         >
             <div className="story-cover">
@@ -37,6 +37,9 @@ const StoryCard = ({ story, showProgress = false, progress = 0 }) => {
                 <p className="story-genre">
                     {story.tags && story.tags.length > 0 ? story.tags[0].name : 'Story'}
                 </p>
+                {isSingleInSection && (
+                    <p className="story-count">1 story</p>
+                )}
             </div>
         </Card>
     )
