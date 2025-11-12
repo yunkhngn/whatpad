@@ -30,6 +30,13 @@ const ReadingPage = () => {
     const [comments, setComments] = useState([])
     const [hasVoted, setHasVoted] = useState(false)
     const [votesCount, setVotesCount] = useState(0)
+    
+    // Library modal state
+    const [showLibraryModal, setShowLibraryModal] = useState(false)
+    const [readingLists, setReadingLists] = useState([])
+    const [searchQuery, setSearchQuery] = useState('')
+    const [listsContainingStory, setListsContainingStory] = useState(new Set())
+    const [readingListThumbnails, setReadingListThumbnails] = useState({})
 
     // Check if user is logged in
     const isLoggedIn = () => {
@@ -197,6 +204,118 @@ const ReadingPage = () => {
         }
     }
 
+    // Fetch reading lists when modal opens
+    useEffect(() => {
+        const fetchReadingLists = async () => {
+            if (!showLibraryModal || !story?.id) return
+            
+            try {
+                const token = localStorage.getItem('authToken')
+                if (!token) return
+
+                // Decode token to get user ID
+                const payload = JSON.parse(atob(token.split('.')[1]))
+                const userId = payload.id || payload.userId || payload.sub
+
+                const response = await fetch(`http://localhost:4000/users/${userId}/reading-lists`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                })
+
+                if (response.ok) {
+                    const data = await response.json()
+                    setReadingLists(data || [])
+                    
+                    // Fetch thumbnails for each list
+                    const thumbnailsMap = {}
+                    for (const list of data || []) {
+                        try {
+                            const thumbResponse = await fetch(`http://localhost:4000/reading-lists/${list.id}/thumbnails`, {
+                                headers: {
+                                    Authorization: `Bearer ${token}`
+                                }
+                            })
+                            if (thumbResponse.ok) {
+                                const thumbnails = await thumbResponse.json()
+                                thumbnailsMap[list.id] = Array.isArray(thumbnails) ? thumbnails : []
+                            } else {
+                                thumbnailsMap[list.id] = []
+                            }
+                        } catch (err) {
+                            console.error(`Error fetching thumbnails for list ${list.id}:`, err)
+                            thumbnailsMap[list.id] = []
+                        }
+                    }
+                    setReadingListThumbnails(thumbnailsMap)
+                    
+                    // Check which lists already contain this story
+                    const listsWithStory = new Set()
+                    for (const list of data || []) {
+                        try {
+                            const storiesResponse = await fetch(`http://localhost:4000/reading-lists/${list.id}/stories`, {
+                                headers: {
+                                    Authorization: `Bearer ${token}`
+                                }
+                            })
+                            if (storiesResponse.ok) {
+                                const stories = await storiesResponse.json()
+                                const hasStory = stories.some(s => s.id === parseInt(story.id))
+                                if (hasStory) {
+                                    listsWithStory.add(list.id)
+                                }
+                            }
+                        } catch (err) {
+                            console.error(`Error checking list ${list.id}:`, err)
+                        }
+                    }
+                    setListsContainingStory(listsWithStory)
+                }
+            } catch (err) {
+                console.error('Error fetching reading lists:', err)
+            }
+        }
+
+        fetchReadingLists()
+    }, [showLibraryModal, story?.id])
+
+    // Handle add/remove from library (follow/unfollow story)
+    const handleLibraryToggle = async () => {
+        if (!handleAuthAction('add to library')) return
+        setShowLibraryModal(true)
+    }
+
+    const handleAddToList = async (listId) => {
+        try {
+            const token = localStorage.getItem('authToken')
+            const response = await fetch(`http://localhost:4000/reading-lists/${listId}/stories`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    story_id: parseInt(story.id)
+                })
+            })
+
+            if (response.ok) {
+                setListsContainingStory(prev => new Set([...prev, listId]))
+                alert('Story added to reading list!')
+            } else {
+                const error = await response.json()
+                if (error.errorCode === 'ALREADY_ADDED') {
+                    alert('Story is already in this list')
+                } else {
+                    alert('Failed to add story to list')
+                }
+            }
+        } catch (err) {
+            console.error('Error adding story to list:', err)
+            alert('Unable to add story to list')
+        }
+    }
+
     const handleChapterChange = (newChapterId) => {
         navigate(`/read/${newChapterId}`)
     }
@@ -350,12 +469,8 @@ const ReadingPage = () => {
                     <div className={styles.actionButtons}>
                         <button 
                             className={styles.actionButton}
-                            onClick={() => {
-                                if (handleAuthAction('add to library')) {
-                                    // TODO: Implement add to library functionality
-                                    console.log('Add to library')
-                                }
-                            }}
+                            onClick={handleLibraryToggle}
+                            title="Add to library"
                         >
                             <i className="bi bi-plus-lg"></i> Add to library
                         </button>
@@ -407,7 +522,8 @@ const ReadingPage = () => {
                                     if (commentText.trim()) {
                                         try {
                                             // Post comment to backend
-                                            await createComment(chapterId, {
+                                            await createComment({
+                                                chapter_id: chapterId,
                                                 content: commentText.trim()
                                             })
                                             
@@ -499,6 +615,179 @@ const ReadingPage = () => {
                     </section>
                 )}
             </div>
+
+            {/* Add to Library Modal */}
+            {showLibraryModal && (
+                <div className="modal show d-block" style={{backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050}}>
+                    <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                        <div className="modal-content">
+                            <div className="modal-header border-0">
+                                <h5 className="modal-title fw-bold">Add to Library</h5>
+                                <button 
+                                    type="button" 
+                                    className="btn-close" 
+                                    onClick={() => setShowLibraryModal(false)}
+                                ></button>
+                            </div>
+                            <div className="modal-body">
+                                {/* Search Bar */}
+                                <div className="mb-3">
+                                    <div className="input-group">
+                                        <span className="input-group-text bg-light border-end-0">
+                                            <i className="bi bi-search"></i>
+                                        </span>
+                                        <input
+                                            type="text"
+                                            className="form-control border-start-0"
+                                            placeholder="Search your reading lists..."
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Reading Lists */}
+                                <div 
+                                    className="list-group list-group-flush" 
+                                    style={{
+                                        maxHeight: '400px', 
+                                        overflowY: readingLists.length > 5 ? 'auto' : 'visible'
+                                    }}
+                                >
+                                    {readingLists.length === 0 ? (
+                                        <div className="text-center py-4">
+                                            <i className="bi bi-bookmark text-muted" style={{fontSize: '48px'}}></i>
+                                            <p className="text-muted mt-3">No reading lists yet</p>
+                                            <p className="small text-muted">Create a reading list from your profile</p>
+                                        </div>
+                                    ) : (
+                                        readingLists
+                                            .filter(list => 
+                                                list.name.toLowerCase().includes(searchQuery.toLowerCase())
+                                            )
+                                            .map((list) => {
+                                                const isAdded = listsContainingStory.has(list.id)
+                                                const thumbnails = readingListThumbnails[list.id] || []
+                                                const storyCount = list.story_count || 0
+                                                
+                                                return (
+                                                    <div 
+                                                        key={list.id} 
+                                                        className="list-group-item d-flex justify-content-between align-items-center py-3"
+                                                    >
+                                                        <div className="d-flex align-items-center gap-3">
+                                                            {/* Thumbnail Display */}
+                                                            <div className="d-flex gap-1">
+                                                                {storyCount >= 3 && thumbnails.length >= 3 ? (
+                                                                    // Show first thumbnail + 2 smaller thumbnails on the side
+                                                                    <>
+                                                                        <img 
+                                                                            src={thumbnails[0].cover_url || '/assests/icons/default-cover.png'} 
+                                                                            alt="Story 1"
+                                                                            className="rounded object-fit-cover"
+                                                                            style={{width: '40px', height: '60px'}}
+                                                                            onError={(e) => {
+                                                                                e.target.onerror = null
+                                                                                e.target.src = '/assests/icons/default-cover.png'
+                                                                            }}
+                                                                        />
+                                                                        <div className="d-flex flex-column gap-1">
+                                                                            <img 
+                                                                                src={thumbnails[1].cover_url || '/assests/icons/default-cover.png'} 
+                                                                                alt="Story 2"
+                                                                                className="rounded object-fit-cover"
+                                                                                style={{width: '20px', height: '28px'}}
+                                                                                onError={(e) => {
+                                                                                    e.target.onerror = null
+                                                                                    e.target.src = '/assests/icons/default-cover.png'
+                                                                                }}
+                                                                            />
+                                                                            <img 
+                                                                                src={thumbnails[2].cover_url || '/assests/icons/default-cover.png'} 
+                                                                                alt="Story 3"
+                                                                                className="rounded object-fit-cover"
+                                                                                style={{width: '20px', height: '28px'}}
+                                                                                onError={(e) => {
+                                                                                    e.target.onerror = null
+                                                                                    e.target.src = '/assests/icons/default-cover.png'
+                                                                                }}
+                                                                            />
+                                                                        </div>
+                                                                    </>
+                                                                ) : thumbnails.length > 0 ? (
+                                                                    // Show only the first story's thumbnail
+                                                                    <img 
+                                                                        src={thumbnails[0].cover_url || '/assests/icons/default-cover.png'} 
+                                                                        alt="Story"
+                                                                        className="rounded object-fit-cover"
+                                                                        style={{width: '40px', height: '60px'}}
+                                                                        onError={(e) => {
+                                                                            e.target.onerror = null
+                                                                            e.target.src = '/assests/icons/default-cover.png'
+                                                                        }}
+                                                                    />
+                                                                ) : (
+                                                                    // Default placeholder
+                                                                    <div 
+                                                                        className="d-flex align-items-center justify-content-center rounded"
+                                                                        style={{
+                                                                            width: '40px',
+                                                                            height: '60px',
+                                                                            backgroundColor: '#E8E8E8'
+                                                                        }}
+                                                                    >
+                                                                        <i className="bi bi-book text-secondary"></i>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <div>
+                                                                <h6 className="mb-0">{list.name}</h6>
+                                                                <small className="text-muted">{storyCount} {storyCount === 1 ? 'story' : 'stories'}</small>
+                                                            </div>
+                                                        </div>
+                                                        {!isAdded ? (
+                                                            <button 
+                                                                className="btn btn-sm rounded-circle d-flex align-items-center justify-content-center"
+                                                                style={{
+                                                                    width: '36px', 
+                                                                    height: '36px',
+                                                                    border: '2px solid #FF6B00',
+                                                                    backgroundColor: 'transparent',
+                                                                    color: '#FF6B00'
+                                                                }}
+                                                                onClick={() => handleAddToList(list.id)}
+                                                            >
+                                                                <i className="bi bi-plus-lg"></i>
+                                                            </button>
+                                                        ) : (
+                                                            <div className="d-flex align-items-center gap-2">
+                                                                <i className="bi bi-check-circle-fill text-success" style={{fontSize: '24px'}}></i>
+                                                                <small className="text-success fw-semibold">Added</small>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )
+                                            })
+                                    )}
+                                </div>
+                            </div>
+                            <div className="modal-footer border-0 bg-light">
+                                <button 
+                                    type="button" 
+                                    className="btn btn-link text-decoration-none"
+                                    onClick={() => {
+                                        setShowLibraryModal(false)
+                                        navigate('/profile')
+                                    }}
+                                >
+                                    <i className="bi bi-plus-circle me-2"></i>
+                                    Create New List
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

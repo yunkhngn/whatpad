@@ -67,11 +67,19 @@ router.post('/', auth, async (req, res, next) => {
       return res.status(400).json({ ok: false, message: 'story_id and last_chapter_id are required', errorCode: 'MISSING_FIELDS' });
     }
     
+    // Update reading history
     await pool.query(
       `INSERT INTO reading_history (user_id, story_id, last_chapter_id, updated_at)
        VALUES (?, ?, ?, NOW())
        ON DUPLICATE KEY UPDATE last_chapter_id = ?, updated_at = NOW()`,
       [req.user.id, story_id, last_chapter_id, last_chapter_id]
+    );
+
+    // Also record in story_reads for analytics (read count)
+    await pool.query(
+      `INSERT INTO story_reads (user_id, story_id, chapter_id, created_at)
+       VALUES (?, ?, ?, NOW())`,
+      [req.user.id, story_id, last_chapter_id]
     );
 
     res.json({ ok: true, message: 'Reading progress updated' });

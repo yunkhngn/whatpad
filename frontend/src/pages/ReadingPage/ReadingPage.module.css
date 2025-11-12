@@ -236,6 +236,17 @@
     border-color: #ff5520;
 }
 
+.actionButton.inLibrary {
+    background-color: #28a745;
+    color: white;
+    border-color: #28a745;
+}
+
+.actionButton.inLibrary:hover {
+    background-color: #218838;
+    border-color: #218838;
+}
+
 .shareSection {
     display: flex;
     gap: 0.5rem;
