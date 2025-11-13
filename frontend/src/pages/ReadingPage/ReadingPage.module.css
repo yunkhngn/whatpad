@@ -371,6 +371,21 @@
     align-items: center;
     gap: 1rem;
     margin-bottom: 1rem;
+    position: relative;
+}
+
+.reportCommentBtn {
+    background: none;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    padding: 0.5rem;
+    margin-left: auto;
+    transition: color 0.3s ease;
+}
+
+.reportCommentBtn:hover {
+    color: #dc3545;
 }
 
 .commentAvatar {

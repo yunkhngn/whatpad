@@ -197,14 +197,15 @@ export const toggleChapterPublish = async (storyId, chapterId, isPublished) => {
 export const toggleStoryPublish = async (storyId, isPublished) => {
   return apiRequest(`/stories/${storyId}`, {
     method: "PUT",
-    body: JSON.stringify({ status: isPublished ? 'published' : 'draft' }),
+    body: JSON.stringify({ published: isPublished }),
   });
 };
 
 // ================== Tags API ==================
 export const getTags = async () => {
   const response = await apiRequest("/tags");
-  return { tags: response.data || [] };
+  // JSON Server returns array directly, not wrapped in data property
+  return { tags: Array.isArray(response) ? response : (response.data || []) };
 };
 
 // ================== Users API ==================
@@ -225,8 +226,8 @@ export const updateCurrentUser = async (userData) => {
 };
 
 // ================== Comments API ==================
-export const getCommentsByStoryId = async (storyId) => {
-  return apiRequest(`/comments/story/${storyId}`);
+export const getCommentsByStoryId = async (storyId, page = 1, limit = 10) => {
+  return apiRequest(`/comments/story/${storyId}?page=${page}&limit=${limit}`);
 };
 
 export const getCommentsByChapterId = async (chapterId) => {
@@ -255,6 +256,7 @@ export const checkVote = async (chapterId) => {
 export const voteChapter = async (chapterId) => {
   return apiRequest(`/votes/chapter/${chapterId}`, {
     method: "POST",
+    body: JSON.stringify({ vote_type: "up" })
   });
 };
 
@@ -293,7 +295,7 @@ export const removeStoryFromFavorite = async (listId, storyId) => {
 export const followUser = async (userId) => {
   return apiRequest("/follows", {
     method: "POST",
-    body: JSON.stringify({ following_id: userId }),
+    body: JSON.stringify({ userId: userId }), // Backend expects 'userId', not 'following_id'
   });
 };
 
@@ -338,7 +340,7 @@ export const updateReadingProgress = async (storyId, chapterId) => {
     method: "POST",
     body: JSON.stringify({
       story_id: storyId,
-      last_chapter_id: chapterId,
+      chapter_id: chapterId,
     }),
   });
 };
@@ -385,4 +387,138 @@ export const searchStories = (query) => {
 
 export const getStoriesByGenre = (genre) => {
   return getStories({ tag: genre });
+};
+
+// ================== Admin API ==================
+export const getAdminPendingStories = async (params = {}) => {
+  const queryString = new URLSearchParams(params).toString();
+  const response = await apiRequest(
+    `/admin/stories/pending${queryString ? `?${queryString}` : ""}`
+  );
+  return {
+    stories: response.stories || [],
+    total: response.total || 0,
+    page: response.page,
+    size: response.size,
+  };
+};
+
+export const approveStory = async (storyId) => {
+  return apiRequest(`/admin/stories/${storyId}/approve`, {
+    method: "PUT",
+  });
+};
+
+export const unapproveStory = async (storyId) => {
+  return apiRequest(`/admin/stories/${storyId}/unapprove`, {
+    method: "PUT",
+  });
+};
+
+export const rejectStory = async (storyId, reason) => {
+  return apiRequest(`/admin/stories/${storyId}/reject`, {
+    method: "PUT",
+    body: JSON.stringify({ reason }),
+  });
+};
+
+export const approveChapter = async (chapterId) => {
+  return apiRequest(`/admin/chapters/${chapterId}/approve`, {
+    method: "PUT",
+  });
+};
+
+export const unapproveChapter = async (chapterId) => {
+  return apiRequest(`/admin/chapters/${chapterId}/unapprove`, {
+    method: "PUT",
+  });
+};
+
+export const getPendingChaptersForStory = async (storyId) => {
+  const response = await apiRequest(`/admin/stories/${storyId}/pending-chapters`);
+  return {
+    chapters: response.chapters || [],
+    count: response.count || 0,
+  };
+};
+
+export const getAllChaptersForStory = async (storyId) => {
+  const response = await apiRequest(`/admin/stories/${storyId}/chapters`);
+  return {
+    allChapters: response.chapters || [],
+    pendingChapters: response.pendingChapters || [],
+    approvedChapters: response.approvedChapters || [],
+    totalCount: response.totalCount || 0,
+    pendingCount: response.pendingCount || 0,
+    approvedCount: response.approvedCount || 0,
+  };
+};
+
+export const getChapterReports = async (params = {}) => {
+  const queryString = new URLSearchParams(params).toString();
+  const response = await apiRequest(
+    `/admin/reports/chapters${queryString ? `?${queryString}` : ""}`
+  );
+  return {
+    reports: response.reports || [],
+    total: response.total || 0,
+    page: response.page,
+    size: response.size,
+  };
+};
+
+export const getCommentReports = async (params = {}) => {
+  const queryString = new URLSearchParams(params).toString();
+  const response = await apiRequest(
+    `/admin/reports/comments${queryString ? `?${queryString}` : ""}`
+  );
+  return {
+    reports: response.reports || [],
+    total: response.total || 0,
+    page: response.page,
+    size: response.size,
+  };
+};
+
+export const approveReport = async (reportId) => {
+  return apiRequest(`/admin/reports/${reportId}/approve`, {
+    method: "POST",
+  });
+};
+
+export const rejectReport = async (reportId) => {
+  return apiRequest(`/admin/reports/${reportId}/reject`, {
+    method: "POST",
+  });
+};
+
+export const getBannedUsers = async (params = {}) => {
+  const queryString = new URLSearchParams(params).toString();
+  const response = await apiRequest(
+    `/admin/banned-users${queryString ? `?${queryString}` : ""}`
+  );
+  return {
+    banned_users: response.banned_users || [],
+    total: response.total || 0,
+    page: response.page,
+    size: response.size,
+  };
+};
+
+export const unbanUser = async (banId) => {
+  return apiRequest(`/admin/banned-users/${banId}/unban`, {
+    method: "POST",
+  });
+};
+
+// ================== Report API ==================
+export const createReport = async (reportData) => {
+  return apiRequest("/reports", {
+    method: "POST",
+    body: JSON.stringify(reportData),
+  });
+};
+
+export const checkUserBanStatus = async (userId) => {
+  return apiRequest(`/users/${userId}/ban-status`);
 };

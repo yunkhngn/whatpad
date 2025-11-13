@@ -91,6 +91,19 @@ router.post('/', auth, async (req, res, next) => {
 // POST /followed-stories/:storyId - Follow a story
 router.post('/followed-stories/:storyId', auth, async (req, res, next) => {
   try {
+    // First, check if the story exists
+    const [storyCheck] = await pool.query(
+      'SELECT id FROM stories WHERE id = ?',
+      [req.params.storyId]
+    );
+
+    if (storyCheck.length === 0) {
+      return res.status(404).json({ 
+        ok: false, 
+        message: 'Story not found' 
+      });
+    }
+
     await pool.query(
       'INSERT IGNORE INTO followed_stories (user_id, story_id, created_at) VALUES (?, ?, NOW())',
       [req.user.id, req.params.storyId]
@@ -105,6 +118,19 @@ router.post('/followed-stories/:storyId', auth, async (req, res, next) => {
 // DELETE /followed-stories/:storyId - Unfollow a story
 router.delete('/followed-stories/:storyId', auth, async (req, res, next) => {
   try {
+    // Check if the story exists
+    const [storyCheck] = await pool.query(
+      'SELECT id FROM stories WHERE id = ?',
+      [req.params.storyId]
+    );
+
+    if (storyCheck.length === 0) {
+      return res.status(404).json({ 
+        ok: false, 
+        message: 'Story not found' 
+      });
+    }
+
     await pool.query(
       'DELETE FROM followed_stories WHERE user_id = ? AND story_id = ?',
       [req.user.id, req.params.storyId]
@@ -119,6 +145,21 @@ router.delete('/followed-stories/:storyId', auth, async (req, res, next) => {
 // GET /followed-stories/:storyId/check - Check if current user follows a story
 router.get('/followed-stories/:storyId/check', auth, async (req, res, next) => {
   try {
+    // First check if the story exists
+    const [storyCheck] = await pool.query(
+      'SELECT id FROM stories WHERE id = ?',
+      [req.params.storyId]
+    );
+
+    if (storyCheck.length === 0) {
+      return res.status(404).json({ 
+        ok: false, 
+        message: 'Story not found',
+        isFollowing: false
+      });
+    }
+
+    // Then check if user is following
     const [rows] = await pool.query(
       'SELECT 1 FROM followed_stories WHERE user_id = ? AND story_id = ?',
       [req.user.id, req.params.storyId]

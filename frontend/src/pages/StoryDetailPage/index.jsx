@@ -18,16 +18,24 @@ import {
   unfollowStory,
   checkIfFollowingStory,
   getCommentsByStoryId,
+  createReport,
+  getCurrentUser,
 } from "../../services/api";
+import ReportModal from "../../components/ReportModal";
+import BanAlert from "../../components/BanAlert";
+import { handleAvatarError } from "../../utils/avatarUtils";
 
 const StoryDetailPage = () => {
   const { id } = useParams();
   const [story, setStory] = useState(null);
   const [chapters, setChapters] = useState([]);
   const [comments, setComments] = useState([]);
+  const [commentsPagination, setCommentsPagination] = useState({ page: 1, totalPages: 1, total: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [following, setFollowing] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [showReportModal, setShowReportModal] = useState(false);
   
   // Library modal state
   const [showLibraryModal, setShowLibraryModal] = useState(false);
@@ -68,11 +76,16 @@ const StoryDetailPage = () => {
         if (response.ok) {
           const data = await response.json();
           console.log('Reading lists received:', data);
-          setReadingLists(data || []);
+          // Ensure data is an array
+          const lists = Array.isArray(data) ? data : 
+                       (data.data && Array.isArray(data.data)) ? data.data :
+                       (data.readingLists && Array.isArray(data.readingLists)) ? data.readingLists :
+                       []
+          setReadingLists(lists);
           
           // Check which lists already contain this story
           const listsWithStory = new Set();
-          for (const list of data || []) {
+          for (const list of lists) {
             try {
               const storiesResponse = await fetch(`http://localhost:4000/reading-lists/${list.id}/stories`, {
                 headers: {
@@ -106,6 +119,7 @@ const StoryDetailPage = () => {
     const fetchStoryDetails = async () => {
       try {
         setLoading(true);
+        setError(""); // Clear any previous errors
         
         // Check if we have updated story data in sessionStorage
         const cachedStoryData = sessionStorage.getItem('storyData');
@@ -119,18 +133,43 @@ const StoryDetailPage = () => {
           }
         }
         
-        const [storyResponse, chaptersResponse, commentsResponse] =
-          await Promise.all([
-            getStoryById(id),
-            getStoryChapters(id),
-            getCommentsByStoryId(id),
-          ]);
+        // Fetch story data - if this fails, don't proceed
+        let storyResponse;
+        try {
+          storyResponse = await getStoryById(id);
+          
+          if (!storyResponse || !storyResponse.story) {
+            throw new Error('Story not found');
+          }
+          
+          setStory(storyResponse.story);
+        } catch (err) {
+          // Story doesn't exist, set error and return early
+          if (err.message.includes('404') || err.message.includes('not found')) {
+            setError("This story no longer exists or has been removed.");
+          } else {
+            setError("Failed to load story details");
+          }
+          console.error('Story fetch error:', err);
+          setLoading(false);
+          return; // Don't try to fetch chapters/comments if story doesn't exist
+        }
+        
+        // Now fetch chapters and comments in parallel
+        const [chaptersResponse, commentsResponse] = await Promise.all([
+          getStoryChapters(id),
+          getCommentsByStoryId(id, commentsPagination.page),
+        ]);
 
-        setStory(storyResponse.story);
         setChapters(chaptersResponse.chapters || []);
         setComments(commentsResponse.data || []);
         
-        // Check if the current user is following this story
+        // Update pagination info if available
+        if (commentsResponse.pagination) {
+          setCommentsPagination(commentsResponse.pagination);
+        }
+        
+        // Check if the current user is following this story (only if we got here)
         try {
           const token = localStorage.getItem('authToken');
           if (token) {
@@ -138,11 +177,13 @@ const StoryDetailPage = () => {
             setFollowing(followCheck.isFollowing || false);
           }
         } catch (err) {
-          console.log('Not logged in or error checking follow status');
+          // Silently fail for follow check - not critical for page load
+          console.log('Could not check follow status:', err.message);
         }
       } catch (err) {
+        // Handle any other unexpected errors
         setError("Failed to load story details");
-        console.error(err);
+        console.error('Unexpected error:', err);
       } finally {
         setLoading(false);
       }
@@ -175,10 +216,32 @@ const StoryDetailPage = () => {
       window.removeEventListener('storyDataUpdated', handleStoryDataUpdated);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [id]);
+  }, [id, commentsPagination.page]);
+
+  // Fetch current user
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const token = localStorage.getItem('authToken');
+        if (token) {
+          const response = await getCurrentUser();
+          setCurrentUser(response.data);
+        }
+      } catch (err) {
+        console.error('Error fetching current user:', err);
+      }
+    };
+    fetchUser();
+  }, []);
 
   const handleFollowToggle = async () => {
     try {
+      // Check if story exists and is loaded
+      if (!story) {
+        setError("Story not found. Please refresh the page.");
+        return;
+      }
+
       if (following) {
         await unfollowStory(id);
         setFollowing(false);
@@ -186,9 +249,29 @@ const StoryDetailPage = () => {
         await followStory(id);
         setFollowing(true);
       }
+      
+      // Clear any previous errors on success
+      setError("");
     } catch (err) {
       console.error("Error toggling follow:", err);
-      setError("Failed to update follow status. Please try again.");
+      
+      // Provide more specific error messages
+      if (err.message.includes('404')) {
+        setError("This story no longer exists or has been removed.");
+      } else if (err.message.includes('401') || err.message.includes('403')) {
+        setError("Please log in to follow stories.");
+      } else {
+        setError("Failed to update follow status. Please try again.");
+      }
+    }
+  };
+
+  const handleReportSubmit = async (reportData) => {
+    try {
+      await createReport(reportData);
+      alert('Report submitted successfully. Our team will review it shortly.');
+    } catch (err) {
+      throw err;
     }
   };
 
@@ -214,14 +297,16 @@ const StoryDetailPage = () => {
       });
 
       if (response.ok) {
-        const newList = await response.json();
+        const result = await response.json();
+        const newList = result.data; // Backend returns { ok: true, data: newList }
         setReadingLists([...readingLists, newList]);
         setShowCreateListModal(false);
         setNewListName('');
         setNewListDescription('');
         setNewListPrivacy(true);
       } else {
-        alert('Failed to create reading list');
+        const errorData = await response.json();
+        alert(errorData.message || 'Failed to create reading list');
       }
     } catch (err) {
       console.error('Error creating reading list:', err);
@@ -291,7 +376,7 @@ const StoryDetailPage = () => {
               <div className="d-flex">
                 <div className="me-4">
                   <img
-                    src={story.cover_url || "/book-placeholder.png"}
+                    src={story.cover_image_url || story.cover_url || "/book-placeholder.png"}
                     alt={story.title}
                     style={{
                       width: "150px",
@@ -366,6 +451,18 @@ const StoryDetailPage = () => {
                       <i className="bi bi-book me-1"></i>
                       Add to Library
                     </Button>
+
+                    {/* Report Button - Available for all logged-in users */}
+                    {currentUser && (
+                      <Button 
+                        variant="outline-danger" 
+                        onClick={() => setShowReportModal(true)}
+                        title="Report this story"
+                      >
+                        <i className="bi bi-flag me-1"></i>
+                        Report
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -391,7 +488,8 @@ const StoryDetailPage = () => {
                       <strong>
                         Chapter {index + 1}: {chapter.title}
                       </strong>
-                      {!chapter.is_published && (
+                      {/* Only show Draft badge to the story author */}
+                      {!chapter.is_published && !chapter.published && currentUser && story && currentUser.id === story.user_id && (
                         <Badge bg="warning" className="ms-2">
                           Draft
                         </Badge>
@@ -414,7 +512,7 @@ const StoryDetailPage = () => {
           {/* Comments Section */}
           <Card className="mt-4">
             <Card.Header>
-              <h4 className="mb-0">Recent Comments ({comments.length})</h4>
+              <h4 className="mb-0">Recent Comments ({commentsPagination.total})</h4>
             </Card.Header>
             <Card.Body>
               {comments.length > 0 ? (
@@ -426,7 +524,8 @@ const StoryDetailPage = () => {
                           src={comment.avatar_url || "/default-avatar.png"}
                           alt={comment.username}
                           className="rounded-circle me-3"
-                          style={{ width: "40px", height: "40px" }}
+                          style={{ width: "40px", height: "40px", objectFit: "cover" }}
+                          onError={(e) => handleAvatarError(e, comment.username)}
                         />
                         <div className="flex-grow-1">
                           <div className="d-flex justify-content-between align-items-start mb-1">
@@ -456,6 +555,33 @@ const StoryDetailPage = () => {
                       </div>
                     </div>
                   ))}
+                  
+                  {/* Pagination Controls */}
+                  {commentsPagination.totalPages > 1 && (
+                    <div className="d-flex justify-content-center mt-4">
+                      <Button
+                        variant="outline-primary"
+                        size="sm"
+                        disabled={commentsPagination.page === 1}
+                        onClick={() => setCommentsPagination(prev => ({ ...prev, page: prev.page - 1 }))}
+                        className="me-2"
+                      >
+                        Previous
+                      </Button>
+                      <span className="d-flex align-items-center mx-3">
+                        Page {commentsPagination.page} of {commentsPagination.totalPages}
+                      </span>
+                      <Button
+                        variant="outline-primary"
+                        size="sm"
+                        disabled={commentsPagination.page === commentsPagination.totalPages}
+                        onClick={() => setCommentsPagination(prev => ({ ...prev, page: prev.page + 1 }))}
+                        className="ms-2"
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <p className="text-center text-muted mb-0">
@@ -478,7 +604,8 @@ const StoryDetailPage = () => {
                   src={story.author_avatar || "/default-avatar.png"}
                   alt={story.author_name || story.username}
                   className="rounded-circle me-3"
-                  style={{ width: "50px", height: "50px" }}
+                  style={{ width: "50px", height: "50px", objectFit: "cover" }}
+                  onError={(e) => handleAvatarError(e, story.author_name || story.username)}
                 />
                 <div>
                   <h6 className="mb-0">
@@ -688,6 +815,18 @@ const StoryDetailPage = () => {
           </div>
         </div>
       )}
+      
+      {/* Report Modal */}
+      <ReportModal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        onSubmit={handleReportSubmit}
+        type="story"
+        entityId={parseInt(id)}
+      />
+
+      {/* Ban Alert */}
+      {currentUser && <BanAlert userId={currentUser.id} />}
     </Container>
   );
 };

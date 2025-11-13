@@ -10,6 +10,7 @@ import BookCoverPlaceHolder from "../../../assests/images/book-cover-placeholder
 const UserStoryItem = ({ story, onView, onRefresh }) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showPublishModal, setShowPublishModal] = useState(false);
+  const [showRejectionModal, setShowRejectionModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -33,7 +34,7 @@ const UserStoryItem = ({ story, onView, onRefresh }) => {
   };
 
   const handlePublish = async () => {
-    const isPublished = story.status === 'published';
+    const isPublished = story.published === true;
     const newPublishStatus = !isPublished;
     const action = newPublishStatus ? "publish" : "unpublish";
     
@@ -41,7 +42,7 @@ const UserStoryItem = ({ story, onView, onRefresh }) => {
       setIsLoading(true);
       setPublishing(true);
       await toggleStoryPublish(story.id, newPublishStatus);
-      toast.success(`Story ${action}ed successfully. All chapters will be ${action}ed.`);
+      toast.success(`Story ${action}ed successfully. ${newPublishStatus ? 'It will appear in the admin dashboard for approval.' : 'Story removed from public view.'}`);
       setShowPublishModal(false);
       onRefresh();
     } catch (err) {
@@ -84,14 +85,24 @@ const UserStoryItem = ({ story, onView, onRefresh }) => {
           <div className="flex-grow-1">
             <div className="mb-1">
               <strong style={{ fontSize: "1.1rem" }}>{story.title}</strong>
-              {story.status !== 'published' && (
-                <Badge bg="warning" className="ms-2">
-                  Draft
-                </Badge>
-              )}
-              {story.status === 'published' && (
+              {story.published && story.approved && (
                 <Badge bg="success" className="ms-2">
                   Published
+                </Badge>
+              )}
+              {story.published && !story.approved && !story.rejection_reason && (
+                <Badge bg="warning" className="ms-2">
+                  Pending Approval
+                </Badge>
+              )}
+              {!story.published && story.rejection_reason && (
+                <Badge bg="danger" className="ms-2">
+                  Rejected
+                </Badge>
+              )}
+              {!story.published && !story.rejection_reason && (
+                <Badge bg="secondary" className="ms-2">
+                  Draft
                 </Badge>
               )}
             </div>
@@ -126,13 +137,23 @@ const UserStoryItem = ({ story, onView, onRefresh }) => {
 
         {/* Action Buttons */}
         <div className="d-flex gap-2">
+          {!story.published && story.rejection_reason && (
+            <Button
+              variant="outline-info"
+              size="sm"
+              onClick={() => setShowRejectionModal(true)}
+              title="View rejection reason"
+            >
+              <i className="bi bi-info-circle"></i>
+            </Button>
+          )}
           <Button
-            variant={story.status === 'published' ? "outline-warning" : "outline-success"}
+            variant={story.published ? "outline-warning" : "outline-success"}
             size="sm"
             onClick={() => setShowPublishModal(true)}
             className="ms-3"
           >
-            <i className={`bi ${story.status === 'published' ? "bi-arrow-counterclockwise" : "bi-check-circle"}`}></i>
+            <i className={`bi ${story.published ? "bi-arrow-counterclockwise" : "bi-check-circle"}`}></i>
           </Button>
           <Button
             variant="outline-danger"
@@ -151,20 +172,20 @@ const UserStoryItem = ({ story, onView, onRefresh }) => {
         centered
       >
         <Modal.Header closeButton>
-          <Modal.Title>{story.status === 'published' ? "Unpublish" : "Publish"} Story</Modal.Title>
+          <Modal.Title>{story.published ? "Unpublish" : "Publish"} Story</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {story.status === 'published' ? (
+          {story.published ? (
             <>
               Are you sure you want to unpublish "{story.title}"? 
               <br /><br />
-              <strong>All chapters will be unpublished and hidden from other users.</strong>
+              <strong>The story will be removed from public view and will need to be approved again if you republish it.</strong>
             </>
           ) : (
             <>
               Are you sure you want to publish "{story.title}"? 
               <br /><br />
-              <strong>All chapters will be published and visible to other users.</strong>
+              <strong>The story will be sent to the admin dashboard for approval before it appears on the homepage.</strong>
             </>
           )}
         </Modal.Body>
@@ -177,11 +198,11 @@ const UserStoryItem = ({ story, onView, onRefresh }) => {
             Cancel
           </Button>
           <Button 
-            variant={story.status === 'published' ? "warning" : "success"} 
+            variant={story.published ? "warning" : "success"} 
             onClick={handlePublish} 
             disabled={publishing}
           >
-            {publishing ? "Processing..." : (story.status === 'published' ? "Unpublish" : "Publish")}
+            {publishing ? "Processing..." : (story.published ? "Unpublish" : "Publish")}
           </Button>
         </Modal.Footer>
       </Modal>
@@ -209,6 +230,40 @@ const UserStoryItem = ({ story, onView, onRefresh }) => {
           </Button>
           <Button variant="danger" onClick={handleDelete} disabled={deleting}>
             {deleting ? "Deleting..." : "Delete"}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Rejection Reason Modal */}
+      <Modal
+        show={showRejectionModal}
+        onHide={() => setShowRejectionModal(false)}
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Story Rejection Reason</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p><strong>Your story "{story.title}" was rejected for the following reason:</strong></p>
+          <div style={{ 
+            padding: '15px', 
+            backgroundColor: '#f8f9fa', 
+            borderRadius: '8px',
+            border: '1px solid #dee2e6'
+          }}>
+            {story.rejection_reason}
+          </div>
+          <p className="mt-3 text-muted" style={{ fontSize: '0.9rem' }}>
+            <i className="bi bi-info-circle me-1"></i>
+            You can edit your story and publish it again for re-approval.
+          </p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={() => setShowRejectionModal(false)}
+          >
+            Close
           </Button>
         </Modal.Footer>
       </Modal>

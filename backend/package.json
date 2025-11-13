@@ -1,12 +1,12 @@
 {
   "name": "whatpad-backend",
   "version": "1.0.0",
-  "main": "src/app.js",
+  "main": "json-server-config.js",
   "license": "MIT",
-  "description": "Wattpad-like backend with Express and MSSQL",
+  "description": "Wattpad-like backend with JSON Server",
   "scripts": {
-    "start": "node src/app.js",
-    "dev": "nodemon src/app.js",
+    "start": "node json-server-config.js",
+    "dev": "nodemon json-server-config.js",
     "migrate:tags": "node scripts/run-tags-migration.js"
   },
   "dependencies": {
@@ -15,9 +15,10 @@
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
+    "json-server": "^0.17.4",
     "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
-    "mysql2": "^3.15.1",
+    "streamifier": "^0.1.1",
     "swagger-ui-express": "^5.0.0"
   },
   "devDependencies": {

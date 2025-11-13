@@ -1,9 +1,18 @@
 "use client";
 
-import { Container, Row, Col, Form } from "react-bootstrap";
+import { useState } from "react";
+import { Container, Row, Col, Form, Button } from "react-bootstrap";
+import ImportModal from "../ImportModal";
 import styles from "./ChapterEditor.module.css";
 
-function ChapterEditor({ fetchedChapter, chapterEdit, setChapterEdit }) {
+function ChapterEditor({ chapterEdit, setChapterEdit }) {
+  const [showImportModal, setShowImportModal] = useState(false);
+
+  const handleImport = (text) => {
+    // Preserve the formatting: line breaks, spacing, and case
+    setChapterEdit({ ...chapterEdit, content: text });
+  };
+
   return (
     <Container className={styles.chapterEditorContainer}>
       <Row>
@@ -18,6 +27,19 @@ function ChapterEditor({ fetchedChapter, chapterEdit, setChapterEdit }) {
               }
               className={styles.chapterTitleInput}
             />
+            
+            {/* Import Button */}
+            <div className={styles.importButtonContainer}>
+              <Button
+                variant="outline-primary"
+                onClick={() => setShowImportModal(true)}
+                className={styles.importButton}
+              >
+                <i className="bi bi-file-earmark-arrow-up me-2"></i>
+                Import Document
+              </Button>
+            </div>
+
             <Form.Control
               as="textarea"
               placeholder="Start writing your chapter..."
@@ -30,6 +52,12 @@ function ChapterEditor({ fetchedChapter, chapterEdit, setChapterEdit }) {
           </Form>
         </Col>
       </Row>
+
+      <ImportModal
+        show={showImportModal}
+        onHide={() => setShowImportModal(false)}
+        onImport={handleImport}
+      />
     </Container>
   );
 }

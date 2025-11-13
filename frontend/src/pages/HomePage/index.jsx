@@ -362,7 +362,7 @@ const HomePage = () => {
                           {genre.stories[0] && (
                             <div className={styles.largeThumbnail}>
                               <img
-                                src={genre.stories[0].cover_url || "/assests/icons/default-cover.png"}
+                                src={genre.stories[0].cover_image_url || genre.stories[0].cover_url || "/assests/icons/default-cover.png"}
                                 alt={genre.stories[0].title}
                                 onError={(e) => {
                                   e.target.src = "/assests/icons/default-cover.png";
@@ -376,7 +376,7 @@ const HomePage = () => {
                               {genre.stories.slice(1, 5).map((story, idx) => (
                                 <div key={idx} className={styles.smallThumbnail}>
                                   <img
-                                    src={story.cover_url || "/assests/icons/default-cover.png"}
+                                    src={story.cover_image_url || story.cover_url || "/assests/icons/default-cover.png"}
                                     alt={story.title}
                                     onError={(e) => {
                                       e.target.src = "/assests/icons/default-cover.png";

@@ -18,7 +18,6 @@ export default function CreateChapterPage() {
   const { storyId, chapterId } = useParams();
   const navigate = useNavigate();
   const [fetchedStory, setFetchedStory] = useState({});
-  const [fetchedChapter, setFetchedChapter] = useState({});
   const [chapterEdit, setChapterEdit] = useState({
     title: "",
     content: "",
@@ -31,7 +30,6 @@ export default function CreateChapterPage() {
       const storyResponse = await getStoryById(storyId);
       const chapterResponse = await getChapterOfStory(storyId, chapterId);
       setFetchedStory(storyResponse.story);
-      setFetchedChapter(chapterResponse.chapter);
       setChapterEdit({
         title:
           chapterResponse?.chapter?.title?.toLowerCase() === "untitled"
@@ -107,7 +105,6 @@ export default function CreateChapterPage() {
       <ChapterEditor
         chapterEdit={chapterEdit}
         setChapterEdit={setChapterEdit}
-        fetchedChapter={fetchedChapter}
       />
     </div>
   );

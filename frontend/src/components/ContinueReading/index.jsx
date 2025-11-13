@@ -4,9 +4,9 @@ import { getReadingHistory } from '../../services/api';
 import { useNavigate } from 'react-router';
 import './ContinueReading.css';
 
-const ContinueReading = () => {
-    const [readingHistory, setReadingHistory] = useState([]);
-    const [loading, setLoading] = useState(true);
+const ContinueReading = ({ stories }) => {
+    const [readingHistory, setReadingHistory] = useState(stories || []);
+    const [loading, setLoading] = useState(!stories);
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
@@ -16,6 +16,14 @@ const ContinueReading = () => {
     };
 
     useEffect(() => {
+        // If stories prop is provided, use it directly
+        if (stories) {
+            setReadingHistory(stories);
+            setLoading(false);
+            return;
+        }
+
+        // Otherwise fetch reading history
         const fetchReadingHistory = async () => {
             if (!isLoggedIn()) {
                 setLoading(false);
@@ -37,7 +45,7 @@ const ContinueReading = () => {
         };
 
         fetchReadingHistory();
-    }, []);
+    }, [stories]);
 
     // Don't show section if not logged in or no history
     if (!isLoggedIn() || (!loading && readingHistory.length === 0)) {

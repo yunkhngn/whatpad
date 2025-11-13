@@ -537,9 +537,9 @@ const SearchPage = () => {
                                         .map((story) => (
                                     <div key={story.id} className={styles.storyItem}>
                                         <Link to={`/story/${story.id}`} className={styles.storyLink}>
-                                            {story.cover_url && (
+                                            {(story.cover_image_url || story.cover_url) && (
                                                 <img 
-                                                    src={story.cover_url} 
+                                                    src={story.cover_image_url || story.cover_url} 
                                                     alt={story.title}
                                                     className={styles.storyCover}
                                                 />

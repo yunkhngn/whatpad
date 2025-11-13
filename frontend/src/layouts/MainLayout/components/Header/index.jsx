@@ -297,6 +297,15 @@ function Header() {
                     <i className="bi bi-journal-text me-2"></i>
                     My Stories
                   </NavDropdown.Item>
+                  {user.role === 'admin' && (
+                    <>
+                      <NavDropdown.Divider />
+                      <NavDropdown.Item as={Link} to="/admin">
+                        <i className="bi bi-shield-check me-2"></i>
+                        Admin Dashboard
+                      </NavDropdown.Item>
+                    </>
+                  )}
                   <NavDropdown.Divider />
                   <NavDropdown.Item onClick={handleLogout}>
                     <i className="bi bi-box-arrow-right me-2"></i>

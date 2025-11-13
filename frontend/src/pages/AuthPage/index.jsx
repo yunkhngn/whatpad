@@ -119,11 +119,15 @@ const AuthPage = () => {
                 });
                 
                 // Save token to localStorage
-                if (response.token) {
-                    localStorage.setItem('authToken', response.token);
-                    console.log('Token saved:', response.token);
+                // Backend returns { ok: true, data: { user, token } }
+                const token = response.data?.token || response.token;
+                if (token) {
+                    localStorage.setItem('authToken', token);
+                    console.log('Token saved:', token);
                     // Dispatch custom event to notify components about login
                     window.dispatchEvent(new Event('userLogin'))
+                } else {
+                    console.error('No token in response:', response);
                 }
                 
                 setSuccess('Login successful!');

@@ -12,8 +12,8 @@ const StoryCard = ({ story, showProgress = false, progress = 0, isSingleInSectio
         navigate(`/story/${story.id}`)
     }
 
-    // Get optimized cover URL
-    const coverUrl = getStoryCoverUrl(story.cover_url) || bookCoverPlaceholder
+    // Get optimized cover URL - check both possible field names
+    const coverUrl = getStoryCoverUrl(story.cover_image_url || story.cover_url) || bookCoverPlaceholder
 
     return (
         <Card 

@@ -11,6 +11,7 @@ import CreateStoryPage from "../../pages/CreateStoryPage";
 import UserStoriesPage from "../../pages/UserStoriesPage";
 import CreateChapterPage from "../../pages/CreateChapterPage";
 import UserStoryDetailPage from "../../pages/UserStoryDetailsPage";
+import AdminPage from "../../pages/AdminPage";
 
 const AppRouter = () => {
   return (
@@ -94,6 +95,15 @@ const AppRouter = () => {
           element={
             <MainLayout>
               <UserStoryDetailPage />
+            </MainLayout>
+          }
+        />
+
+        <Route
+          path="/admin"
+          element={
+            <MainLayout>
+              <AdminPage />
             </MainLayout>
           }
         />

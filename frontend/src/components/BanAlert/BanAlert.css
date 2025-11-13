@@ -1,0 +1,107 @@
+.ban-alert-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  padding: 20px;
+}
+
+.ban-alert {
+  background: white;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 500px;
+  padding: 32px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  animation: bounceIn 0.5s ease;
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.ban-alert-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+
+.ban-alert h2 {
+  font-size: 24px;
+  color: #d32f2f;
+  margin: 0 0 24px 0;
+}
+
+.ban-alert-content {
+  text-align: left;
+  background: #fff3cd;
+  padding: 20px;
+  border-radius: 8px;
+  border-left: 4px solid #ffc107;
+  margin-bottom: 24px;
+}
+
+.ban-reason {
+  font-size: 14px;
+  color: var(--text-primary, #333);
+  margin: 0 0 12px 0;
+}
+
+.ban-duration {
+  font-size: 14px;
+  color: var(--text-primary, #333);
+  margin: 0 0 12px 0;
+}
+
+.ban-duration strong {
+  color: #d32f2f;
+}
+
+.ban-message {
+  font-size: 13px;
+  color: var(--text-secondary, #666);
+  margin: 0;
+  line-height: 1.6;
+}
+
+.btn-close-alert {
+  padding: 12px 32px;
+  background: #d32f2f;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.btn-close-alert:hover {
+  background: #b71c1c;
+}
+
+@media (max-width: 768px) {
+  .ban-alert {
+    padding: 24px;
+  }
+
+  .ban-alert h2 {
+    font-size: 20px;
+  }
+}

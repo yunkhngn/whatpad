@@ -12,8 +12,12 @@ import {
   voteChapter,
   unvoteChapter,
   updateReadingProgress,
+  createReport,
+  getCurrentUser,
 } from "../../services/api";
 import { Dropdown } from "react-bootstrap";
+import ReportModal from "../../components/ReportModal";
+import BanAlert from "../../components/BanAlert";
 import styles from "./ReadingPage.module.css";
 
 const ReadingPage = () => {
@@ -30,6 +34,10 @@ const ReadingPage = () => {
     const [comments, setComments] = useState([])
     const [hasVoted, setHasVoted] = useState(false)
     const [votesCount, setVotesCount] = useState(0)
+    const [currentUser, setCurrentUser] = useState(null)
+    const [showReportModal, setShowReportModal] = useState(false)
+    const [reportType, setReportType] = useState('chapter')
+    const [reportEntityId, setReportEntityId] = useState(null)
     
     // Library modal state
     const [showLibraryModal, setShowLibraryModal] = useState(false)
@@ -60,14 +68,19 @@ const ReadingPage = () => {
                 setLoading(true)
                 // Fetch chapter
                 const chapterResponse = await getChapterById(chapterId)
+                console.log('=== CHAPTER RESPONSE ===', chapterResponse)
+                console.log('Chapter object:', chapterResponse.chapter)
+                console.log('Votes value:', chapterResponse.chapter?.votes)
                 setChapter(chapterResponse.chapter)
                 setVotesCount(chapterResponse.chapter?.votes || 0)
+                console.log('VotesCount set to:', chapterResponse.chapter?.votes || 0)
 
                 // Check if user has voted (only if logged in)
                 if (isLoggedIn()) {
                     try {
                         const voteStatus = await checkVote(chapterId)
-                        setHasVoted(voteStatus.hasVoted || false)
+                        // Backend returns data.userVote which is 'up', 'down', or null
+                        setHasVoted(voteStatus.data?.userVote === 'up')
                     } catch (err) {
                         console.error('Error checking vote status:', err)
                         setHasVoted(false)
@@ -107,17 +120,6 @@ const ReadingPage = () => {
                     try {
                         await updateReadingProgress(chapterResponse.chapter.story_id, chapterId)
                         console.log('Reading progress updated')
-                        
-                        // After a short delay, refetch story to get updated read_count
-                        setTimeout(async () => {
-                            try {
-                                const updatedStory = await getStoryById(chapterResponse.chapter.story_id)
-                                setStory(updatedStory.story)
-                                console.log('Story data refreshed with updated read count')
-                            } catch (err) {
-                                console.error('Error refreshing story data:', err)
-                            }
-                        }, 500) // 500ms delay to ensure backend has processed the read
                     } catch (err) {
                         console.error('Error updating reading progress:', err)
                     }
@@ -204,6 +206,48 @@ const ReadingPage = () => {
         }
     }
 
+    // Fetch current user
+    useEffect(() => {
+        const fetchUser = async () => {
+            try {
+                const token = localStorage.getItem('authToken')
+                if (token) {
+                    const response = await getCurrentUser()
+                    setCurrentUser(response.data)
+                }
+            } catch (err) {
+                console.error('Error fetching current user:', err)
+            }
+        }
+        fetchUser()
+    }, [])
+
+    // Handle report submit
+    const handleReportSubmit = async (reportData) => {
+        try {
+            await createReport(reportData)
+            alert('Report submitted successfully. Our team will review it shortly.')
+        } catch (err) {
+            throw err
+        }
+    }
+
+    // Handle report chapter
+    const handleReportChapter = () => {
+        if (!handleAuthAction('report')) return
+        setReportType('chapter')
+        setReportEntityId(parseInt(chapterId))
+        setShowReportModal(true)
+    }
+
+    // Handle report comment
+    const handleReportComment = (commentId) => {
+        if (!handleAuthAction('report')) return
+        setReportType('comment')
+        setReportEntityId(commentId)
+        setShowReportModal(true)
+    }
+
     // Fetch reading lists when modal opens
     useEffect(() => {
         const fetchReadingLists = async () => {
@@ -225,11 +269,16 @@ const ReadingPage = () => {
 
                 if (response.ok) {
                     const data = await response.json()
-                    setReadingLists(data || [])
+                    // Ensure data is an array
+                    const lists = Array.isArray(data) ? data : 
+                                 (data.data && Array.isArray(data.data)) ? data.data :
+                                 (data.readingLists && Array.isArray(data.readingLists)) ? data.readingLists :
+                                 []
+                    setReadingLists(lists)
                     
                     // Fetch thumbnails for each list
                     const thumbnailsMap = {}
-                    for (const list of data || []) {
+                    for (const list of lists) {
                         try {
                             const thumbResponse = await fetch(`http://localhost:4000/reading-lists/${list.id}/thumbnails`, {
                                 headers: {
@@ -430,7 +479,6 @@ const ReadingPage = () => {
                 <section className={styles.contentSection}>
                     <h2 className={styles.chapterTitle}>{chapter.title}</h2>
                     <div className={styles.chapterMeta}>
-                        <span><i className="bi bi-eye"></i> {chapter.views || 0} reads</span>
                         <span><i className="bi bi-star"></i> {votesCount} votes</span>
                         <span><i className="bi bi-chat"></i> {chapter.comments_count || 0} comments</span>
                     </div>
@@ -482,6 +530,16 @@ const ReadingPage = () => {
                             <i className={`bi ${hasVoted ? 'bi-star-fill' : 'bi-star'}`}></i> 
                             {hasVoted ? 'Voted' : 'Vote'}
                         </button>
+                        {currentUser && (
+                            <button 
+                                className={styles.actionButton}
+                                onClick={handleReportChapter}
+                                title="Report this chapter"
+                                style={{ color: '#dc3545' }}
+                            >
+                                <i className="bi bi-flag"></i> Report
+                            </button>
+                        )}
                     </div>
                 </section>
 
@@ -554,12 +612,14 @@ const ReadingPage = () => {
                                 <div key={comment.id} className={styles.commentItem}>
                                     <div className={styles.commentHeader}>
                                         <img 
-                                            src={comment.avatar_url || '/default-avatar.png'} 
-                                            alt={comment.username}
+                                            src={comment.user?.avatar_url || comment.avatar_url || '/default-avatar.png'} 
+                                            alt={comment.user?.username || comment.username || 'User'}
                                             className={styles.commentAvatar}
                                         />
                                         <div className={styles.commentMeta}>
-                                            <span className={styles.commentAuthor}>{comment.username}</span>
+                                            <span className={styles.commentAuthor}>
+                                                {comment.user?.username || comment.username || 'Anonymous'}
+                                            </span>
                                             <span className={styles.commentTime}>
                                                 {new Date(comment.created_at).toLocaleDateString('vi-VN', {
                                                     year: 'numeric',
@@ -570,6 +630,15 @@ const ReadingPage = () => {
                                                 })}
                                             </span>
                                         </div>
+                                        {currentUser && (
+                                            <button 
+                                                className={styles.reportCommentBtn}
+                                                onClick={() => handleReportComment(comment.id)}
+                                                title="Report this comment"
+                                            >
+                                                <i className="bi bi-flag"></i>
+                                            </button>
+                                        )}
                                     </div>
                                     <p className={styles.commentText}>{comment.content}</p>
                                 </div>
@@ -788,6 +857,18 @@ const ReadingPage = () => {
                     </div>
                 </div>
             )}
+
+            {/* Report Modal */}
+            <ReportModal
+                isOpen={showReportModal}
+                onClose={() => setShowReportModal(false)}
+                onSubmit={handleReportSubmit}
+                type={reportType}
+                entityId={reportEntityId}
+            />
+
+            {/* Ban Alert */}
+            {currentUser && <BanAlert userId={currentUser.id} />}
         </div>
     )
 }

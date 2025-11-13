@@ -3,9 +3,41 @@
 Wattpad clone – whatapp
 =======================
 
+## ⚡ Quick Start
+
+### Backend (JSON Server)
+```bash
+cd backend
+npm install
+npm start
+# Server runs on http://localhost:4000
+```
+
+### Frontend (React)
+```bash
+cd frontend
+npm install
+npm start
+# App runs on http://localhost:3000
+```
+
+### 🖼️ Image Upload Setup (Cloudinary)
+See [CLOUDINARY-SETUP.md](CLOUDINARY-SETUP.md) for detailed instructions.
+
+**Quick Setup:**
+1. Create `backend/.env` file
+2. Add your Cloudinary credentials (from https://cloudinary.com)
+3. Restart backend
+
+**Default Admin Account:**
+- Email: `admin@whatpad.com`
+- Password: `admin123`
+
+---
+
 Mục tiêu
 --------
-Tạo bản clone tối giản kiểu Wattpad để học fullstack. Tập trung vào CRUD truyện, chapter, đọc truyện, theo dõi tác giả, vote và comment. FE dùng React Router và React Bootstrap. BE dùng Node.js Express kết nối SQL Server. Ảnh lưu Cloudinary. DB chỉ giữ URL.
+Tạo bản clone tối giản kiểu Wattpad để học fullstack. Tập trung vào CRUD truyện, chapter, đọc truyện, theo dõi tác giả, vote và comment. FE dùng React Router và React Bootstrap. BE dùng Node.js Express + JSON Server. Ảnh lưu Cloudinary. DB chỉ giữ URL.
 
 Tính năng MVP
 -------------

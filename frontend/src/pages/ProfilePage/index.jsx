@@ -261,8 +261,17 @@ export default function ProfilePage() {
     
     setFollowLoading(true);
     try {
-      const method = isFollowing ? 'DELETE' : 'POST';
-      const response = await apiRequest(`/follows/${profile.id}`, { method });
+      let response;
+      if (isFollowing) {
+        // Unfollow: DELETE /follows/:userId
+        response = await apiRequest(`/follows/${profile.id}`, { method: 'DELETE' });
+      } else {
+        // Follow: POST /follows with userId in body
+        response = await apiRequest('/follows', { 
+          method: 'POST',
+          body: JSON.stringify({ userId: profile.id })
+        });
+      }
       
       if (response.ok) {
         setIsFollowing(!isFollowing);
@@ -270,10 +279,12 @@ export default function ProfilePage() {
           ...prev, 
           followers: prev.followers + (isFollowing ? -1 : 1) 
         }));
+      } else {
+        setFetchError('Failed to update follow status. Please try again.');
       }
     } catch (err) {
       console.error('Error following/unfollowing user:', err);
-      setFetchError('Không thể thực hiện hành động này');
+      setFetchError('Failed to update follow status. Please try again.');
     }
     setFollowLoading(false);
   };
@@ -303,16 +314,18 @@ export default function ProfilePage() {
 
   const handleSaveProfile = async () => {
     try {
-      const response = await apiRequest('/users/me', {
+      const data = await apiRequest('/users/me', {
         method: 'PUT',
         body: JSON.stringify({
           username: editData.username,
           bio: editData.bio,
-          avatar_url: editData.avatar_url
+          avatar_url: editData.avatar_url,
+          banner_url: editData.banner_url
         })
       });
 
-      if (response.ok) {
+      // apiRequest returns the parsed JSON data, not the response object
+      if (data && data.ok !== false) {
         setProfile({
           ...profile,
           name: editData.username,
@@ -321,10 +334,11 @@ export default function ProfilePage() {
           avatar: editData.avatar_url || `${API_BASE_URL}/uploads/avatars/default-avatar.png`
         });
         setCurrentPage('profile');
+        alert('Profile updated successfully!');
       }
     } catch (err) {
       console.error('Error updating profile:', err);
-      alert('Unable to update profile');
+      alert(`Unable to update profile: ${err.message}`);
     }
   };
 
@@ -367,7 +381,8 @@ export default function ProfilePage() {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/reading-lists`, {
+      const currentUserId = getCurrentUserId();
+      const response = await fetch(`${API_BASE_URL}/users/${currentUserId}/reading-lists`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -376,19 +391,21 @@ export default function ProfilePage() {
         body: JSON.stringify({
           name: newListName,
           description: newListDescription,
-          privacy: newListPrivacy
+          is_public: newListPrivacy === 'public'
         })
       });
 
       if (response.ok) {
-        const newList = await response.json();
+        const result = await response.json();
+        const newList = result.data || result;
         setReadingLists([...readingLists, newList]);
         setShowCreateListModal(false);
         setNewListName('');
         setNewListDescription('');
         setNewListPrivacy('public');
       } else {
-        alert('Failed to create reading list');
+        const errorData = await response.json();
+        alert(errorData.message || 'Failed to create reading list');
       }
     } catch (err) {
       console.error('Error creating reading list:', err);
@@ -1027,16 +1044,18 @@ export default function ProfilePage() {
                               )}
                               <div className="d-flex gap-3 small text-muted">
                                 <span><i className="bi bi-eye me-1"></i>{story.read_count || 0}</span>
-                                <span><i className="bi bi-star me-1"></i>{story.vote_count || 0}</span>
+                                <span><i className="bi bi-heart me-1"></i>{story.vote_count || 0}</span>
                                 <span><i className="bi bi-book me-1"></i>{story.chapter_count || 0} chapters</span>
                               </div>
                               <div className="mt-2">
-                                <small className="text-muted">
-                                  Updated: {story.updated_at ? new Date(story.updated_at).toLocaleDateString('en-US') : 'Unknown'}
+                                <small className="text-muted d-block">
+                                  Updated: {story.updated_at ? new Date(story.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Unknown'}
                                 </small>
-                                <small className="text-success d-block">
-                                  Following since {story.followed_at ? new Date(story.followed_at).toLocaleDateString('en-US') : 'Unknown'}
-                                </small>
+                                {(story.following_since || story.followed_at) && (
+                                  <small className="text-success d-block">
+                                    Following since {new Date(story.following_since || story.followed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                  </small>
+                                )}
                               </div>
                             </div>
                             {isOwnProfile && (
